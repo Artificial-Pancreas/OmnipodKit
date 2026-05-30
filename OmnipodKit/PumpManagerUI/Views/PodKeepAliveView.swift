@@ -22,8 +22,6 @@ struct PodKeepAliveView: View {
     private var initialValue: PodKeepAlive
     @State private var preference: PodKeepAlive
 
-    private let availableModes: [PodKeepAlive] = [ .disabled, .silentTune, .rileyLink ]
-
     init(title: String, initialValue: PodKeepAlive, onChange: @escaping (_ selectedValue: PodKeepAlive) -> Void) {
         self.title = title
         self.initialValue = initialValue
@@ -65,7 +63,7 @@ struct PodKeepAliveView: View {
             }
 
             Picker("Pod Keep Alive", selection: $viewModel.podKeepAlive) {
-                ForEach(availableModes, id: \.rawValue) { type in
+                ForEach(PodKeepAlive.allCases, id: \.self) { type in
                     Text(type.title).tag(type)
                 }
             }
