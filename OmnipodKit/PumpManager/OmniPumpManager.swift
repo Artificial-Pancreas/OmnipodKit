@@ -1523,10 +1523,11 @@ extension OmniPumpManager {
         handleSilencePodEnd(session: session)
 
         // Next do the getStatus() call unless we can optimize and it
-        // has been less than a couple of minutes since the last response.
+        // has been less than optimizeInterval since the last response.
+        let optimizeInterval = TimeInterval(seconds: 120)
         let timeSinceLastResponse = -(self.state.podState?.podTimeUpdated ?? .distantPast).timeIntervalSinceNow
         let status: StatusResponse?
-        if canOptimize && timeSinceLastResponse < TimeInterval(minutes: 2) {
+        if canOptimize && timeSinceLastResponse < optimizeInterval {
             self.log.debug("### skipping getStatus() with last status %@ ago", timeSinceLastResponse.timeIntervalStr)
             status = nil
         } else {
