@@ -85,7 +85,7 @@ struct RileyLinkSetupView: View {
         UIColor(named: "RileyLink Tint", in: Bundle(for: RileyLinkCell.self), compatibleWith: nil) ?? .gray
     }
 
-    @ViewBuilder  private var bodyText: some View {
+    @ViewBuilder private var bodyText: some View {
         Text(LocalizedString(
             "RileyLink allows for communication with the pump over Bluetooth",
             comment: "bodyText for RileyLinkSetupView"

@@ -173,7 +173,7 @@ class BluetoothManager: NSObject {
         }
     }
 
-    @discardableResult  private func addPeripheral(_ peripheral: CBPeripheral, podAdvertisement: PodAdvertisement?) -> Omni {
+    @discardableResult private func addPeripheral(_ peripheral: CBPeripheral, podAdvertisement: PodAdvertisement?) -> Omni {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         var device: Omni! = devices.first(where: { $0.manager.peripheral.identifier == peripheral.identifier })

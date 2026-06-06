@@ -95,7 +95,7 @@ struct DeactivatePodView: View {
             .font(.headline)
     }
 
-    @ViewBuilder  var actionButton: some View {
+    @ViewBuilder var actionButton: some View {
         if self.viewModel.stateNeedsDeliberateUserAcceptance {
             SlideButton(styling: .init(indicatorSize: 60, indicatorColor: Color.red), action: {
                 self.viewModel.continueButtonTapped()

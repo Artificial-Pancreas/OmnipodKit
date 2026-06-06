@@ -644,7 +644,7 @@ class PodCommsSession: MessageTransportDelegate {
     // Configures the given pod alert(s) and registers the newly configured alert slot(s).
     // When re-configuring all the pod alerts for a silence pod toggle, the optional acknowledgeAll can be
     // specified to first acknowledge and clear all possible pending pod alerts and pod alert configurations.
-    @discardableResult  func configureAlerts(
+    @discardableResult func configureAlerts(
         _ alerts: [PodAlert],
         acknowledgeAll: Bool = false,
         beepBlock: MessageBlock? = nil

@@ -84,7 +84,7 @@ struct InsertCannulaView: View {
             .font(.headline)
     }
 
-    @ViewBuilder  var actionButton: some View {
+    @ViewBuilder var actionButton: some View {
         if self.viewModel.stateNeedsDeliberateUserAcceptance {
             SlideButton(action: {
                 self.viewModel.continueButtonTapped()

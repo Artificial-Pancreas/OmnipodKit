@@ -38,7 +38,7 @@ struct PodSetupView: View {
         }
     }
 
-    @ViewBuilder  private var close: some View {
+    @ViewBuilder private var close: some View {
         HStack {
             Spacer()
             cancelButton
@@ -46,7 +46,7 @@ struct PodSetupView: View {
         .padding(.top)
     }
 
-    @ViewBuilder  private var content: some View {
+    @ViewBuilder private var content: some View {
         VStack(alignment: .leading, spacing: 2) {
             title
                 .padding(.top, 5)
@@ -60,14 +60,14 @@ struct PodSetupView: View {
         }
     }
 
-    @ViewBuilder  private var title: some View {
+    @ViewBuilder private var title: some View {
         Text(LocalizedString("Pod Setup", comment: "Title for PodSetupView"))
             .font(.largeTitle)
             .bold()
             .padding(.vertical)
     }
 
-    @ViewBuilder  private var bodyText: some View {
+    @ViewBuilder private var bodyText: some View {
         Text(LocalizedString(
             "You will now begin the process of configuring your reminders, selecting your insulin type, selecting the Omnipod pod type you will be using, filling your Pod with insulin, pairing to your device and placing it on your body.",
             comment: "bodyText for PodSetupView"

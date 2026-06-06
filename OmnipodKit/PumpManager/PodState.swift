@@ -443,7 +443,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
-    @discardableResult  mutating func handleCancelDosing(
+    @discardableResult mutating func handleCancelDosing(
         deliveryType: CancelDeliveryCommand.DeliveryType,
         bolusNotDelivered: Double,
         at now: Date = Date()

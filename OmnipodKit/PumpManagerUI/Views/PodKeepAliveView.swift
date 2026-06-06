@@ -74,7 +74,7 @@ struct PodKeepAliveView: View {
         }
     }
 
-    @ViewBuilder  private var selectedDeviceSection: some View {
+    @ViewBuilder private var selectedDeviceSection: some View {
         if let storedDevice = bleManager.getSelectedDevice() {
             Section(header: Text("Selected Device")) {
                 VStack(alignment: .leading, spacing: 4) {
