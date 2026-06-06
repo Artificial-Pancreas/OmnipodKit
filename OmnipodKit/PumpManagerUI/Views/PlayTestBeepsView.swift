@@ -1,15 +1,5 @@
-//
-//  PlayTestBeepsView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/PlayTestBeepsView.swift
-//  Created by Joe Moran on 9/1/23.
-//  Copyright © 2023 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKit
-
+import SwiftUI
 
 struct PlayTestBeepsView: View {
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -19,8 +9,14 @@ struct PlayTestBeepsView: View {
 
     private let title = LocalizedString("Play Test Beeps", comment: "navigation title for play test beeps")
     private let actionString = LocalizedString("Playing Test Beeps...", comment: "button title when executing play test beeps")
-    private let failedString: String = LocalizedString("Failed to play test beeps", comment: "Alert title for error when playing test beeps")
-    private let successMessage = LocalizedString("Play test beeps command sent successfully.\n\nIf you did not hear any beeps from your Pod, the piezo speaker in your Pod may be broken or disabled.", comment: "Success message for play test beeps")
+    private let failedString: String = LocalizedString(
+        "Failed to play test beeps",
+        comment: "Alert title for error when playing test beeps"
+    )
+    private let successMessage = LocalizedString(
+        "Play test beeps command sent successfully.\n\nIf you did not hear any beeps from your Pod, the piezo speaker in your Pod may be broken or disabled.",
+        comment: "Success message for play test beeps"
+    )
 
     @State private var alertIsPresented: Bool = false
     @State private var displayString: String = ""
@@ -60,11 +56,11 @@ struct PlayTestBeepsView: View {
     private func playTestBeepsAndHandleError() async {
         do {
             try await playTestBeeps()
-            self.displayString = successMessage
+            displayString = successMessage
         } catch {
-            self.displayString = ""
+            displayString = ""
             self.error = error
-            self.alertIsPresented = true
+            alertIsPresented = true
         }
     }
 
@@ -77,7 +73,7 @@ struct PlayTestBeepsView: View {
     }
 
     private func alert(error: Error?) -> SwiftUI.Alert {
-        return SwiftUI.Alert(
+        SwiftUI.Alert(
             title: Text(failedString),
             message: Text(error?.localizedDescription ?? "No Error")
         )

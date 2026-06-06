@@ -1,16 +1,6 @@
-//
-//  ScheduledExpirationReminderEditView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/ScheduledExpirationReminderEditView.swift
-//  Created by Pete Schwamb on 2/17/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import SwiftUI
 
 struct ScheduledExpirationReminderEditView: View {
-
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var allowedDates: [Date]
@@ -24,14 +14,20 @@ struct ScheduledExpirationReminderEditView: View {
     @State private var saving: Bool = false
     @State private var selectedDate: Date?
 
-    init(scheduledExpirationReminderDate: Date?, allowedDates: [Date], dateFormatter: DateFormatter, onSave: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)? = nil, onFinish: (() -> Void)? = nil)
+    init(
+        scheduledExpirationReminderDate: Date?,
+        allowedDates: [Date],
+        dateFormatter: DateFormatter,
+        onSave: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)? = nil,
+        onFinish: (() -> Void)? = nil
+    )
     {
         self.allowedDates = allowedDates
         self.dateFormatter = dateFormatter
         self.onSave = onSave
         self.onFinish = onFinish
-        self.initialValue = scheduledExpirationReminderDate
-        self._selectedDate = State(initialValue: scheduledExpirationReminderDate)
+        initialValue = scheduledExpirationReminderDate
+        _selectedDate = State(initialValue: scheduledExpirationReminderDate)
     }
 
     var body: some View {
@@ -40,7 +36,10 @@ struct ScheduledExpirationReminderEditView: View {
 
     var content: some View {
         VStack {
-            RoundedCardScrollView(title: LocalizedString("Scheduled Reminder", comment: "Title for scheduled expiration reminder edit page")) {
+            RoundedCardScrollView(title: LocalizedString(
+                "Scheduled Reminder",
+                comment: "Title for scheduled expiration reminder edit page"
+            )) {
                 if self.horizontalSizeClass == .compact {
                     // Keep picker outside of card in compact view, because it forces full device width.
                     VStack(spacing: 0) {
@@ -103,7 +102,7 @@ struct ScheduledExpirationReminderEditView: View {
 
     private func saveTapped() {
         saving = true
-        self.onSave?(selectedDate) { (error) in
+        onSave?(selectedDate) { error in
             saving = false
             if let error = error {
                 self.error = error
@@ -123,18 +122,20 @@ struct ScheduledExpirationReminderEditView: View {
     }
 
     private var valueChanged: Bool {
-        return selectedDate != initialValue
+        selectedDate != initialValue
     }
 
     private var contentWithCancel: some View {
         if saving {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
             )
         } else if valueChanged {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
-                .navigationBarItems(leading: cancelButton)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
+                    .navigationBarItems(leading: cancelButton)
             )
         } else {
             return AnyView(content)
@@ -142,12 +143,16 @@ struct ScheduledExpirationReminderEditView: View {
     }
 
     private var cancelButton: some View {
-        Button(action: { self.onFinish?() } ) { Text(LocalizedString("Cancel", comment: "Button title for cancelling scheduled reminder date edit")) }
+        Button(action: { self.onFinish?() }) {
+            Text(LocalizedString("Cancel", comment: "Button title for cancelling scheduled reminder date edit")) }
     }
 
     private func alert(error: Error?) -> SwiftUI.Alert {
-        return SwiftUI.Alert(
-            title: Text(LocalizedString("Failed to Update Expiration Reminder", comment: "Alert title for error when updating expiration reminder")),
+        SwiftUI.Alert(
+            title: Text(LocalizedString(
+                "Failed to Update Expiration Reminder",
+                comment: "Alert title for error when updating expiration reminder"
+            )),
             message: Text(error?.localizedDescription ?? "No Error")
         )
     }
@@ -159,8 +164,8 @@ struct ScheduledExpirationReminderEditView_Previews: PreviewProvider {
             scheduledExpirationReminderDate: Date(),
             allowedDates: [Date()],
             dateFormatter: DateFormatter(),
-            onSave: { (_, _) in },
-            onFinish: { }
+            onSave: { _, _ in },
+            onFinish: {}
         )
     }
 }

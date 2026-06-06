@@ -1,12 +1,3 @@
-//
-//  BeepConfigCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/BeepConfigCommand.swift
-//  Created by Joseph Moran on 5/12/19.
-//  Copyright © 2019 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct BeepConfigCommand: MessageBlock {
@@ -22,7 +13,15 @@ struct BeepConfigCommand: MessageBlock {
     let bolusCompletionBeep: Bool
     let bolusIntervalBeep: TimeInterval
 
-    init(beepType: BeepType, basalCompletionBeep: Bool = false, basalIntervalBeep: TimeInterval = 0, tempBasalCompletionBeep: Bool = false, tempBasalIntervalBeep: TimeInterval = 0, bolusCompletionBeep: Bool = false, bolusIntervalBeep: TimeInterval = 0) {
+    init(
+        beepType: BeepType,
+        basalCompletionBeep: Bool = false,
+        basalIntervalBeep: TimeInterval = 0,
+        tempBasalCompletionBeep: Bool = false,
+        tempBasalIntervalBeep: TimeInterval = 0,
+        bolusCompletionBeep: Bool = false,
+        bolusIntervalBeep: TimeInterval = 0
+    ) {
         self.beepType = beepType
         self.basalCompletionBeep = basalCompletionBeep
         self.basalIntervalBeep = basalIntervalBeep
@@ -41,29 +40,29 @@ struct BeepConfigCommand: MessageBlock {
         } else {
             throw MessageBlockError.parseError
         }
-        self.basalCompletionBeep = encodedData[3] & (1<<6) != 0
-        self.basalIntervalBeep = TimeInterval(minutes: Double(encodedData[3] & 0x3f))
-        self.tempBasalCompletionBeep = encodedData[4] & (1<<6) != 0
-        self.tempBasalIntervalBeep = TimeInterval(minutes: Double(encodedData[4] & 0x3f))
-        self.bolusCompletionBeep = encodedData[5] & (1<<6) != 0
-        self.bolusIntervalBeep = TimeInterval(minutes: Double(encodedData[5] & 0x3f))
+        basalCompletionBeep = encodedData[3] & (1 << 6) != 0
+        basalIntervalBeep = TimeInterval(minutes: Double(encodedData[3] & 0x3F))
+        tempBasalCompletionBeep = encodedData[4] & (1 << 6) != 0
+        tempBasalIntervalBeep = TimeInterval(minutes: Double(encodedData[4] & 0x3F))
+        bolusCompletionBeep = encodedData[5] & (1 << 6) != 0
+        bolusIntervalBeep = TimeInterval(minutes: Double(encodedData[5] & 0x3F))
     }
 
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            4,
-            ])
+            4
+        ])
         data.append(beepType.rawValue)
-        data.append((basalCompletionBeep ? (1<<6) : 0) + (UInt8(basalIntervalBeep.minutes) & 0x3f))
-        data.append((tempBasalCompletionBeep ? (1<<6) : 0) + (UInt8(tempBasalIntervalBeep.minutes) & 0x3f))
-        data.append((bolusCompletionBeep ? (1<<6) : 0) + (UInt8(bolusIntervalBeep.minutes) & 0x3f))
+        data.append((basalCompletionBeep ? (1 << 6) : 0) + (UInt8(basalIntervalBeep.minutes) & 0x3F))
+        data.append((tempBasalCompletionBeep ? (1 << 6) : 0) + (UInt8(tempBasalIntervalBeep.minutes) & 0x3F))
+        data.append((bolusCompletionBeep ? (1 << 6) : 0) + (UInt8(bolusIntervalBeep.minutes) & 0x3F))
         return data
     }
 }
 
 extension BeepConfigCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "BeepConfigCommand(beepType:\(beepType), basalIntervalBeep:\(basalIntervalBeep), tempBasalCompletionBeep:\(tempBasalCompletionBeep), tempBasalIntervalBeep:\(tempBasalIntervalBeep), bolusCompletionBeep:\(bolusCompletionBeep), bolusIntervalBeep:\(bolusIntervalBeep))"
+        "BeepConfigCommand(beepType:\(beepType), basalIntervalBeep:\(basalIntervalBeep), tempBasalCompletionBeep:\(tempBasalCompletionBeep), tempBasalIntervalBeep:\(tempBasalIntervalBeep), bolusCompletionBeep:\(bolusCompletionBeep), bolusIntervalBeep:\(bolusIntervalBeep))"
     }
 }

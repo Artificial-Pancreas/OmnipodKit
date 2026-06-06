@@ -42,73 +42,73 @@ struct DetailedStatus: PodInfo, Equatable {
         guard PodProgressStatus(rawValue: encodedData[1]) != nil else {
             throw MessageError.unknownValue(value: encodedData[1], typeDescription: "PodProgressStatus")
         }
-        self.podProgressStatus = PodProgressStatus(rawValue: encodedData[1])!
+        podProgressStatus = PodProgressStatus(rawValue: encodedData[1])!
 
-        self.bolusNotDelivered = Double((Int(encodedData[3] & 0x3) << 8) | Int(encodedData[4])) / Pod.pulsesPerUnit
+        bolusNotDelivered = Double((Int(encodedData[3] & 0x3) << 8) | Int(encodedData[4])) / Pod.pulsesPerUnit
 
-        self.lastProgrammingMessageSeqNum = encodedData[5]
+        lastProgrammingMessageSeqNum = encodedData[5]
 
-        self.totalInsulinDelivered = Double(encodedData[6...7].toBigEndian(UInt16.self)) / Pod.pulsesPerUnit
+        totalInsulinDelivered = Double(encodedData[6 ... 7].toBigEndian(UInt16.self)) / Pod.pulsesPerUnit
 
-        self.faultEventCode = FaultEventCode(rawValue: encodedData[8])
+        faultEventCode = FaultEventCode(rawValue: encodedData[8])
 
         /// Older pod simulators didn't know that all faulted pods are suspended, so handle this here
-        if self.faultEventCode.faultType != .noFaults {
-            self.deliveryStatus = .suspended
+        if faultEventCode.faultType != .noFaults {
+            deliveryStatus = .suspended
         } else {
-            self.deliveryStatus = DeliveryStatus(rawValue: encodedData[2] & 0xf)!
+            deliveryStatus = DeliveryStatus(rawValue: encodedData[2] & 0xF)!
         }
 
-        let minutesSinceActivation = encodedData[9...10].toBigEndian(UInt16.self)
-        if minutesSinceActivation != 0xffff {
-            self.faultEventTimeSinceActivation = TimeInterval(minutes: Double(minutesSinceActivation))
+        let minutesSinceActivation = encodedData[9 ... 10].toBigEndian(UInt16.self)
+        if minutesSinceActivation != 0xFFFF {
+            faultEventTimeSinceActivation = TimeInterval(minutes: Double(minutesSinceActivation))
         } else {
-            self.faultEventTimeSinceActivation = nil
+            faultEventTimeSinceActivation = nil
         }
 
-        self.reservoirLevel = Double((Int(encodedData[11] & 0x3) << 8) + Int(encodedData[12])) / Pod.pulsesPerUnit
+        reservoirLevel = Double((Int(encodedData[11] & 0x3) << 8) + Int(encodedData[12])) / Pod.pulsesPerUnit
 
-        self.timeActive = TimeInterval(minutes: Double(encodedData[13...14].toBigEndian(UInt16.self)))
+        timeActive = TimeInterval(minutes: Double(encodedData[13 ... 14].toBigEndian(UInt16.self)))
 
-        self.unacknowledgedAlerts = AlertSet(rawValue: encodedData[15])
+        unacknowledgedAlerts = AlertSet(rawValue: encodedData[15])
 
-        self.faultAccessingTables = (encodedData[16] & 2) != 0
+        faultAccessingTables = (encodedData[16] & 2) != 0
 
         if encodedData[17] == 0x00 {
             // no fault has occurred, errorEventInfo and previousPodProgressStatus not valid
-            self.errorEventInfo = nil
-            self.previousPodProgressStatus = nil
+            errorEventInfo = nil
+            previousPodProgressStatus = nil
         } else {
             // fault has occurred, VV byte contains valid fault info
             let errorEventInfo = ErrorEventInfo(rawValue: encodedData[17])
             self.errorEventInfo = errorEventInfo
             // errorEventInfo.podProgressStatus is valid for both Eros and Dash on fault
-            self.previousPodProgressStatus = errorEventInfo.podProgressStatus
+            previousPodProgressStatus = errorEventInfo.podProgressStatus
         }
 
         // For Dash these values have always been zero
-        self.receiverLowGain = UInt8(encodedData[18] >> 6)
-        self.radioRSSI = UInt8(encodedData[18] & 0x3F)
+        receiverLowGain = UInt8(encodedData[18] >> 6)
+        radioRSSI = UInt8(encodedData[18] & 0x3F)
 
         // For Eros, encodedData[19] (XX) byte is the same previousPodProgressStatus nibble in the VV byte on fault.
         // For Dash, encodedData[19] (XX) byte is uninitialized or unknown, so use VV byte for previousPodProgressStatus.
 
         // YYYY is only valid if there was a pod fault (PP != 0) on a Dash pod (WW == 0)
         // For Eros faults, YYYY is always uninitialized data from the previous command/response at the same buffer offset.
-        if encodedData[8] != 0 && encodedData[18] == 0 {
+        if encodedData[8] != 0, encodedData[18] == 0 {
             // For Dash faults, YYYY could be a calling address of the fault routine for the first return after a pod fault,
             // subsequent returns will be byte swapped data from previous command/response at the same buffer offset.
-            self.possibleFaultCallingAddress = encodedData[20...21].toBigEndian(UInt16.self) // only potentially valid for Dash
+            possibleFaultCallingAddress = encodedData[20 ... 21].toBigEndian(UInt16.self) // only potentially valid for Dash
         } else {
             // YYYY contents not valid (either uninitialized data for Eros or some unknown content for Dash).
-            self.possibleFaultCallingAddress = nil
+            possibleFaultCallingAddress = nil
         }
 
-        self.data = Data(encodedData)
+        data = Data(encodedData)
     }
 
     var isFaulted: Bool {
-        return faultEventCode.faultType != .noFaults || podProgressStatus == .activationTimeExceeded
+        faultEventCode.faultType != .noFaults || podProgressStatus == .activationTimeExceeded
     }
 
     // Returns an appropropriate DASH PDM style Ref string for DetailedStatus. DASH Ref codes are all of
@@ -117,38 +117,44 @@ struct DetailedStatus: PodInfo, Equatable {
         let TT, VVV, HH, III, RR, FFF: UInt
 
         switch faultEventCode.faultType {
-
         case .noFaults:
-            return nil  // not a pod fault
+            return nil // not a pod fault
 
         // The DASH PDM defines the AlarmHazardPumpFailure type (TT=11), but
         // doesn't use it for anything including the 0x31 (-049) pod fault!
 
         // The DASH PDM uses the AlarmHazardPumpVolume type (TT=14) for the 0x18 (024) pod fault.
         case .reservoirEmpty:
-            TT = 14     // DASH PDM Ref: 14-VVVHH-IIIRR-024
+            TT = 14 // DASH PDM Ref: 14-VVVHH-IIIRR-024
 
         // The DASH PDM uses the AlarmHazardPumpAutoOff type (TT=15) for a 0x29 (041) autoOff0 pod fault
         // (the only autoOff# it actually uses). While Loop doesn't use the Auto Off feature for anything,
         // map all autoOff# pod faults to AlarmHazardPumpAutoOff in case these ever do get used for something.
-        case .autoOff0, .autoOff1, .autoOff2, .autoOff3, .autoOff4, .autoOff5, .autoOff6, .autoOff7:
-            TT = 15     // DASH PDM Ref: 15-VVVHH-IIIRR-FFF
+        case .autoOff0,
+             .autoOff1,
+             .autoOff2,
+             .autoOff3,
+             .autoOff4,
+             .autoOff5,
+             .autoOff6,
+             .autoOff7:
+            TT = 15 // DASH PDM Ref: 15-VVVHH-IIIRR-FFF
 
         // The DASH PDM uses the AlarmHazardPumpExpired type (TT=16) for the 0x1C (028) pod fault.
         case .exceededMaximumPodLife80Hrs:
-            TT = 16     // DASH PDM Ref: 16-VVVHH-IIIRR-028
+            TT = 16 // DASH PDM Ref: 16-VVVHH-IIIRR-028
 
         // The DASH PDM uses the AlarmHazardPumpOcclusion type (TT=17) for an 0x14 (-020) occlusion fault.
         // Unlike the Eros PDM, the DASH PDM doesn't do anything special with the other values for this Ref code.
         case .occluded:
-            TT = 17     // DASH PDM Ref: 17-VVVHH-IIIRR-020
+            TT = 17 // DASH PDM Ref: 17-VVVHH-IIIRR-020
 
         // The DASH PDM defines the AlarmHazardPumpActivate type (TT=18) and the
         // AlarmHazardPumpCommunications type (TT=20), but doesn't actually use either!
 
         // The DASH PDM uses the AlarmHazardPumpError type (TT=19) for all other pod faults.
         default:
-            TT = 19     // DASH PDM Ref: 19-VVVHH-IIIRR-FFF
+            TT = 19 // DASH PDM Ref: 19-VVVHH-IIIRR-FFF
         }
 
         VVV = UInt(data[17]) // raw DetailedStatus VV byte
@@ -158,7 +164,7 @@ struct DetailedStatus: PodInfo, Equatable {
             HH = UInt(timeActive.hours) // active time in whole # of hours
         }
         III = UInt(totalInsulinDelivered) // whole units of insulin
-        RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
+        RR = UInt(reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
         FFF = UInt(faultEventCode.rawValue) // actual fault code value
 
         return String(format: "%02d-%03d%02d-%03d%02d-%03d", TT, VVV, HH, III, RR, FFF)
@@ -170,8 +176,10 @@ struct DetailedStatus: PodInfo, Equatable {
         let TT, VVV, HH, III, RR, FFF: UInt
 
         switch faultEventCode.faultType {
-        case .noFaults, .reservoirEmpty, .exceededMaximumPodLife80Hrs:
-            return nil      // no Eros PDM Ref # generated for these cases
+        case .exceededMaximumPodLife80Hrs,
+             .noFaults,
+             .reservoirEmpty:
+            return nil // no Eros PDM Ref # generated for these cases
 
         case .insulinDeliveryCommandError:
             // This fault is treated as a PDM fault which uses an alternate Ref format
@@ -179,13 +187,13 @@ struct DetailedStatus: PodInfo, Equatable {
 
         case .occluded:
             // Ref: 17-000HH-IIIRR-000
-            TT = 17         // Occlusion detected Ref type
-            VVV = 0         // no VVV value for an occlusion fault
-            FFF = 0         // no FFF value for an occlusion fault
+            TT = 17 // Occlusion detected Ref type
+            VVV = 0 // no VVV value for an occlusion fault
+            FFF = 0 // no FFF value for an occlusion fault
 
         default:
             // Ref: 19-VVVHH-IIIRR-FFF
-            TT = 19         // pod fault Ref type
+            TT = 19 // pod fault Ref type
             VVV = UInt(data[17]) // use the raw VV byte value
             FFF = UInt(faultEventCode.rawValue)
         }
@@ -196,7 +204,7 @@ struct DetailedStatus: PodInfo, Equatable {
             HH = UInt(timeActive.hours) // active time in whole # of hours
         }
         III = UInt(totalInsulinDelivered) // whole units of insulin
-        RR = UInt(self.reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
+        RR = UInt(reservoirLevel) // whole reservoir units, special 51.15 value used for > 50U will become 51 as needed
 
         return String(format: "%02d-%03d%02d-%03d%02d-%03d", TT, VVV, HH, III, RR, FFF)
     }
@@ -225,14 +233,14 @@ extension DetailedStatus: CustomDebugStringConvertible {
             "* reservoirLevel: \(reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : reservoirLevel.twoDecimals) U",
             "* timeActive: \(timeActive.timeIntervalStr)",
             "* unacknowledgedAlerts: \(unacknowledgedAlerts)",
-            "",
-            ].joined(separator: "\n")
+            ""
+        ].joined(separator: "\n")
         if radioRSSI != 0 {
             result += [
                 "* receiverLowGain: \(receiverLowGain)",
                 "* radioRSSI: \(radioRSSI)",
-                "",
-                ].joined(separator: "\n")
+                ""
+            ].joined(separator: "\n")
         }
         if faultEventCode.faultType != .noFaults {
             result += [
@@ -242,8 +250,8 @@ extension DetailedStatus: CustomDebugStringConvertible {
                 "* errorEventInfo: \(errorEventInfo?.description ?? "NA")",
                 "* previousPodProgressStatus: \(previousPodProgressStatus?.description ?? "NA")",
                 "* possibleFaultCallingAddress: \(possibleFaultCallingAddress != nil ? String(format: "0x%04x", possibleFaultCallingAddress!) : "NA")",
-                "",
-                ].joined(separator: "\n")
+                ""
+            ].joined(separator: "\n")
         }
         return result
     }
@@ -259,7 +267,7 @@ extension DetailedStatus: RawRepresentable {
     }
 
     var rawValue: Data {
-        return data
+        data
     }
 }
 
@@ -277,7 +285,7 @@ struct ErrorEventInfo: CustomStringConvertible, Equatable {
     let podProgressStatus: PodProgressStatus // 'dddd' bits
 
     var errorEventInfo: ErrorEventInfo? {
-        return ErrorEventInfo(rawValue: rawValue)
+        ErrorEventInfo(rawValue: rawValue)
     }
 
     var description: String {
@@ -287,15 +295,15 @@ struct ErrorEventInfo: CustomStringConvertible, Equatable {
             "insulinStateTableCorruption: \(insulinStateTableCorruption)",
             "occlusionType: \(occlusionType)",
             "immediateBolusInProgress: \(immediateBolusInProgress)",
-            "podProgressStatus: \(podProgressStatus)",
-            ].joined(separator: ", ")
+            "podProgressStatus: \(podProgressStatus)"
+        ].joined(separator: ", ")
     }
 
     init(rawValue: UInt8) {
         self.rawValue = rawValue
-        self.insulinStateTableCorruption = (rawValue & 0x80) != 0
-        self.occlusionType = Int((rawValue & 0x60) >> 5)
-        self.immediateBolusInProgress = (rawValue & 0x10) != 0
-        self.podProgressStatus = PodProgressStatus(rawValue: rawValue & 0xF)!
+        insulinStateTableCorruption = (rawValue & 0x80) != 0
+        occlusionType = Int((rawValue & 0x60) >> 5)
+        immediateBolusInProgress = (rawValue & 0x10) != 0
+        podProgressStatus = PodProgressStatus(rawValue: rawValue & 0xF)!
     }
 }

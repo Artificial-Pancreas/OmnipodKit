@@ -1,26 +1,17 @@
-//
-//  ErrorView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/DesignElements/ErrorView.swift
-//  Created by Pete Schwamb on 3/12/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
+import SwiftUI
 
 struct ErrorView: View {
     var error: LocalizedError
-    
+
     var criticality: ErrorCriticality
-    
+
     @Environment(\.guidanceColors) var guidanceColors
-    
+
     enum ErrorCriticality {
         case critical
         case normal
-        
+
         func symbolColor(using guidanceColors: GuidanceColors) -> Color {
             switch self {
             case .critical:
@@ -30,10 +21,10 @@ struct ErrorView: View {
             }
         }
     }
-    
+
     init(_ error: LocalizedError, errorClass: ErrorCriticality = .normal) {
         self.error = error
-        self.criticality = errorClass
+        criticality = errorClass
     }
 
     var body: some View {
@@ -48,7 +39,7 @@ struct ErrorView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibility(label: FrameworkLocalText("Error", comment: "Accessibility label indicating an error occurred"))
-            
+
             Text(self.error.recoverySuggestion ?? "")
                 .foregroundColor(.secondary)
                 .font(.footnote)
@@ -63,11 +54,11 @@ struct ErrorView: View {
 struct ErrorView_Previews: PreviewProvider {
     enum ErrorViewPreviewError: LocalizedError {
         case someError
-        
+
         var localizedDescription: String { "It didn't work" }
         var recoverySuggestion: String { "Maybe try turning it on and off." }
     }
-    
+
     static var previews: some View {
         ErrorView(ErrorViewPreviewError.someError)
     }

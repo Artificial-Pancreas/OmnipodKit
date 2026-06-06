@@ -1,21 +1,11 @@
-//
-//  ErosPodComms.swift
-//  OmnipodKit
-//
-//  Based on OmniKit/PumpManager/PodComms.swift
-//  Created by Joe Moran on 4/15/25.
-//  Copyright © 2025 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
-import RileyLinkBLEKit
 import LoopKit
 import os.log
+import RileyLinkBLEKit
 
-fileprivate var diagnosePairingRssi = false
+private var diagnosePairingRssi = false
 
 class ErosPodComms: PodComms {
-
     private let configuredDevices: Locked<Set<UUID>> = Locked(Set())
     private var startingPacketNumber = 0
 
@@ -45,15 +35,22 @@ class ErosPodComms: PodComms {
     ///     - MessageError.invalidSequence
     ///     - MessageError.invalidAddress
     ///     - RileyLinkDeviceError
-    private func erosSendPairMessage(address: UInt32, erosPodMessageTransport: ErosPodMessageTransport, message: Message, insulinType: InsulinType) throws -> VersionResponse {
-
+    private func erosSendPairMessage(
+        address: UInt32,
+        erosPodMessageTransport: ErosPodMessageTransport,
+        message: Message,
+        insulinType: InsulinType
+    ) throws -> VersionResponse {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
         defer {
             log.debug("erosSendPairMessage saving current transport packet #%d", erosPodMessageTransport.packetNumber)
             if self.podState != nil {
-                self.podState!.erosMessageTransportState = ErosMessageTransportState(packetNumber: erosPodMessageTransport.packetNumber, messageNumber: erosPodMessageTransport.messageNumber)
+                self.podState!.erosMessageTransportState = ErosMessageTransportState(
+                    packetNumber: erosPodMessageTransport.packetNumber,
+                    messageNumber: erosPodMessageTransport.messageNumber
+                )
             } else {
                 self.startingPacketNumber = erosPodMessageTransport.packetNumber
             }
@@ -66,16 +63,21 @@ class ErosPodComms: PodComms {
             let response: Message
             do {
                 response = try erosPodMessageTransport.sendMessage(message)
-            } catch let error {
+            } catch {
                 if let podCommsError = error as? PodCommsError {
                     switch podCommsError {
                     // These errors can happen some times when the responses are not seen for a long
                     // enough time. Automatically retrying using the already incremented packet # can
                     // clear this condition without requiring any user interaction for a pairing failure.
-                    case .podAckedInsteadOfReturningResponse, .noResponse, .noResponseRL:
+                    case .noResponse,
+                         .noResponseRL,
+                         .podAckedInsteadOfReturningResponse:
                         if didRetry == false {
                             didRetry = true
-                            log.debug("erosSendPairMessage to retry using updated packet #%d", erosPodMessageTransport.packetNumber)
+                            log.debug(
+                                "erosSendPairMessage to retry using updated packet #%d",
+                                erosPodMessageTransport.packetNumber
+                            )
                             continue // the transport packet # is already advanced for the retry
                         }
                     default:
@@ -100,21 +102,30 @@ class ErosPodComms: PodComms {
             }
 
             guard config.address == address else {
-                log.error("erosSendPairMessage unexpected address return of %{public}@ instead of expected %{public}@",
-                  String(format: "08X", config.address), String(format: "%08X", address))
+                log.error(
+                    "erosSendPairMessage unexpected address return of %{public}@ instead of expected %{public}@",
+                    String(format: "08X", config.address),
+                    String(format: "%08X", address)
+                )
                 throw PodCommsError.invalidAddress(address: config.address, expectedAddress: address)
             }
 
             // If we previously had podState, verify that we are still dealing with the same pod
-            if let podState = self.podState, (podState.lotNo != config.lot || podState.lotSeq != config.tid) {
+            if let podState = self.podState, podState.lotNo != config.lot || podState.lotSeq != config.tid {
                 // Have a new pod, could be a pod change w/o deactivation (or we're picking up some other pairing pod!)
-                log.error("Received pod response for [lot %u tid %u], expected [lot %u tid %u]", config.lot, config.tid, podState.lotNo, podState.lotSeq)
+                log.error(
+                    "Received pod response for [lot %u tid %u], expected [lot %u tid %u]",
+                    config.lot,
+                    config.tid,
+                    podState.lotNo,
+                    podState.lotSeq
+                )
                 throw PodCommsError.podChange
             }
 
             // Check the pod RSSI
-            let maxRssiAllowed = 59         // maximum RSSI limit allowed
-            let minRssiAllowed = 30         // minimum RSSI limit allowed
+            let maxRssiAllowed = 59 // maximum RSSI limit allowed
+            let minRssiAllowed = 30 // minimum RSSI limit allowed
             if let rssi = config.rssi, let gain = config.gain {
                 let rssiStr = String(format: "RSSI: %u.\nReceiver Low Gain: %u", rssi, gain)
                 log.default("%@", rssiStr)
@@ -124,14 +135,24 @@ class ErosPodComms: PodComms {
 
                 rssiRetries -= 1
                 if rssi < minRssiAllowed {
-                    log.default("RSSI value %d is less than minimum allowed value of %d, %d retries left", rssi, minRssiAllowed, rssiRetries)
+                    log.default(
+                        "RSSI value %d is less than minimum allowed value of %d, %d retries left",
+                        rssi,
+                        minRssiAllowed,
+                        rssiRetries
+                    )
                     if rssiRetries > 0 {
                         continue
                     }
                     throw PodCommsError.rssiTooLow
                 }
                 if rssi > maxRssiAllowed {
-                    log.default("RSSI value %d is more than maximum allowed value of %d, %d retries left", rssi, maxRssiAllowed, rssiRetries)
+                    log.default(
+                        "RSSI value %d is more than maximum allowed value of %d, %d retries left",
+                        rssi,
+                        maxRssiAllowed,
+                        rssiRetries
+                    )
                     if rssiRetries > 0 {
                         continue
                     }
@@ -139,9 +160,16 @@ class ErosPodComms: PodComms {
                 }
             }
 
-            if self.podState == nil {
-                log.default("Creating PodState for address %{public}@ [lot %u tid %u], packet #%d, message #%d", String(format: "%04X", config.address), config.lot, config.tid, erosPodMessageTransport.packetNumber, erosPodMessageTransport.messageNumber)
-                self.podState = PodState(
+            if podState == nil {
+                log.default(
+                    "Creating PodState for address %{public}@ [lot %u tid %u], packet #%d, message #%d",
+                    String(format: "%04X", config.address),
+                    config.lot,
+                    config.tid,
+                    erosPodMessageTransport.packetNumber,
+                    erosPodMessageTransport.messageNumber
+                )
+                podState = PodState(
                     address: config.address,
                     firmwareVersion: String(describing: config.firmwareVersion),
                     iFirmwareVersion: String(describing: config.iFirmwareVersion),
@@ -157,7 +185,7 @@ class ErosPodComms: PodComms {
             // Now that we have podState, check for an activation timeout condition that can be noted in setupProgress
             guard config.podProgressStatus != .activationTimeExceeded else {
                 // The 2 hour window for the initial pairing has expired
-                self.podState?.setupProgress = .activationTimeout
+                podState?.setupProgress = .activationTimeout
                 throw PodCommsError.activationTimeExceeded
             }
 
@@ -165,39 +193,69 @@ class ErosPodComms: PodComms {
             // To actually be able to handle different fundemental values in Loop things would need to be reworked to save
             // these values in some persistent PodState and then make sure that everything properly works using these values.
             var errorStrings: [String] = []
-            if let pulseSize = config.pulseSize, pulseSize != Pod.pulseSize  {
-                errorStrings.append(String(format: "Pod reported pulse size of %.3fU different than expected %.3fU", pulseSize, Pod.pulseSize))
+            if let pulseSize = config.pulseSize, pulseSize != Pod.pulseSize {
+                errorStrings
+                    .append(String(
+                        format: "Pod reported pulse size of %.3fU different than expected %.3fU",
+                        pulseSize,
+                        Pod.pulseSize
+                    ))
             }
-            if let secondsPerBolusPulse = config.secondsPerBolusPulse, secondsPerBolusPulse != Pod.secondsPerBolusPulse  {
-                errorStrings.append(String(format: "Pod reported seconds per pulse rate of %.1f different than expected %.1f", secondsPerBolusPulse, Pod.secondsPerBolusPulse))
+            if let secondsPerBolusPulse = config.secondsPerBolusPulse, secondsPerBolusPulse != Pod.secondsPerBolusPulse {
+                errorStrings.append(String(
+                    format: "Pod reported seconds per pulse rate of %.1f different than expected %.1f",
+                    secondsPerBolusPulse,
+                    Pod.secondsPerBolusPulse
+                ))
             }
-            if let secondsPerPrimePulse = config.secondsPerPrimePulse, secondsPerPrimePulse != Pod.secondsPerPrimePulse  {
-                errorStrings.append(String(format: "Pod reported seconds per prime pulse rate of %.1f different than expected %.1f", secondsPerPrimePulse, Pod.secondsPerPrimePulse))
+            if let secondsPerPrimePulse = config.secondsPerPrimePulse, secondsPerPrimePulse != Pod.secondsPerPrimePulse {
+                errorStrings.append(String(
+                    format: "Pod reported seconds per prime pulse rate of %.1f different than expected %.1f",
+                    secondsPerPrimePulse,
+                    Pod.secondsPerPrimePulse
+                ))
             }
             if let primeUnits = config.primeUnits, primeUnits != Pod.primeUnits {
-                errorStrings.append(String(format: "Pod reported prime bolus of %.2fU different than expected %.2fU", primeUnits, Pod.primeUnits))
+                errorStrings
+                    .append(String(
+                        format: "Pod reported prime bolus of %.2fU different than expected %.2fU",
+                        primeUnits,
+                        Pod.primeUnits
+                    ))
             }
             if let cannulaInsertionUnits = config.cannulaInsertionUnits, Pod.cannulaInsertionUnits != cannulaInsertionUnits {
-                errorStrings.append(String(format: "Pod reported cannula insertion bolus of %.2fU different than expected %.2fU", cannulaInsertionUnits, Pod.cannulaInsertionUnits))
+                errorStrings.append(String(
+                    format: "Pod reported cannula insertion bolus of %.2fU different than expected %.2fU",
+                    cannulaInsertionUnits,
+                    Pod.cannulaInsertionUnits
+                ))
             }
             if let serviceDuration = config.serviceDuration {
                 if serviceDuration < Pod.serviceDuration {
-                    errorStrings.append(String(format: "Pod reported service duration of %.0f hours shorter than expected %.0f", serviceDuration.hours, Pod.serviceDuration.hours))
+                    errorStrings.append(String(
+                        format: "Pod reported service duration of %.0f hours shorter than expected %.0f",
+                        serviceDuration.hours,
+                        Pod.serviceDuration.hours
+                    ))
                 } else if serviceDuration > Pod.serviceDuration {
-                    log.info("Pod reported service duration of %.0f hours limited to expected %.0f", serviceDuration.hours, Pod.serviceDuration.hours)
+                    log.info(
+                        "Pod reported service duration of %.0f hours limited to expected %.0f",
+                        serviceDuration.hours,
+                        Pod.serviceDuration.hours
+                    )
                 }
             }
 
             let errMess = errorStrings.joined(separator: ".\n")
             if errMess.isEmpty == false {
                 log.error("%@", errMess)
-                self.podState?.setupProgress = .podIncompatible
+                podState?.setupProgress = .podIncompatible
                 throw PodCommsError.podIncompatible(str: errMess)
             }
 
-            if config.podProgressStatus == .pairingCompleted && self.podState?.setupProgress.isPaired == false {
+            if config.podProgressStatus == .pairingCompleted, podState?.setupProgress.isPaired == false {
                 log.info("Version Response %{public}@ indicates pairing is now complete", String(describing: config))
-                self.podState?.setupProgress = .podPaired
+                podState?.setupProgress = .podPaired
             }
 
             return config
@@ -215,40 +273,74 @@ class ErosPodComms: PodComms {
             packetNumber = podState.erosMessageTransportState.packetNumber
             messageNumber = podState.erosMessageTransportState.messageNumber
         } else {
-            packetNumber = self.startingPacketNumber
+            packetNumber = startingPacketNumber
             messageNumber = 0
         }
 
         log.debug("Attempting pairing with address %{public}@ using packet #%d", String(format: "%04X", address), packetNumber)
         let messageTransportState = ErosMessageTransportState(packetNumber: packetNumber, messageNumber: messageNumber)
-        let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: address, state: messageTransportState)
+        let erosPodMessageTransport = ErosPodMessageTransport(
+            session: commandSession,
+            address: 0xFFFF_FFFF,
+            ackAddress: address,
+            state: messageTransportState
+        )
         erosPodMessageTransport.messageLogger = messageLogger
 
         // Create the Assign Address command message
         let assignAddress = AssignAddressCommand(address: address)
-        let message = Message(address: 0xffffffff, messageBlocks: [assignAddress], sequenceNum: erosPodMessageTransport.messageNumber)
+        let message = Message(
+            address: 0xFFFF_FFFF,
+            messageBlocks: [assignAddress],
+            sequenceNum: erosPodMessageTransport.messageNumber
+        )
 
-        _ = try erosSendPairMessage(address: address, erosPodMessageTransport: erosPodMessageTransport, message: message, insulinType: insulinType)
+        _ = try erosSendPairMessage(
+            address: address,
+            erosPodMessageTransport: erosPodMessageTransport,
+            message: message,
+            insulinType: insulinType
+        )
     }
 
-    private func setupPod(podState: PodState, timeZone: TimeZone, commandSession: CommandSession, insulinType: InsulinType) throws {
+    private func setupPod(
+        podState: PodState,
+        timeZone: TimeZone,
+        commandSession: CommandSession,
+        insulinType: InsulinType
+    ) throws {
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
         commandSession.assertOnSessionQueue()
 
-        let erosTransport = ErosPodMessageTransport(session: commandSession, address: 0xffffffff, ackAddress: podState.address, state: podState.erosMessageTransportState)
+        let erosTransport = ErosPodMessageTransport(
+            session: commandSession,
+            address: 0xFFFF_FFFF,
+            ackAddress: podState.address,
+            state: podState.erosMessageTransportState
+        )
         erosTransport.messageLogger = messageLogger
 
         let dateComponents = SetupPodCommand.dateComponents(date: Date(), timeZone: timeZone)
-        let setupPod = SetupPodCommand(address: podState.address, dateComponents: dateComponents, lot: podState.lotNo, tid: podState.lotSeq)
+        let setupPod = SetupPodCommand(
+            address: podState.address,
+            dateComponents: dateComponents,
+            lot: podState.lotNo,
+            tid: podState.lotSeq
+        )
 
-        let message = Message(address: 0xffffffff, messageBlocks: [setupPod], sequenceNum: erosTransport.messageNumber)
+        let message = Message(address: 0xFFFF_FFFF, messageBlocks: [setupPod], sequenceNum: erosTransport.messageNumber)
 
         let versionResponse: VersionResponse
         do {
-            versionResponse = try erosSendPairMessage(address: podState.address, erosPodMessageTransport: erosTransport, message: message, insulinType: insulinType)
-        } catch let error {
+            versionResponse = try erosSendPairMessage(
+                address: podState.address,
+                erosPodMessageTransport: erosTransport,
+                message: message,
+                insulinType: insulinType
+            )
+        } catch {
             if case PodCommsError.podAckedInsteadOfReturningResponse = error {
                 log.default("SetupPod acked instead of returning response.")
                 if self.podState?.setupProgress.isPaired == false {
@@ -272,16 +364,17 @@ class ErosPodComms: PodComms {
         using deviceSelector: @escaping (_ completion: @escaping (_ device: RileyLinkDevice?) -> Void) -> Void,
         timeZone: TimeZone,
         insulinType: InsulinType,
-        messageLogger: MessageLogger?,
-        _ block: @escaping (_ result: SessionRunResult) -> Void)
+        messageLogger _: MessageLogger?,
+        _ block: @escaping (_ result: SessionRunResult) -> Void
+    )
     {
-        deviceSelector { (device) in
+        deviceSelector { device in
             guard let device = device else {
                 block(.failure(PodCommsError.noRileyLinkAvailable))
                 return
             }
 
-            device.runSession(withName: "Pair Pod") { (commandSession) in
+            device.runSession(withName: "Pair Pod") { commandSession in
                 // Synchronize access to podState
                 self.podStateLock.lock()
                 defer {
@@ -289,7 +382,6 @@ class ErosPodComms: PodComms {
                 }
 
                 do {
-
                     self.configureDevice(device, with: commandSession)
 
                     if self.podState == nil {
@@ -302,17 +394,29 @@ class ErosPodComms: PodComms {
                     }
 
                     if self.podState!.setupProgress.isPaired == false {
-                        try self.setupPod(podState: self.podState!, timeZone: timeZone, commandSession: commandSession, insulinType: insulinType)
+                        try self.setupPod(
+                            podState: self.podState!,
+                            timeZone: timeZone,
+                            commandSession: commandSession,
+                            insulinType: insulinType
+                        )
                     }
 
                     guard self.podState!.setupProgress.isPaired else {
-                        self.log.error("Unexpected podStatus setupProgress value of %{public}@", String(describing: self.podState!.setupProgress))
+                        self.log.error(
+                            "Unexpected podStatus setupProgress value of %{public}@",
+                            String(describing: self.podState!.setupProgress)
+                        )
                         throw PodCommsError.invalidData
                     }
                     self.startingPacketNumber = 0
 
                     // Run a session now for any post-pairing commands
-                    let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
+                    let erosPodMessageTransport = ErosPodMessageTransport(
+                        session: commandSession,
+                        address: self.podState!.address,
+                        state: self.podState!.erosMessageTransportState
+                    )
                     erosPodMessageTransport.messageLogger = self.messageLogger
                     let podSession = PodCommsSession(podState: self.podState!, transport: erosPodMessageTransport, delegate: self)
 
@@ -326,15 +430,19 @@ class ErosPodComms: PodComms {
         }
     }
 
-    func erosRunSession(withName name: String, using deviceSelector: @escaping (_ completion: @escaping (_ device: RileyLinkDevice?) -> Void) -> Void, _ block: @escaping (_ result: SessionRunResult) -> Void)
+    func erosRunSession(
+        withName name: String,
+        using deviceSelector: @escaping (_ completion: @escaping (_ device: RileyLinkDevice?) -> Void) -> Void,
+        _ block: @escaping (_ result: SessionRunResult) -> Void
+    )
     {
-        deviceSelector { (device) in
+        deviceSelector { device in
             guard let device = device else {
                 block(.failure(PodCommsError.noRileyLinkAvailable))
                 return
             }
 
-            device.runSession(withName: name) { (commandSession) in
+            device.runSession(withName: name) { commandSession in
 
                 // Synchronize access to podState
                 self.podStateLock.lock()
@@ -348,7 +456,11 @@ class ErosPodComms: PodComms {
                 }
 
                 self.configureDevice(device, with: commandSession)
-                let erosPodMessageTransport = ErosPodMessageTransport(session: commandSession, address: self.podState!.address, state: self.podState!.erosMessageTransportState)
+                let erosPodMessageTransport = ErosPodMessageTransport(
+                    session: commandSession,
+                    address: self.podState!.address,
+                    state: self.podState!.erosMessageTransportState
+                )
                 erosPodMessageTransport.messageLogger = self.messageLogger
                 let podSession = PodCommsSession(podState: self.podState!, transport: erosPodMessageTransport, delegate: self)
                 block(.success(session: podSession))
@@ -359,25 +471,35 @@ class ErosPodComms: PodComms {
     private func configureDevice(_ device: RileyLinkDevice, with session: CommandSession) {
         session.assertOnSessionQueue()
 
-        guard !self.configuredDevices.value.contains(device.peripheralIdentifier) else {
+        guard !configuredDevices.value.contains(device.peripheralIdentifier) else {
             return
         }
 
         do {
             log.debug("configureRadio (omnipod)")
             _ = try session.configureRadio()
-        } catch let error {
+        } catch {
             log.error("configure Radio failed with error: %{public}@", String(describing: error))
             // Ignore the error and let the block run anyway
             return
         }
 
         NotificationCenter.default.post(name: .DeviceRadioConfigDidChange, object: device)
-        NotificationCenter.default.addObserver(self, selector: #selector(deviceRadioConfigDidChange(_:)), name: .DeviceRadioConfigDidChange, object: device)
-        NotificationCenter.default.addObserver(self, selector: #selector(deviceRadioConfigDidChange(_:)), name: .DeviceConnectionStateDidChange, object: device)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(deviceRadioConfigDidChange(_:)),
+            name: .DeviceRadioConfigDidChange,
+            object: device
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(deviceRadioConfigDidChange(_:)),
+            name: .DeviceConnectionStateDidChange,
+            object: device
+        )
 
         log.debug("added device %{public}@ to configuredDevices", device.name ?? "unknown")
-        _ = configuredDevices.mutate { (value) in
+        _ = configuredDevices.mutate { value in
             value.insert(device.peripheralIdentifier)
         }
     }
@@ -391,7 +513,7 @@ class ErosPodComms: PodComms {
         NotificationCenter.default.removeObserver(self, name: .DeviceRadioConfigDidChange, object: device)
         NotificationCenter.default.removeObserver(self, name: .DeviceConnectionStateDidChange, object: device)
 
-        _ = configuredDevices.mutate { (value) in
+        _ = configuredDevices.mutate { value in
             value.remove(device.peripheralIdentifier)
         }
     }
@@ -399,29 +521,26 @@ class ErosPodComms: PodComms {
     // MARK: - CustomDebugStringConvertible
 
     override var debugDescription: String {
-        return super.debugDescription +
-            "* configuredDevices: \(configuredDevices.value.map { $0.uuidString })\n"
+        super.debugDescription +
+            "* configuredDevices: \(configuredDevices.value.map(\.uuidString))\n"
     }
 }
 
 extension ErosPodComms: PodCommsSessionDelegate {
     // We hold podStateLock for the duration of the PodCommsSession
     func podCommsSession(_ podCommsSession: PodCommsSession, didChange state: PodState) {
-
         // We should already be holding podStateLock during calls to this function, so try() should fail
         assert(!podStateLock.try(), "\(#function) should be invoked while holding podStateLock")
 
         podCommsSession.assertOnSessionQueue()
-        self.podState = state
+        podState = state
     }
 }
 
 // RileyLink specific code
 
 private extension CommandSession {
-
     func configureRadio() throws {
-        
         //        SYNC1     |0xDF00|0x54|Sync Word, High Byte
         //        SYNC0     |0xDF01|0xC3|Sync Word, Low Byte
         //        PKTLEN    |0xDF02|0x32|Packet Length
@@ -455,7 +574,7 @@ private extension CommandSession {
         try updateRegister(.pktctrl0, value: 0x00)
         try updateRegister(.fsctrl1, value: 0x06)
         try updateRegister(.mdmcfg4, value: 0xCA)
-        try updateRegister(.mdmcfg3, value: 0xBC)  // 0xBB for next lower bitrate
+        try updateRegister(.mdmcfg3, value: 0xBC) // 0xBB for next lower bitrate
         try updateRegister(.mdmcfg2, value: 0x06)
         try updateRegister(.mdmcfg1, value: 0x70)
         try updateRegister(.mdmcfg0, value: 0x11)
@@ -466,7 +585,7 @@ private extension CommandSession {
         try updateRegister(.fscal2, value: 0x2A)
         try updateRegister(.fscal1, value: 0x00)
         try updateRegister(.fscal0, value: 0x1F)
-        
+
         try updateRegister(.test1, value: 0x31)
         try updateRegister(.test0, value: 0x09)
         try updateRegister(.paTable0, value: 0x84)
@@ -478,7 +597,7 @@ private extension CommandSession {
     private func sendPacket() throws {
         let packetNumber = 19
         let messageNumber = 0x24 >> 2
-        let address: UInt32 = 0x1f0b3554
+        let address: UInt32 = 0x1F0B_3554
 
         let cmd = GetStatusCommand(podInfoType: .normal)
 
@@ -487,9 +606,15 @@ private extension CommandSession {
         var dataRemaining = message.encoded()
 
         let sendPacket = Packet(address: address, packetType: .pdm, sequenceNum: packetNumber, data: dataRemaining)
-        dataRemaining = dataRemaining.subdata(in: sendPacket.data.count..<dataRemaining.count)
+        dataRemaining = dataRemaining.subdata(in: sendPacket.data.count ..< dataRemaining.count)
 
-        let _ = try sendAndListen(sendPacket.encoded(), repeatCount: 0, timeout: .milliseconds(333), retryCount: 0, preambleExtension: .milliseconds(127))
+        _ = try sendAndListen(
+            sendPacket.encoded(),
+            repeatCount: 0,
+            timeout: .milliseconds(333),
+            retryCount: 0,
+            preambleExtension: .milliseconds(127)
+        )
 
         throw PodCommsError.emptyResponse
     }

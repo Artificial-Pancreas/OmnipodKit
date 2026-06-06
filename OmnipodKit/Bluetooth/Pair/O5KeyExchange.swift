@@ -1,13 +1,5 @@
-//
-//  O5KeyExchange.swift
-//  OmnipodKit
-//
-//  Created by Joe Moran on 3/25/25.
-//  Copyright © 2025 LoopKit Authors. All rights reserved.
-//
-
-import Foundation
 import CryptoSwift
+import Foundation
 import os.log
 
 enum Direction {
@@ -54,7 +46,8 @@ class O5KeyExchange {
             throw PodProtocolError.pairingException("pdmNonce size \(pdmNonce.count) != expected \(O5KeyExchange.NONCE_SIZE)")
         }
         guard pdmPublic.count == O5KeyExchange.PUBLIC_KEY_SIZE else {
-            throw PodProtocolError.pairingException("pdmPublic size \(pdmPublic.count) != expected \(O5KeyExchange.PUBLIC_KEY_SIZE)")
+            throw PodProtocolError
+                .pairingException("pdmPublic size \(pdmPublic.count) != expected \(O5KeyExchange.PUBLIC_KEY_SIZE)")
         }
 
         podPublic = Data(capacity: O5KeyExchange.PUBLIC_KEY_SIZE)
@@ -70,11 +63,14 @@ class O5KeyExchange {
     }
 
     func o5updatePodPublicData(_ payload: Data) throws {
-        if (payload.count != O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE) {
-            throw PodProtocolError.messageIOException("Invalid SPS1 payload size: \(payload.count), expected \(O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)")
+        if payload.count != O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE {
+            throw PodProtocolError
+                .messageIOException(
+                    "Invalid SPS1 payload size: \(payload.count), expected \(O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)"
+                )
         }
-        podPublic = payload.subdata(in: 0..<O5KeyExchange.PUBLIC_KEY_SIZE)
-        podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE..<O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
+        podPublic = payload.subdata(in: 0 ..< O5KeyExchange.PUBLIC_KEY_SIZE)
+        podNonce = payload.subdata(in: O5KeyExchange.PUBLIC_KEY_SIZE ..< O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
         log.bleDebug("  podPublic: %{public}@", podPublic.hexadecimalString)
         log.bleDebug("  podNonce:  %{public}@", podNonce.hexadecimalString)
         try o5generateKeys()
@@ -90,10 +86,10 @@ class O5KeyExchange {
         data.append(O5LTKExchanger.FIRMWARE_ID)
         data.append(withUnsafeBytes(of: UInt64(4).bigEndian, { Data($0) }))
         data.append(Data([0x00, 0x00, 0x00, 0x00]))
-        data.append(withUnsafeBytes(of: UInt64(self.pdmPublic.count).bigEndian, { Data($0) }))
-        data.append(self.pdmPublic)
-        data.append(withUnsafeBytes(of: UInt64(self.podPublic.count).bigEndian, { Data($0) }))
-        data.append(self.podPublic)
+        data.append(withUnsafeBytes(of: UInt64(pdmPublic.count).bigEndian, { Data($0) }))
+        data.append(pdmPublic)
+        data.append(withUnsafeBytes(of: UInt64(podPublic.count).bigEndian, { Data($0) }))
+        data.append(podPublic)
         data.append(withUnsafeBytes(of: UInt64(sharedSecret.count).bigEndian, { Data($0) }))
         data.append(sharedSecret)
         log.info("  KDF input (%{public}d bytes): %{public}@", data.count, data.hexadecimalString)
@@ -102,21 +98,25 @@ class O5KeyExchange {
         guard derivedKey.count == 32 else {
             throw PodProtocolError.pairingException("SHA-256 output size \(derivedKey.count) != expected 32")
         }
-        self.conf = derivedKey.subdata(in: 0..<16)
-        self.ltk = derivedKey.subdata(in: 16..<32)
+        conf = derivedKey.subdata(in: 0 ..< 16)
+        ltk = derivedKey.subdata(in: 16 ..< 32)
         log.default("Key derivation complete: conf=%{public}@, ltk=%{public}@", conf.hexadecimalString, ltk.hexadecimalString)
     }
-    
+
     private static let SPS_NONCE_SIZE = 13
 
     public func getSPSNonce(direction: Direction) -> Data {
         guard pdmNonce.count >= 6, podNonce.count >= 6 else {
-            log.error("Nonce too short for SPS nonce: pdmNonce=%{public}d bytes, podNonce=%{public}d bytes", pdmNonce.count, podNonce.count)
+            log.error(
+                "Nonce too short for SPS nonce: pdmNonce=%{public}d bytes, podNonce=%{public}d bytes",
+                pdmNonce.count,
+                podNonce.count
+            )
             return Data() // will cause AES-CCM to fail with a clear error
         }
 
-        let pdmSlice = pdmNonce.subdata(in: 0..<6)
-        let podSlice = podNonce.subdata(in: 0..<6)
+        let pdmSlice = pdmNonce.subdata(in: 0 ..< 6)
+        let podSlice = podNonce.subdata(in: 0 ..< 6)
 
         var nonce = Data()
         switch direction {
@@ -134,15 +134,13 @@ class O5KeyExchange {
         }
         return nonce
     }
-    
+
     public func incrementNonce(direction: Direction) {
         switch direction {
         case .write:
             incrementNonceInPlace(&pdmNonce)
-            break
         case .read:
             incrementNonceInPlace(&podNonce)
-            break
         }
     }
 
@@ -154,7 +152,7 @@ class O5KeyExchange {
         var counter = nonce.withUnsafeBytes { $0.load(as: UInt64.self) }
         counter &+= 1
         Swift.withUnsafeBytes(of: counter) { src in
-            nonce.replaceSubrange(0..<8, with: src)
+            nonce.replaceSubrange(0 ..< 8, with: src)
         }
         if nonce.count != prevCount {
             log.error("incrementNonce changed nonce size from %{public}d to %{public}d bytes!", prevCount, nonce.count)
@@ -190,7 +188,8 @@ class O5KeyExchange {
 
         if transcript.count != 171 {
             log.error("Channel-binding transcript size mismatch: got %{public}d, expected 171", transcript.count)
-            let sizes = "FIRMWARE_ID: \(O5LTKExchanger.FIRMWARE_ID.count), pdmNonce: \(pdmNonce.count), pdmPublic: \(pdmPublic.count), podNonce: \(podNonce.count), podPublic: \(podPublic.count)"
+            let sizes =
+                "FIRMWARE_ID: \(O5LTKExchanger.FIRMWARE_ID.count), pdmNonce: \(pdmNonce.count), pdmPublic: \(pdmPublic.count), podNonce: \(podNonce.count), podPublic: \(podPublic.count)"
             log.error("  %{public}@", sizes)
         }
         return transcript
@@ -240,7 +239,7 @@ class O5KeyExchange {
         var counter = podNonceAdjusted.withUnsafeBytes { $0.load(as: UInt64.self) }
         counter &-= 1
         Swift.withUnsafeBytes(of: counter) { src in
-            podNonceAdjusted.replaceSubrange(0..<8, with: src)
+            podNonceAdjusted.replaceSubrange(0 ..< 8, with: src)
         }
 
         // Keys-grouped layout: keys together then nonces together (native RE)

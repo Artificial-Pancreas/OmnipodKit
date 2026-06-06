@@ -1,10 +1,3 @@
-//
-//  BlePodProfile.swift
-//  OmnipodKit
-//
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-//
-
 import CoreBluetooth
 
 struct BlePacketLayout {
@@ -53,7 +46,8 @@ struct BlePodProfile {
         ]
 
         if let heartbeatServiceUUID = heartbeatServiceUUID,
-           let heartbeatCharacteristicUUID = heartbeatCharacteristicUUID {
+           let heartbeatCharacteristicUUID = heartbeatCharacteristicUUID
+        {
             serviceCharacteristics[heartbeatServiceUUID] = [heartbeatCharacteristicUUID]
         }
 
@@ -61,7 +55,8 @@ struct BlePodProfile {
             serviceUUID: []
         ]
         if let heartbeatServiceUUID = heartbeatServiceUUID,
-           let heartbeatCharacteristicUUID = heartbeatCharacteristicUUID {
+           let heartbeatCharacteristicUUID = heartbeatCharacteristicUUID
+        {
             notifyingCharacteristics[heartbeatServiceUUID] = [heartbeatCharacteristicUUID]
         }
 

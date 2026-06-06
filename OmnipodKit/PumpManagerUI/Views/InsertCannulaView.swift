@@ -1,25 +1,14 @@
-//
-//  InsertCannulaView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/InsertCannulaView.swift
-//  Created by Pete Schwamb on 2/5/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
 import SlideButton
-
+import SwiftUI
 
 struct InsertCannulaView: View {
-    
     @ObservedObject var viewModel: InsertCannulaViewModel
-    
+
     @Environment(\.verticalSizeClass) var verticalSizeClass
-    
+
     @State private var cancelModalIsPresented: Bool = false
-    
+
     var body: some View {
         GuidePage(content: {
             VStack {
@@ -27,11 +16,16 @@ struct InsertCannulaView: View {
 
                 HStack {
                     InstructionList(instructions: [
-                        LocalizedString("Slide the switch below to start cannula insertion.", comment: "Label text for step one of insert cannula instructions"),
-                        LocalizedString("Wait until insertion is completed.", comment: "Label text for step two of insert cannula instructions"),
+                        LocalizedString(
+                            "Slide the switch below to start cannula insertion.",
+                            comment: "Label text for step one of insert cannula instructions"
+                        ),
+                        LocalizedString(
+                            "Wait until insertion is completed.",
+                            comment: "Label text for step two of insert cannula instructions"
+                        )
                     ])
-                    .disabled(viewModel.state.instructionsDisabled)
-
+                        .disabled(viewModel.state.instructionsDisabled)
                 }
                 .padding(.bottom, 8)
             }
@@ -66,12 +60,11 @@ struct InsertCannulaView: View {
                     }
                     .disabled(self.viewModel.state.isProcessing)
                 }
-                
-                if (self.viewModel.error == nil || self.viewModel.error?.recoverable == true) {
+
+                if self.viewModel.error == nil || self.viewModel.error?.recoverable == true {
                     actionButton
-                    .disabled(self.viewModel.state.isProcessing)
-                    .zIndex(1)
-                        
+                        .disabled(self.viewModel.state.isProcessing)
+                        .zIndex(1)
                 }
             }
             .transition(AnyTransition.opacity.combined(with: .move(edge: .bottom)))
@@ -83,19 +76,15 @@ struct InsertCannulaView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(trailing: cancelButton)
     }
-    
-    
-    var actionText : some View {
+
+    var actionText: some View {
         Text(self.viewModel.state.nextActionButtonDescription)
             .accessibility(identifier: "button_next_action")
             .accessibility(label: Text(self.viewModel.state.actionButtonAccessibilityLabel))
             .font(.headline)
-            
     }
-    
-    
-    @ViewBuilder
-    var actionButton: some View {
+
+    @ViewBuilder  var actionButton: some View {
         if self.viewModel.stateNeedsDeliberateUserAcceptance {
             SlideButton(action: {
                 self.viewModel.continueButtonTapped()
@@ -109,33 +98,43 @@ struct InsertCannulaView: View {
                 actionText
                     .actionButtonStyle(.primary)
             }
-            
         }
     }
-    
+
     var cancelButton: some View {
         Button(LocalizedString("Cancel", comment: "Cancel button text in navigation bar on insert cannula screen")) {
             cancelModalIsPresented = true
         }
         .accessibility(identifier: "button_cancel")
     }
-    
+
     var cancelPairingModal: Alert {
-        return Alert(
-            title: FrameworkLocalText("Are you sure you want to cancel Pod setup?", comment: "Alert title for cancel pairing modal"),
-            message: FrameworkLocalText("If you cancel Pod setup, the current Pod will be deactivated and will be unusable.", comment: "Alert message body for confirm pod attachment"),
-            primaryButton: .destructive(FrameworkLocalText("Yes, Deactivate Pod", comment: "Button title for confirm deactivation option"), action: { viewModel.didRequestDeactivation?() } ),
-            secondaryButton: .default(FrameworkLocalText("No, Continue With Pod", comment: "Continue pairing button title of in pairing cancel modal"))
+        Alert(
+            title: FrameworkLocalText(
+                "Are you sure you want to cancel Pod setup?",
+                comment: "Alert title for cancel pairing modal"
+            ),
+            message: FrameworkLocalText(
+                "If you cancel Pod setup, the current Pod will be deactivated and will be unusable.",
+                comment: "Alert message body for confirm pod attachment"
+            ),
+            primaryButton: .destructive(
+                FrameworkLocalText("Yes, Deactivate Pod", comment: "Button title for confirm deactivation option"),
+                action: { viewModel.didRequestDeactivation?() }
+            ),
+            secondaryButton: .default(FrameworkLocalText(
+                "No, Continue With Pod",
+                comment: "Continue pairing button title of in pairing cancel modal"
+            ))
         )
     }
-
 }
 
 class MockCannulaInserter: CannulaInserter {
     let mockError: Bool = false
 
-    func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> Void) {
-        let result :Result<TimeInterval, OmniPumpManagerError>
+    func insertCannula(completion: @escaping (Result<TimeInterval, OmniPumpManagerError>) -> Void) {
+        let result: Result<TimeInterval, OmniPumpManagerError>
         if mockError {
             // Display the error text and show Deactivate Pod & Retry options
             result = .failure(OmniPumpManagerError.noPodPaired)

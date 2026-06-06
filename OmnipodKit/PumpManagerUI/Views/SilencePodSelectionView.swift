@@ -1,20 +1,10 @@
-//
-//  SilencePodSelectionView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/SilencePodSelectionView.swift
-//  Created by Joe Moran 8/30/23.
-//  Copyright © 2023 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKit
 import LoopKitUI
+import SwiftUI
 
 private let minimumSilenceModeTime: TimeInterval = .seconds(30)
 
 struct SilencePodSelectionView: View {
-
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
 
@@ -24,7 +14,11 @@ struct SilencePodSelectionView: View {
     private var initialEndTimeValue: Date?
     @State private var endTimeValue: Date?
 
-    private var onSave: ((_ selectedValue: SilencePodPreference, _ selectedSilenceEnd: Date?, _ completion: @escaping (_ error: LocalizedError?) -> Void) -> Void)
+    private var onSave: (
+        _ selectedValue: SilencePodPreference,
+        _ selectedSilenceEnd: Date?,
+        _ completion: @escaping (_ error: LocalizedError?) -> Void
+    ) -> Void
 
     @State private var alertIsPresented: Bool = false
     @State private var error: LocalizedError?
@@ -33,15 +27,18 @@ struct SilencePodSelectionView: View {
     init(
         initialValue: SilencePodPreference,
         initialSilenceTimeEndTime: Date?,
-        onSave: @escaping (_ selectedValue: SilencePodPreference,
-                           _ selectedSilenceEnd: Date?,
-                           _ completion: @escaping (_ error: LocalizedError?) -> Void) -> Void)
+        onSave: @escaping (
+            _ selectedValue: SilencePodPreference,
+            _ selectedSilenceEnd: Date?,
+            _ completion: @escaping (_ error: LocalizedError?) -> Void
+        ) -> Void
+    )
     {
         self.initialValue = initialValue
-        self._preference = State(initialValue: initialValue)
+        _preference = State(initialValue: initialValue)
 
-        self.initialEndTimeValue = initialSilenceTimeEndTime
-        self._endTimeValue = State(initialValue: initialSilenceTimeEndTime)
+        initialEndTimeValue = initialSilenceTimeEndTime
+        _endTimeValue = State(initialValue: initialSilenceTimeEndTime)
 
         self.onSave = onSave
     }
@@ -54,7 +51,10 @@ struct SilencePodSelectionView: View {
         VStack {
             List {
                 Section {
-                    Text(LocalizedString("Silence Pod mode suppresses all Pod alert and confirmation reminder beeping.", comment: "Help text for Silence Pod view")).fixedSize(horizontal: false, vertical: true)
+                    Text(LocalizedString(
+                        "Silence Pod mode suppresses all Pod alert and confirmation reminder beeping.",
+                        comment: "Help text for Silence Pod view"
+                    )).fixedSize(horizontal: false, vertical: true)
                         .padding(.vertical, 10)
                 }
                 Section {
@@ -79,7 +79,10 @@ struct SilencePodSelectionView: View {
                         Section {
                             OptionalDatePicker(
                                 title: LocalizedString("Silence End", comment: "Silence End label"),
-                                footnote: LocalizedString("Silence Pod mode will remain in effect until Disabled or the Silence End time has been reached", comment: "Silence End time description"),
+                                footnote: LocalizedString(
+                                    "Silence Pod mode will remain in effect until Disabled or the Silence End time has been reached",
+                                    comment: "Silence End time description"
+                                ),
                                 selection: $endTimeValue
                             )
                         }
@@ -120,7 +123,7 @@ struct SilencePodSelectionView: View {
     }
 
     /// Save the given values to the onSave function after checking values
-    private func doSave(_ selectedValue: SilencePodPreference, _ selectedSilenceEnd: Date?, dismissOnSuccess: Bool) {
+    private func doSave(_: SilencePodPreference, _: Date?, dismissOnSuccess: Bool) {
         saving = true
 
         /// Make sure that a set of reasonable values for the current time will be saved
@@ -139,7 +142,7 @@ struct SilencePodSelectionView: View {
             preferenceToSave = .enabled
             endTimeToSave = endTimeValue
         }
-        onSave(preferenceToSave, endTimeToSave) { (error) in
+        onSave(preferenceToSave, endTimeToSave) { error in
             saving = false
             if let error = error {
                 self.error = error
@@ -152,13 +155,15 @@ struct SilencePodSelectionView: View {
 
     private var contentWithCancel: some View {
         if saving {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
             )
         } else if valueChanged {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
-                .navigationBarItems(leading: cancelButton)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
+                    .navigationBarItems(leading: cancelButton)
             )
         } else {
             return AnyView(content)
@@ -166,7 +171,7 @@ struct SilencePodSelectionView: View {
     }
 
     private var cancelButton: some View {
-        Button(action: { self.presentationMode.wrappedValue.dismiss() } ) {
+        Button(action: { self.presentationMode.wrappedValue.dismiss() }) {
             Text(LocalizedString("Cancel", comment: "Button title for cancelling silence pod edit"))
         }
     }
@@ -180,17 +185,20 @@ struct SilencePodSelectionView: View {
     }
 
     private var valueChanged: Bool {
-        return preference != initialValue || endTimeValue != initialEndTimeValue
+        preference != initialValue || endTimeValue != initialEndTimeValue
     }
 
     /// N.B., Reevaluated on each reference
     private var earliestAllowedEndTime: Date {
-        return Date().addingTimeInterval(minimumSilenceModeTime)
+        Date().addingTimeInterval(minimumSilenceModeTime)
     }
 
     private func alert(error: Error?) -> SwiftUI.Alert {
-        return SwiftUI.Alert(
-            title: Text(LocalizedString("Failed to update silence pod preference", comment: "Alert title for error when updating silence pod preference")),
+        SwiftUI.Alert(
+            title: Text(LocalizedString(
+                "Failed to update silence pod preference",
+                comment: "Alert title for error when updating silence pod preference"
+            )),
             message: Text(error?.localizedDescription ?? "No Error")
         )
     }
@@ -199,14 +207,16 @@ struct SilencePodSelectionView: View {
 struct SilencePodSelectionView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            SilencePodSelectionView(initialValue: .disabled, initialSilenceTimeEndTime: nil) { selectedValue, selectedSilenceEnd, completion in
+            SilencePodSelectionView(
+                initialValue: .disabled,
+                initialSilenceTimeEndTime: nil
+            ) { selectedValue, selectedSilenceEnd, completion in
                 print("Selected: \(selectedValue), end: \(String(describing: selectedSilenceEnd))")
                 completion(nil)
             }
         }
     }
 }
-
 
 struct OptionalDatePicker: View {
     let title: String
@@ -236,7 +246,7 @@ struct OptionalDatePicker: View {
     ) {
         self.title = title
         self.footnote = footnote
-        self._selection = selection
+        _selection = selection
 
         now = Date()
         earliestAllowedEndTime = now.addingTimeInterval(minimumSilenceModeTime)
@@ -357,7 +367,6 @@ struct OptionalDatePicker: View {
         selection = clamped
         lastCommittedDate = clamped
     }
-
 
     // MARK: - Sync
 

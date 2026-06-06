@@ -1,19 +1,9 @@
-//
-//  RileyLinkListDataSource.swift
-//  OmnipodKit
-//
-//  From OmniKit/OmniKitUI/ViewModels/RileyLinkListDataSource.swift
-//  Created by Pete Schwamb on 6/7/22.
-//  Copyright © 2022 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
-import RileyLinkKit
 import RileyLinkBLEKit
+import RileyLinkKit
 import SwiftUI
 
 class RileyLinkListDataSource: ObservableObject {
-
     let rileyLinkPumpManager: RileyLinkPumpManager
 
     @Published private(set) var devices: [RileyLinkDevice] = []
@@ -22,7 +12,12 @@ class RileyLinkListDataSource: ObservableObject {
         self.rileyLinkPumpManager = rileyLinkPumpManager
 
         // Register for manager notifications
-        NotificationCenter.default.addObserver(self, selector: #selector(reloadDevices), name: .ManagerDevicesDidChange, object: rileyLinkPumpManager.rileyLinkDeviceProvider)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reloadDevices),
+            name: .ManagerDevicesDidChange,
+            object: rileyLinkPumpManager.rileyLinkDeviceProvider
+        )
 
         // Register for device notifications
         for name in [.DeviceConnectionStateDidChange, .DeviceRSSIDidChange, .DeviceNameDidChange] as [Notification.Name] {
@@ -33,7 +28,7 @@ class RileyLinkListDataSource: ObservableObject {
     }
 
     func autoconnectBinding(for device: RileyLinkDevice) -> Binding<Bool> {
-        return Binding(
+        Binding(
             get: { [weak self] in
                 if let connectionManager = self?.rileyLinkPumpManager.rileyLinkDeviceProvider {
                     return connectionManager.shouldConnect(to: device.peripheralIdentifier.uuidString)
@@ -47,11 +42,12 @@ class RileyLinkListDataSource: ObservableObject {
                 } else {
                     self?.rileyLinkPumpManager.disconnectFromRileyLink(device)
                 }
-            })
+            }
+        )
     }
 
     @objc private func reloadDevices() {
-        rileyLinkPumpManager.rileyLinkDeviceProvider.getDevices { (devices) in
+        rileyLinkPumpManager.rileyLinkDeviceProvider.getDevices { devices in
             DispatchQueue.main.async { [weak self] in
                 self?.devices = devices
             }
@@ -63,7 +59,13 @@ class RileyLinkListDataSource: ObservableObject {
             rileyLinkPumpManager.rileyLinkDeviceProvider.setScanningEnabled(isScanningEnabled)
 
             if isScanningEnabled {
-                rssiFetchTimer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(updateRSSI), userInfo: nil, repeats: true)
+                rssiFetchTimer = Timer.scheduledTimer(
+                    timeInterval: 3,
+                    target: self,
+                    selector: #selector(updateRSSI),
+                    userInfo: nil,
+                    repeats: true
+                )
                 updateRSSI()
             } else {
                 rssiFetchTimer = nil
@@ -73,13 +75,12 @@ class RileyLinkListDataSource: ObservableObject {
 
     var connecting: Bool {
         #if targetEnvironment(simulator)
-        return true
+            return true
         #else
 
-        return rileyLinkPumpManager.rileyLinkDeviceProvider.connectingCount > 0
+            return rileyLinkPumpManager.rileyLinkDeviceProvider.connectingCount > 0
         #endif
     }
-
 
     private var rssiFetchTimer: Timer? {
         willSet {

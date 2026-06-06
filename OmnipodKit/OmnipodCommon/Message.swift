@@ -1,12 +1,3 @@
-//
-//  Message.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/OmnipodCommon/Message.swift
-//  Created by Pete Schwamb on 10/14/17.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 enum MessageError: Error {
@@ -28,14 +19,37 @@ extension MessageError: LocalizedError {
             return LocalizedString("Invalid CRC", comment: "Description for MessageError invalidCrc")
         case .invalidSequence:
             return LocalizedString("Unexpected message sequence number", comment: "Description for MessageError invalidSequence")
-        case .invalidAddress(address: let address):
-            return String(format: LocalizedString("Invalid address: (%1$@)", comment: "Description for MessageError invalidAddress"), String(format: "%08x", address))
-        case .parsingError(let offset, let data, let error):
-            return String(format: LocalizedString("Parsing Error: %1$@ in (%2$@)", comment: "Description for MessageError parsingError. (1: decription of error), (2: hexadecimal data starting at offset)"), String(describing: error), data.suffix(from: offset).hexadecimalString)
-        case .unknownValue(let value, let typeDescription):
-            return String(format: LocalizedString("Unknown Value (%1$@) for type %2$@", comment: "Format string for description of MessageError unknownValue. (1: value) (2: Type)"), String(describing: value), typeDescription)
-        case .validationFailed(let description):
-            return String(format: LocalizedString("Validation failed: %1$@", comment: "Format string for description of MessageError validationFailed. (1: description of validation failure)"), description)
+        case let .invalidAddress(address: address):
+            return String(
+                format: LocalizedString("Invalid address: (%1$@)", comment: "Description for MessageError invalidAddress"),
+                String(format: "%08x", address)
+            )
+        case let .parsingError(offset, data, error):
+            return String(
+                format: LocalizedString(
+                    "Parsing Error: %1$@ in (%2$@)",
+                    comment: "Description for MessageError parsingError. (1: decription of error), (2: hexadecimal data starting at offset)"
+                ),
+                String(describing: error),
+                data.suffix(from: offset).hexadecimalString
+            )
+        case let .unknownValue(value, typeDescription):
+            return String(
+                format: LocalizedString(
+                    "Unknown Value (%1$@) for type %2$@",
+                    comment: "Format string for description of MessageError unknownValue. (1: value) (2: Type)"
+                ),
+                String(describing: value),
+                typeDescription
+            )
+        case let .validationFailed(description):
+            return String(
+                format: LocalizedString(
+                    "Validation failed: %1$@",
+                    comment: "Format string for description of MessageError validationFailed. (1: description of validation failure)"
+                ),
+                description
+            )
         }
     }
 }
@@ -45,39 +59,39 @@ struct Message {
     let messageBlocks: [MessageBlock]
     let sequenceNum: Int
     let expectFollowOnMessage: Bool
-    
+
     init(address: UInt32, messageBlocks: [MessageBlock], sequenceNum: Int, expectFollowOnMessage: Bool = false) {
         self.address = address
         self.messageBlocks = messageBlocks
         self.sequenceNum = sequenceNum
         self.expectFollowOnMessage = expectFollowOnMessage
     }
-    
+
     init(encodedData: Data, checkCRC: Bool = true) throws {
         guard encodedData.count >= 10 else {
             throw MessageError.notEnoughData
         }
-        self.address = encodedData[0...].toBigEndian(UInt32.self)
+        address = encodedData[0...].toBigEndian(UInt32.self)
         let b9 = encodedData[4]
         let bodyLen = encodedData[5]
-        
+
         if bodyLen > encodedData.count - 8 {
             throw MessageError.notEnoughData
         }
-        
-        self.expectFollowOnMessage = (b9 & 0b10000000) != 0
-        self.sequenceNum = Int((b9 >> 2) & 0b1111)
-        let crc = (UInt16(encodedData[encodedData.count-2]) << 8) + UInt16(encodedData[encodedData.count-1])
+
+        expectFollowOnMessage = (b9 & 0b1000_0000) != 0
+        sequenceNum = Int((b9 >> 2) & 0b1111)
+        let crc = (UInt16(encodedData[encodedData.count - 2]) << 8) + UInt16(encodedData[encodedData.count - 1])
         let msgWithoutCrc = encodedData.prefix(encodedData.count - 2)
         if checkCRC {
             guard msgWithoutCrc.crc16() == crc else {
                 throw MessageError.invalidCrc
             }
         }
-        self.messageBlocks = try Message.decodeBlocks(data: Data(msgWithoutCrc.suffix(from: 6)))
+        messageBlocks = try Message.decodeBlocks(data: Data(msgWithoutCrc.suffix(from: 6)))
     }
-    
-    static private func decodeBlocks(data: Data) throws -> [MessageBlock]  {
+
+    private static func decodeBlocks(data: Data) throws -> [MessageBlock] {
         var blocks = [MessageBlock]()
         var idx = 0
         repeat {
@@ -88,7 +102,7 @@ struct Message {
                 let block = try blockType.blockType.init(encodedData: Data(data.suffix(from: idx)))
                 blocks.append(block)
                 idx += Int(block.data.count)
-            } catch (let error) {
+            } catch {
                 throw MessageError.parsingError(offset: idx, data: data.suffix(from: idx), error: error)
             }
         } while idx < data.count
@@ -97,16 +111,17 @@ struct Message {
 
     func encoded() -> Data {
         var bytes = Data(bigEndian: address)
-        
+
         var cmdData = Data()
         for cmd in messageBlocks {
             cmdData.append(cmd.data)
         }
-        
-        let b9: UInt8 = ((expectFollowOnMessage ? 1 : 0) << 7) + (UInt8(sequenceNum & 0b1111) << 2) + UInt8((cmdData.count >> 8) & 0b11)
+
+        let b9: UInt8 = ((expectFollowOnMessage ? 1 : 0) << 7) + (UInt8(sequenceNum & 0b1111) << 2) +
+            UInt8((cmdData.count >> 8) & 0b11)
         bytes.append(b9)
-        bytes.append(UInt8(cmdData.count & 0xff))
-        
+        bytes.append(UInt8(cmdData.count & 0xFF))
+
         var data = Data(bytes) + cmdData
         let crc: UInt16 = data.crc16()
         data.appendBigEndian(crc)
@@ -114,11 +129,11 @@ struct Message {
     }
 
     var fault: DetailedStatus? {
-        if messageBlocks.count > 0 && messageBlocks[0].blockType == .podInfoResponse,
-            let infoResponse = messageBlocks[0] as? PodInfoResponse,
-            infoResponse.podInfoResponseSubType == .detailedStatus,
-            let detailedStatus = infoResponse.podInfo as? DetailedStatus,
-            detailedStatus.isFaulted
+        if !messageBlocks.isEmpty, messageBlocks[0].blockType == .podInfoResponse,
+           let infoResponse = messageBlocks[0] as? PodInfoResponse,
+           infoResponse.podInfoResponseSubType == .detailedStatus,
+           let detailedStatus = infoResponse.podInfo as? DetailedStatus,
+           detailedStatus.isFaulted
         {
             return detailedStatus
         } else {

@@ -1,12 +1,3 @@
-//
-//  AcknowledgeAlertCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnpodCommon/MessageBlocks/AcknowledgeAlertCommand.swift
-//  Created by Eelke Jager on 18/09/2018.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct AcknowledgeAlertCommand: NonceResyncableMessageBlock {
@@ -27,15 +18,15 @@ struct AcknowledgeAlertCommand: NonceResyncableMessageBlock {
         if encodedData.count < 7 {
             throw MessageBlockError.notEnoughData
         }
-        self.nonce = encodedData[2...].toBigEndian(UInt32.self)
-        self.alerts = AlertSet(rawValue: encodedData[6])
+        nonce = encodedData[2...].toBigEndian(UInt32.self)
+        alerts = AlertSet(rawValue: encodedData[6])
     }
 
     var data: Data {
         var data = Data([
             blockType.rawValue,
             length
-            ])
+        ])
         data.appendBigEndian(nonce)
         data.append(alerts.rawValue)
         return data
@@ -44,6 +35,6 @@ struct AcknowledgeAlertCommand: NonceResyncableMessageBlock {
 
 extension AcknowledgeAlertCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "AcknowledgeAlertCommand(blockType:\(blockType), length:\(length), alerts:\(alerts))"
+        "AcknowledgeAlertCommand(blockType:\(blockType), length:\(length), alerts:\(alerts))"
     }
 }

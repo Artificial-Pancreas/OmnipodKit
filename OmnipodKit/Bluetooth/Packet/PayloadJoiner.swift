@@ -1,12 +1,3 @@
-//
-//  PayloadJoiner.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/Bluetooth/Packet/PayloadJoiner.swift
-//  Created by Randall Knutson on 8/11/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 class PayloadJoiner {
@@ -15,7 +6,7 @@ class PayloadJoiner {
     let fullFragments: Int
     var crc: Data?
     private var expectedIndex = 0
-    private var fragments: Array<BlePacket> = Array<BlePacket>()
+    private var fragments = [BlePacket]()
 
     init(firstPacket: Data, layout: BlePacketLayout) throws {
         self.layout = layout
@@ -27,15 +18,15 @@ class PayloadJoiner {
     }
 
     func accumulate(packet: Data) throws {
-        if (packet.count < 3) { // idx, size, at least 1 byte of payload
-            throw PodProtocolError.incorrectPacketException(packet, (expectedIndex + 1))
+        if packet.count < 3 { // idx, size, at least 1 byte of payload
+            throw PodProtocolError.incorrectPacketException(packet, expectedIndex + 1)
         }
         let idx = Int(packet[0])
-        if (idx != expectedIndex + 1) {
-            throw PodProtocolError.incorrectPacketException(packet, (expectedIndex + 1))
+        if idx != expectedIndex + 1 {
+            throw PodProtocolError.incorrectPacketException(packet, expectedIndex + 1)
         }
         expectedIndex += 1
-        switch idx{
+        switch idx {
         case let index where index < fullFragments:
             fragments.append(try MiddleBlePacket.parse(payload: packet, layout: layout))
         case let index where index == fullFragments:

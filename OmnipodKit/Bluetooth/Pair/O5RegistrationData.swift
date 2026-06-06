@@ -1,13 +1,5 @@
-//
-//  O5RegistrationData.swift
-//  OmnipodKit
-//
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-//
-
-import Foundation
 import CryptoSwift
-
+import Foundation
 
 struct O5RegistrationData {
     private static var _registry: [UInt32: O5RegistrationData] = [:]
@@ -34,7 +26,7 @@ struct O5RegistrationData {
         case 1:
             return _registry.values.first!
         default:
-            let randomIndex = Int.random(in: 0..<_registry.count)
+            let randomIndex = Int.random(in: 0 ..< _registry.count)
             return Array(_registry.values)[randomIndex]
         }
     }
@@ -65,7 +57,6 @@ struct O5RegistrationData {
 
     let intermediateCABase64: String
     let tlsCertificateBase64: String
-
 
     // MARK: - Convenience
 

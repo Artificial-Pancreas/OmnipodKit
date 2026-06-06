@@ -1,12 +1,3 @@
-//
-//  BolusExtraCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/BolusExtraCommand.swift
-//  Created by Pete Schwamb on 2/24/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 // O5 only additional BolusExtraCommand data
@@ -41,15 +32,15 @@ struct BolusExtraCommand: MessageBlock {
     // 17 12 7c 0208 000186a0 0000 00000000 01 0000 0000 (O5 prime bolus)
     // 17 12 7c 00c8 00030d40 0000 00000000 01 00c8 0000 (O5 1.0U bolus)
 
-
     var data: Data {
-        let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
+        let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3F) + (completionBeep ? (1 << 6) : 0) +
+            (acknowledgementBeep ? (1 << 7) : 0)
 
         var data = Data([
             blockType.rawValue,
-            bolusInfo != nil ? 0x12 : 0x0d, // O5 has additional 5 bytes of bolus info
+            bolusInfo != nil ? 0x12 : 0x0D, // O5 has additional 5 bytes of bolus info
             beepOptions
-            ])
+        ])
 
         data.appendBigEndian(UInt16(round(units * Pod.pulsesPerUnit * 10)))
         data.appendBigEndian(UInt32(timeBetweenPulses.hundredthsOfMilliseconds))
@@ -77,9 +68,9 @@ struct BolusExtraCommand: MessageBlock {
             throw MessageBlockError.notEnoughData
         }
 
-        acknowledgementBeep = encodedData[2] & (1<<7) != 0
-        completionBeep = encodedData[2] & (1<<6) != 0
-        programReminderInterval = TimeInterval(minutes: Double(encodedData[2] & 0x3f))
+        acknowledgementBeep = encodedData[2] & (1 << 7) != 0
+        completionBeep = encodedData[2] & (1 << 6) != 0
+        programReminderInterval = TimeInterval(minutes: Double(encodedData[2] & 0x3F))
 
         units = Double(encodedData[3...].toBigEndian(UInt16.self)) / (Pod.pulsesPerUnit * 10)
 
@@ -105,14 +96,15 @@ struct BolusExtraCommand: MessageBlock {
         }
     }
 
-    init(units: Double = 0,
-         timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse,
-         extendedUnits: Double = 0.0,
-         extendedDuration: TimeInterval = 0,
-         acknowledgementBeep: Bool = false,
-         completionBeep: Bool = false,
-         programReminderInterval: TimeInterval = 0,
-         bolusInfo: BolusInfo? = nil // O5 only, nil for Eros or Dash
+    init(
+        units: Double = 0,
+        timeBetweenPulses: TimeInterval = Pod.secondsPerBolusPulse,
+        extendedUnits: Double = 0.0,
+        extendedDuration: TimeInterval = 0,
+        acknowledgementBeep: Bool = false,
+        completionBeep: Bool = false,
+        programReminderInterval: TimeInterval = 0,
+        bolusInfo: BolusInfo? = nil // O5 only, nil for Eros or Dash
     ) {
         self.acknowledgementBeep = acknowledgementBeep
         self.completionBeep = completionBeep

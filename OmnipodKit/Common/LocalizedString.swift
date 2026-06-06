@@ -1,12 +1,3 @@
-//
-//  LocalizedString.swift
-//  OmnipodKit
-//
-//  From OmniBLE/Commmon/LocalizedString.swift
-//  Created by Kathryn DiSimone on 8/15/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 private class FrameworkBundle {

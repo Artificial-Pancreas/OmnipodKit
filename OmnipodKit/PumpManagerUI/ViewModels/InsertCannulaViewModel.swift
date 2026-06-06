@@ -1,30 +1,19 @@
-//
-//  InsertCannulaViewModel.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/PumpManagerUI/ViewModels/InsertCannulaViewModel.swift
-//  Created by Pete Schwamb on 3/10/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import LoopKit
 import LoopKitUI
 
-
 protocol CannulaInserter {
-    func insertCannula(completion: @escaping (Result<TimeInterval,OmniPumpManagerError>) -> ())
+    func insertCannula(completion: @escaping (Result<TimeInterval, OmniPumpManagerError>) -> Void)
     func checkCannulaInsertionFinished(completion: @escaping (OmniPumpManagerError?) -> Void)
     var cannulaInsertionSuccessfullyStarted: Bool { get }
 }
 
 extension OmniPumpManager: CannulaInserter {
     var cannulaInsertionSuccessfullyStarted: Bool {
-        return state.podState?.setupProgress.cannulaInsertionSuccessfullyStarted == true
+        state.podState?.setupProgress.cannulaInsertionSuccessfullyStarted == true
     }
 }
 
 class InsertCannulaViewModel: ObservableObject, Identifiable {
-
     enum InsertCannulaViewModelState {
         case ready
         case startingInsertion
@@ -32,38 +21,53 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
         case checkingInsertion
         case error(OmniPumpManagerError)
         case finished
-        
+
         var actionButtonAccessibilityLabel: String {
             switch self {
             case .ready:
-                return LocalizedString("Slide Button to insert Cannula", comment: "Insert cannula slider button accessibility label while ready to pair")
-            case .inserting, .startingInsertion:
-                return LocalizedString("Inserting. Please wait.", comment: "Insert cannula action button accessibility label while pairing")
+                return LocalizedString(
+                    "Slide Button to insert Cannula",
+                    comment: "Insert cannula slider button accessibility label while ready to pair"
+                )
+            case .inserting,
+                 .startingInsertion:
+                return LocalizedString(
+                    "Inserting. Please wait.",
+                    comment: "Insert cannula action button accessibility label while pairing"
+                )
             case .checkingInsertion:
-                return LocalizedString("Checking Insertion", comment: "Insert cannula action button accessibility label checking insertion")
-            case .error(let error):
+                return LocalizedString(
+                    "Checking Insertion",
+                    comment: "Insert cannula action button accessibility label checking insertion"
+                )
+            case let .error(error):
                 return String(format: "%@ %@", error.errorDescription ?? "", error.recoverySuggestion ?? "")
             case .finished:
-                return LocalizedString("Cannula inserted successfully. Continue.", comment: "Insert cannula action button accessibility label when cannula insertion succeeded")
+                return LocalizedString(
+                    "Cannula inserted successfully. Continue.",
+                    comment: "Insert cannula action button accessibility label when cannula insertion succeeded"
+                )
             }
         }
 
         var instructionsDisabled: Bool {
             switch self {
-            case .ready, .error:
+            case .error,
+                 .ready:
                 return false
             default:
                 return true
             }
         }
-        
+
         var nextActionButtonDescription: String {
             switch self {
             case .ready:
                 return LocalizedString("Slide to Insert Cannula", comment: "Cannula insertion button text while ready to insert")
             case .error:
                 return LocalizedString("Retry", comment: "Cannula insertion button text while showing error")
-            case .inserting, .startingInsertion:
+            case .inserting,
+                 .startingInsertion:
                 return LocalizedString("Inserting...", comment: "Cannula insertion button text while inserting")
             case .checkingInsertion:
                 return LocalizedString("Checking...", comment: "Cannula insertion button text while checking insertion")
@@ -71,10 +75,10 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
                 return LocalizedString("Continue", comment: "Cannula insertion button text when inserted")
             }
         }
-        
+
         var nextActionButtonStyle: ActionButton.ButtonType {
             switch self {
-            case .error(let error):
+            case let .error(error):
                 if !error.recoverable {
                     return .destructive
                 }
@@ -83,20 +87,22 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             }
             return .primary
         }
-        
+
         var progressState: ProgressIndicatorState {
             switch self {
-            case .ready, .error:
+            case .error,
+                 .ready:
                 return .hidden
-            case .startingInsertion, .checkingInsertion:
+            case .checkingInsertion,
+                 .startingInsertion:
                 return .indeterminantProgress
-            case .inserting(let finishTime):
+            case let .inserting(finishTime):
                 return .timedProgress(finishTime: finishTime)
             case .finished:
                 return .completed
             }
         }
-        
+
         var showProgressDetail: Bool {
             switch self {
             case .ready:
@@ -105,16 +111,17 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
                 return true
             }
         }
-        
+
         var isProcessing: Bool {
             switch self {
-            case .startingInsertion, .inserting:
+            case .inserting,
+                 .startingInsertion:
                 return true
             default:
                 return false
             }
         }
-        
+
         var isFinished: Bool {
             if case .finished = self {
                 return true
@@ -122,9 +129,9 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             return false
         }
     }
-    
+
     var error: OmniPumpManagerError? {
-        if case .error(let error) = self.state {
+        if case let .error(error) = state {
             return error
         }
         return nil
@@ -132,7 +139,7 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
 
     @Published var state: InsertCannulaViewModelState = .ready
 
-    var stateNeedsDeliberateUserAcceptance : Bool {
+    var stateNeedsDeliberateUserAcceptance: Bool {
         switch state {
         case .ready:
             true
@@ -140,18 +147,18 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             false
         }
     }
-    
+
     var didFinish: (() -> Void)?
-    
+
     var didRequestDeactivation: (() -> Void)?
-    
+
     var cannulaInserter: CannulaInserter
 
     var autoRetryAttempted: Bool
 
     init(cannulaInserter: CannulaInserter) {
         self.cannulaInserter = cannulaInserter
-        self.autoRetryAttempted = false
+        autoRetryAttempted = false
 
         // If resuming, don't wait for the button action
         if cannulaInserter.cannulaInsertionSuccessfullyStarted {
@@ -161,7 +168,7 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
 
     private func checkCannulaInsertionFinished() {
         state = .checkingInsertion
-        cannulaInserter.checkCannulaInsertionFinished() { (error) in
+        cannulaInserter.checkCannulaInsertionFinished { error in
             DispatchQueue.main.async {
                 if let error = error {
                     self.state = .error(error)
@@ -171,14 +178,14 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
             }
         }
     }
-    
+
     private func insertCannula() {
         state = .startingInsertion
 
-        cannulaInserter.insertCannula { (result) in
+        cannulaInserter.insertCannula { result in
             DispatchQueue.main.async {
-                switch(result) {
-                case .success(let finishTime):
+                switch result {
+                case let .success(finishTime):
                     self.state = .inserting(finishTime: CACurrentMediaTime() + finishTime)
                     let delay = finishTime
                     if delay > 0 {
@@ -188,14 +195,16 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
                     } else {
                         self.state = .finished
                     }
-                case .failure(let error):
+                case let .failure(error):
                     if self.autoRetryAttempted {
                         self.autoRetryAttempted = false // allow for an auto retry on the next user attempt
                         self.state = .error(error)
                     } else {
                         self.autoRetryAttempted = true
                         let autoRetryPauseTime = TimeInterval(seconds: 3)
-                        print("### insertCannula encountered error \(error.localizedDescription), retrying after \(autoRetryPauseTime) seconds")
+                        print(
+                            "### insertCannula encountered error \(error.localizedDescription), retrying after \(autoRetryPauseTime) seconds"
+                        )
                         DispatchQueue.global(qos: .utility).async {
                             Thread.sleep(forTimeInterval: autoRetryPauseTime)
 
@@ -211,10 +220,12 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
         switch state {
         case .finished:
             didFinish?()
-        case .error(let error):
+        case let .error(error):
             if error.recoverable {
                 if cannulaInserter.cannulaInsertionSuccessfullyStarted {
-                    print("### InsertCannulaViewModel calling checkCannulaInsertionFinished after error \(error.localizedDescription)")
+                    print(
+                        "### InsertCannulaViewModel calling checkCannulaInsertionFinished after error \(error.localizedDescription)"
+                    )
                     checkCannulaInsertionFinished()
                 } else {
                     print("### InsertCannulaViewModel calling insertCannula after error \(error.localizedDescription)")
@@ -231,8 +242,8 @@ class InsertCannulaViewModel: ObservableObject, Identifiable {
 
 extension OmniPumpManagerError {
     var recoverable: Bool {
-        //TODO
-        return true
+        // TODO:
+        true
 //        switch self {
 //        case .podIsInAlarm:
 //            return false
@@ -252,4 +263,3 @@ extension OmniPumpManagerError {
 //        }
     }
 }
-

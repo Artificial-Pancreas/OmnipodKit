@@ -1,20 +1,10 @@
-//
-//  VersionResponse.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/VersionResponse.swift
-//  Created by Pete Schwamb on 2/12/18.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
-fileprivate let assignAddressVersionLength: UInt8 = 0x15
-fileprivate let setupPodVersionLength: UInt8 = 0x1B
+private let assignAddressVersionLength: UInt8 = 0x15
+private let setupPodVersionLength: UInt8 = 0x1B
 
-struct VersionResponse : MessageBlock {
-
-    struct FirmwareVersion : CustomStringConvertible {
+struct VersionResponse: MessageBlock {
+    struct FirmwareVersion: CustomStringConvertible {
         let major: UInt8
         let minor: UInt8
         let patch: UInt8
@@ -26,37 +16,37 @@ struct VersionResponse : MessageBlock {
         }
 
         var description: String {
-            return "\(major).\(minor).\(patch)"
+            "\(major).\(minor).\(patch)"
         }
     }
 
     let blockType: MessageBlockType = .versionResponse
 
-    let firmwareVersion: FirmwareVersion     // for Eros (PM) 2.x.y, for NXP Dash 3.x.y, for TWI Dash 4.x.y
-    let iFirmwareVersion: FirmwareVersion    // for Eros (PI) same as PM, for Dash BLE firmware version #
-    let podType: PodType                     // 02 for Eros, 04 for Dash, perhaps 05 for Omnipod 5
+    let firmwareVersion: FirmwareVersion // for Eros (PM) 2.x.y, for NXP Dash 3.x.y, for TWI Dash 4.x.y
+    let iFirmwareVersion: FirmwareVersion // for Eros (PI) same as PM, for Dash BLE firmware version #
+    let podType: PodType // 02 for Eros, 04 for Dash, perhaps 05 for Omnipod 5
     let lot: UInt32
     let tid: UInt32
     let address: UInt32
     let podProgressStatus: PodProgressStatus
 
     // These values only included in the shorter 0x15 VersionResponse for the AssignAddress command for Eros.
-    let gain: UInt8?                         // 2-bit value, max gain is at 0, min gain is at 2
-    let rssi: UInt8?                         // 6-bit value, max rssi seen 61
+    let gain: UInt8? // 2-bit value, max gain is at 0, min gain is at 2
+    let rssi: UInt8? // 6-bit value, max rssi seen 61
 
     // These values only included in the longer 0x1B VersionResponse for the SetupPod command.
-    let pulseSize: Double?                   // VVVV / 100,000, must be 0x1388 / 100,000 = 0.05U
-    let secondsPerBolusPulse: Double?        // BR / 8, nominally 0x10 / 8 = 2 seconds per pulse
-    let secondsPerPrimePulse: Double?        // PR / 8, nominally 0x08 / 8 = 1 seconds per priming pulse
-    let primeUnits: Double?                  // PP / pulsesPerUnit, nominally 0x34 / 20 = 2.6U
-    let cannulaInsertionUnits: Double?       // CP / pulsesPerUnit, nominally 0x0A / 20 = 0.5U
-    let serviceDuration: TimeInterval?       // PL hours, nominally 0x50 = 80 hours
+    let pulseSize: Double? // VVVV / 100,000, must be 0x1388 / 100,000 = 0.05U
+    let secondsPerBolusPulse: Double? // BR / 8, nominally 0x10 / 8 = 2 seconds per pulse
+    let secondsPerPrimePulse: Double? // PR / 8, nominally 0x08 / 8 = 1 seconds per priming pulse
+    let primeUnits: Double? // PP / pulsesPerUnit, nominally 0x34 / 20 = 2.6U
+    let cannulaInsertionUnits: Double? // CP / pulsesPerUnit, nominally 0x0A / 20 = 0.5U
+    let serviceDuration: TimeInterval? // PL hours, nominally 0x50 = 80 hours
 
     let data: Data
 
     init(encodedData: Data) throws {
         let responseLength = encodedData[1]
-        data = encodedData.subdata(in: 0..<Int(responseLength + 2))
+        data = encodedData.subdata(in: 0 ..< Int(responseLength + 2))
 
         switch responseLength {
         case assignAddressVersionLength:
@@ -75,8 +65,8 @@ struct VersionResponse : MessageBlock {
             // GS = ggssssss (Gain/RSSI for Eros only)
             // IIIIIIII = connection ID address
 
-            firmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 2..<5))
-            iFirmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 5..<8))
+            firmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 2 ..< 5))
+            iFirmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 5 ..< 8))
             podType = PodType(rawValue: encodedData[8])
             guard let progressStatus = PodProgressStatus(rawValue: encodedData[9]) else {
                 throw MessageBlockError.parseError
@@ -88,8 +78,8 @@ struct VersionResponse : MessageBlock {
 
             // The gain and RSSI fields are only valid for Eros pods in the shorter 0x15 VersionResponse
             if podType.isEros {
-                gain = (encodedData[18] & 0xc0) >> 6
-                rssi = encodedData[18] & 0x3f
+                gain = (encodedData[18] & 0xC0) >> 6
+                rssi = encodedData[18] & 0x3F
             } else {
                 gain = nil
                 rssi = nil
@@ -124,8 +114,8 @@ struct VersionResponse : MessageBlock {
             // TTTTTTTT = Tid
             // IIIIIIII = connection ID address
 
-            firmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 9..<12))
-            iFirmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 12..<15))
+            firmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 9 ..< 12))
+            iFirmwareVersion = FirmwareVersion(encodedData: encodedData.subdata(in: 12 ..< 15))
             podType = PodType(rawValue: encodedData[15])
             guard let progressStatus = PodProgressStatus(rawValue: encodedData[16]) else {
                 throw MessageBlockError.parseError
@@ -136,7 +126,7 @@ struct VersionResponse : MessageBlock {
             address = encodedData[25...].toBigEndian(UInt32.self)
 
             // These values should be verified elsewhere and appropriately handled.
-            pulseSize = Double(encodedData[2...].toBigEndian(UInt16.self)) / 100000
+            pulseSize = Double(encodedData[2...].toBigEndian(UInt16.self)) / 100_000
             secondsPerBolusPulse = Double(encodedData[4]) / 8
             secondsPerPrimePulse = Double(encodedData[5]) / 8
             primeUnits = Double(encodedData[6]) / Pod.pulsesPerUnit
@@ -153,19 +143,19 @@ struct VersionResponse : MessageBlock {
     }
 
     var isAssignAddressVersionResponse: Bool {
-        return self.data.count == assignAddressVersionLength + 2
+        data.count == assignAddressVersionLength + 2
     }
 
     var isSetupPodVersionResponse: Bool {
-        return self.data.count == setupPodVersionLength + 2
+        data.count == setupPodVersionLength + 2
     }
 }
 
 extension VersionResponse: CustomDebugStringConvertible {
     var debugDescription: String {
-
         // Common fields valid in both types of VersionResponses
-        var retVal = "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType:\(podType), podProgressStatus:\(podProgressStatus)"
+        var retVal =
+            "VersionResponse(lot:\(lot), tid:\(tid), address:\(Data(bigEndian: address).hexadecimalString), firmwareVersion:\(firmwareVersion), iFirmwareVersion:\(iFirmwareVersion), podType:\(podType), podProgressStatus:\(podProgressStatus)"
 
         // The optional gain and RSSI fields are only valid for Eros pods in the shorter AssignAddress VersionResponse
         if let gain = gain, let rssi = rssi {
@@ -180,7 +170,8 @@ extension VersionResponse: CustomDebugStringConvertible {
            let cannulaInsertionUnits = cannulaInsertionUnits,
            let serviceDuration = serviceDuration
         {
-            retVal += ", pulseSize:\(pulseSize.description), secondsPerBolusPulse:\(secondsPerBolusPulse.description), secondsPerPrimePulse:\(secondsPerPrimePulse.description), primeUnits:\(primeUnits.description), cannulaInsertionUnits:\(cannulaInsertionUnits.description), serviceDuration:\(serviceDuration.timeIntervalStr)"
+            retVal +=
+                ", pulseSize:\(pulseSize.description), secondsPerBolusPulse:\(secondsPerBolusPulse.description), secondsPerPrimePulse:\(secondsPerPrimePulse.description), primeUnits:\(primeUnits.description), cannulaInsertionUnits:\(cannulaInsertionUnits.description), serviceDuration:\(serviceDuration.timeIntervalStr)"
         }
 
         return retVal + ")"

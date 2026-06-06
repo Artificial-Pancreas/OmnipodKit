@@ -1,12 +1,3 @@
-//
-//  PodComms.swift
-//  OmnipodKit
-//
-//  Based on Omni{BLE,Kit}/PumpManager/PodComms.swift
-//  Created by Joe Moran on 1/9/25.
-//  Copyright © 2025 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 import LoopKit
 import os.log
@@ -17,7 +8,6 @@ protocol PodCommsDelegate: OmniConnectionDelegate {
 }
 
 class PodComms: CustomDebugStringConvertible {
-
     var myId: UInt32 = 0
     var podId: UInt32 = 0
 
@@ -41,8 +31,8 @@ class PodComms: CustomDebugStringConvertible {
 
     init(podState: PodState?, podType: PodType, myId: UInt32 = 0, podId: UInt32 = 0) {
         self.podState = podState
-        self.delegate = nil
-        self.messageLogger = nil
+        delegate = nil
+        messageLogger = nil
         self.myId = myId
         self.podId = podId
         self.podType = podType
@@ -78,7 +68,7 @@ class PodComms: CustomDebugStringConvertible {
         /// Compute the bolusNotDelivered if there was a bolus in progress when the pod was discarded.
         var bolusNotDelivered = 0.0
         if let bolus = podState!.unfinalizedBolus {
-            let bolusDelivered = (((bolus.units * bolus.progress(at: now)) / Pod.pulseSize).rounded()) * Pod.pulseSize
+            let bolusDelivered = ((bolus.units * bolus.progress(at: now)) / Pod.pulseSize).rounded() * Pod.pulseSize
             log.info("Cancelling unfinished bolus with calculated bolus delivered of %@", bolusDelivered.twoDecimals)
             bolusNotDelivered = bolus.units - bolusDelivered
         }
@@ -117,7 +107,7 @@ class PodComms: CustomDebugStringConvertible {
         self.podId = podId
 
         podStateLock.lock()
-        self.podState = nil
+        podState = nil
         podStateLock.unlock()
     }
 

@@ -1,13 +1,7 @@
-//
-//  LocalizationCatalogLoader.swift
-//  OmniTests
-//
-
 import Foundation
 
 enum LocalizationCatalogLoader {
-
-    static func localizableXcstringsURL(file: StaticString = #file) -> URL {
+    static func localizableXcstringsURL(file _: StaticString = #file) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()

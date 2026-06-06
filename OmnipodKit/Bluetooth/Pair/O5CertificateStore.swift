@@ -1,20 +1,11 @@
-//
-//  O5CertificateStore.swift
-//  OmnipodKit
-//
-//  Created for Omnipod 5 PKI support.
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-//
-
-import Foundation
 import CryptoKit
 import CryptoSwift
+import Foundation
 import os.log
 
 /// Manages the PKI material needed for Omnipod 5 pairing and pod communication.
 /// Key/certificate data comes from `O5RegistrationData.active` — swap it to use a different registration.
 class O5CertificateStore {
-
     private let log = OSLog(category: "O5CertificateStore")
 
     /// The registration data backing this store.
@@ -29,7 +20,7 @@ class O5CertificateStore {
     var controllerIdData: Data { registration.controllerIdData }
 
     var signingPublicKeyRaw: Data {
-        return signingKey.publicKey.rawRepresentation
+        signingKey.publicKey.rawRepresentation
     }
 
     // MARK: - Access aids
@@ -55,22 +46,20 @@ class O5CertificateStore {
         return O5RegistrationData.get(controllerId) != nil
     }
 
-
     // MARK: - Initialization
 
     // init for the specified controllerId
     init(controllerId: UInt32) throws {
-
         loadOptionalO5Data()
         guard let data = O5RegistrationData.get(controllerId) else {
             log.debug("@@@ O5CertificateStore has no data for 0x%08X", controllerId)
             throw PodCommsError.noCertificateFound
         }
 
-        self.registration = data
+        registration = data
         let scalar = registration.privateKey
         assert(scalar.count == 32, "Secondary key scalar must be exactly 32 bytes")
-        self.signingKey = try P256.Signing.PrivateKey(rawRepresentation: scalar)
+        signingKey = try P256.Signing.PrivateKey(rawRepresentation: scalar)
 
         // Verify the signing key's public key matches the expected value
         let derivedPubKey = signingKey.publicKey.rawRepresentation
@@ -111,13 +100,13 @@ class O5CertificateStore {
     /// The fixed DER header bytes for a P-256 SubjectPublicKeyInfo + uncompressed point indicator.
     /// SEQUENCE(89) > SEQUENCE(19) > OID(ecPublicKey) + OID(secp256r1) > BIT STRING(66) > 0x00 > 0x04
     private static let p256SPKIHeader = Data([
-        0x30, 0x59,                                     // SEQUENCE (89 bytes)
-        0x30, 0x13,                                     // SEQUENCE (19 bytes) - AlgorithmIdentifier
-        0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,  // OID 1.2.840.10045.2.1 (ecPublicKey)
-        0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,  // OID 1.2.840.10045.3.1.7 (secp256r1)
-        0x03, 0x42,                                     // BIT STRING (66 bytes)
-        0x00,                                           // no unused bits
-        0x04                                            // uncompressed EC point
+        0x30, 0x59, // SEQUENCE (89 bytes)
+        0x30, 0x13, // SEQUENCE (19 bytes) - AlgorithmIdentifier
+        0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01, // OID 1.2.840.10045.2.1 (ecPublicKey)
+        0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, // OID 1.2.840.10045.3.1.7 (secp256r1)
+        0x03, 0x42, // BIT STRING (66 bytes)
+        0x00, // no unused bits
+        0x04 // uncompressed EC point
     ])
 
     /// Extract the raw P-256 public key (64 bytes, x || y) from a DER-encoded X.509 certificate.
@@ -138,18 +127,18 @@ class O5CertificateStore {
     static func extractP256PublicKey(fromDERCert certDER: Data) -> Data? {
         let header = p256SPKIHeader
         let headerLen = header.count
-        let keyLen = 64  // raw x || y
+        let keyLen = 64 // raw x || y
 
         guard certDER.count >= headerLen + keyLen else {
             return nil
         }
 
         // Search for the SPKI header pattern
-        for i in 0...(certDER.count - headerLen - keyLen) {
-            if certDER.subdata(in: i..<(i + headerLen)) == header {
+        for i in 0 ... (certDER.count - headerLen - keyLen) {
+            if certDER.subdata(in: i ..< (i + headerLen)) == header {
                 // Found it — the next 64 bytes are the raw public key
                 let keyStart = i + headerLen
-                return certDER.subdata(in: keyStart..<(keyStart + keyLen))
+                return certDER.subdata(in: keyStart ..< (keyStart + keyLen))
             }
         }
         return nil
@@ -164,14 +153,14 @@ class O5CertificateStore {
     static func extractSerialNumber(fromDERCert certDER: Data) -> Data? {
         // Try v3 first: [0] EXPLICIT { INTEGER 2 } = a0 03 02 01 02
         // Followed by serial: 02 [length] [serial bytes]
-        let v3Pattern = Data([0xa0, 0x03, 0x02, 0x01, 0x02, 0x02])
+        let v3Pattern = Data([0xA0, 0x03, 0x02, 0x01, 0x02, 0x02])
         if let range = certDER.range(of: v3Pattern) {
             let serialLenOffset = range.upperBound
             guard serialLenOffset < certDER.count else { return nil }
             let serialLen = Int(certDER[serialLenOffset])
             let serialStart = serialLenOffset + 1
             guard serialLen > 0, serialStart + serialLen <= certDER.count else { return nil }
-            return certDER.subdata(in: serialStart..<(serialStart + serialLen))
+            return certDER.subdata(in: serialStart ..< (serialStart + serialLen))
         }
 
         // V1 fallback: no version tag. Structure is:
@@ -190,7 +179,7 @@ class O5CertificateStore {
         let serialLen = Int(certDER[lenOffset])
         let serialStart = lenOffset + 1
         guard serialLen > 0, serialStart + serialLen <= certDER.count else { return nil }
-        return certDER.subdata(in: serialStart..<(serialStart + serialLen))
+        return certDER.subdata(in: serialStart ..< (serialStart + serialLen))
     }
 
     /// Parse a DER length field starting at `offset`. Returns (length, contentStartOffset).
@@ -203,10 +192,10 @@ class O5CertificateStore {
             return (Int(firstByte), offset + 1)
         } else {
             // Long form
-            let numLenBytes = Int(firstByte & 0x7f)
+            let numLenBytes = Int(firstByte & 0x7F)
             guard numLenBytes > 0, offset + 1 + numLenBytes <= data.count else { return (nil, nil) }
             var len = 0
-            for i in 0..<numLenBytes {
+            for i in 0 ..< numLenBytes {
                 len = (len << 8) | Int(data[offset + 1 + i])
             }
             return (len, offset + 1 + numLenBytes)
@@ -217,7 +206,7 @@ class O5CertificateStore {
 // MARK: - Runtime Installer
 
 /// Load the data from the optional O5Data file if present by invoking its install() function using a unsafeBitCast
-fileprivate func loadOptionalO5Data() {
+private func loadOptionalO5Data() {
     // Use RTLD_DEFAULT (-2) to find the symbol if it was compiled into the binary
     if let installSym = dlsym(
         UnsafeMutableRawPointer(bitPattern: -2),

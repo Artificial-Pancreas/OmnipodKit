@@ -1,23 +1,3 @@
-//
-//  O5AidCommands.swift
-//  OmnipodKit
-//
-//  Created for O5 AID setup commands sent between AssignAddress and SetupPod.
-//  These use an ASCII key-value protocol different from legacy Omnipod commands.
-//
-//  Command formats:
-//    SET+GET: S[feature].[attr]=[data],G[feature].[attr]
-//    GET only: G[feature].[attr]
-//    Extended SET: SE[feature].[attr]=[data]
-//
-//  Response formats:
-//    SET+GET response: [feature].[attr]=[data]
-//    GET response: [feature].[attr]=[data]
-//    Extended SET response: ES[feature].[attr]=[data]
-//
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 /// Constructs O5 AID command payloads for the pre-SetupPod activation sequence.
@@ -27,8 +7,8 @@ import Foundation
 /// (e.g., "8" for DIA) or raw binary bytes (e.g., 0x0003000E00 for TDI).
 ///
 struct O5AidCommands {
-
     // MARK: - AID Payload Construction
+
     //
     // AID commands use plain ASCII key-value format with NO length prefix.
     // This is different from standard Omnipod SLPE (S0.0=...,G0.0) which uses
@@ -81,13 +61,13 @@ struct O5AidCommands {
     /// Returns the expected response prefix for a SET+GET or GET-only command.
     /// Response format: `[feature].[attribute]=`
     static func responsePrefix(feature: String, attribute: String) -> String {
-        return "\(feature).\(attribute)="
+        "\(feature).\(attribute)="
     }
 
     /// Returns the expected response prefix for an Extended SET command.
     /// Response format: `ES[feature].[attribute]=`
     static func extendedSetResponsePrefix(feature: String, attribute: String) -> String {
-        return "ES\(feature).\(attribute)="
+        "ES\(feature).\(attribute)="
     }
 
     // MARK: - AID Command Definitions
@@ -95,7 +75,7 @@ struct O5AidCommands {
     /// Command 1: UTC time setting.
     /// Sends: `SE255.2=[unix_timestamp]`
     /// Response: `ES255.2=0`
-    struct UtcCommand {
+    enum UtcCommand {
         static let feature = "255"
         static let attribute = "2"
 
@@ -115,7 +95,7 @@ struct O5AidCommands {
     /// Response: `3.2=` + [5 binary bytes echoed back]
     ///
     /// The 5 data bytes: version(00), therapy type(03), delivery mode(00), bolus speed(0E=14U TDI), reserved(00).
-    struct TdiCommand {
+    enum TdiCommand {
         static let feature = "3"
         static let attribute = "2"
         static let defaultBinaryData = Data([0x00, 0x03, 0x00, 0x0E, 0x00])
@@ -133,17 +113,17 @@ struct O5AidCommands {
     ///
     /// The 0x00C0 prefix = 192 = 48 * 4 (byte count of the 48 target entries).
     /// Each target is a 4-byte big-endian value in mg/dL (e.g., 0x0000006E = 110).
-    struct TargetBgProfileCommand {
+    enum TargetBgProfileCommand {
         static let feature = "3"
         static let attribute = "1"
-        static let defaultTargetMgdl: UInt32 = 110  // 0x006e
+        static let defaultTargetMgdl: UInt32 = 110 // 0x006e
 
         static func payload(targets: [UInt32]? = nil) -> (data: Data, responsePrefix: String) {
             let targetValues = targets ?? Array(repeating: defaultTargetMgdl, count: 48)
             assert(targetValues.count == 48, "Target BG profile must have exactly 48 half-hour entries")
 
             var binaryData = Data()
-            let totalBytes = UInt16(targetValues.count * 4)  // 192 = 0x00C0
+            let totalBytes = UInt16(targetValues.count * 4) // 192 = 0x00C0
             binaryData.appendBigEndian(totalBytes)
             for target in targetValues {
                 binaryData.appendBigEndian(target)
@@ -159,7 +139,7 @@ struct O5AidCommands {
     /// Response: `3.9=8`
     ///
     /// Value "8" likely represents 8 half-hours = 4 hours DIA, but could be the raw value.
-    struct DiaCommand {
+    enum DiaCommand {
         static let feature = "3"
         static let attribute = "9"
         static let defaultValue = "8"
@@ -176,7 +156,7 @@ struct O5AidCommands {
     /// Response: `3.7=3670015`
     ///
     /// The value `3670015` is a bitfield or composite config value for CGM/EGV settings.
-    struct EgvCommand {
+    enum EgvCommand {
         static let feature = "3"
         static let attribute = "7"
         static let defaultValue = "3670015"
@@ -194,7 +174,7 @@ struct O5AidCommands {
     ///
     /// The 0x00A8 prefix = 168 = 24 * 7 (byte count of the 24 history records).
     /// Each record is 7 bytes. For initial setup with no history, all records are zeros.
-    struct AlgorithmInsulinHistoryCommand {
+    enum AlgorithmInsulinHistoryCommand {
         static let feature = "2"
         static let attribute = "1"
         static let recordsPerBatch = 24
@@ -210,7 +190,7 @@ struct O5AidCommands {
                 recordData = Array(repeating: Data(count: bytesPerRecord), count: recordsPerBatch)
             }
 
-            let totalBytes = UInt16(recordsPerBatch * bytesPerRecord)  // 168 = 0x00A8
+            let totalBytes = UInt16(recordsPerBatch * bytesPerRecord) // 168 = 0x00A8
             var binaryData = Data()
             binaryData.appendBigEndian(totalBytes)
             for record in recordData {
@@ -228,7 +208,7 @@ struct O5AidCommands {
     /// Response: `3.11=[fixed 30-byte payload: 2-byte length + 28-byte body]`
     ///
     /// Used for Gen1 pods (firmware majorVersion < 7).
-    struct AidPodStatusCommand {
+    enum AidPodStatusCommand {
         static let feature = "3"
         static let attribute = "11"
 
@@ -244,7 +224,7 @@ struct O5AidCommands {
     /// Response: `3.12=[29 bytes of AID status data]`
     ///
     /// Used for non-Gen1 pods (firmware majorVersion >= 7).
-    struct UnifiedAidPodStatusCommand {
+    enum UnifiedAidPodStatusCommand {
         static let feature = "3"
         static let attribute = "12"
 

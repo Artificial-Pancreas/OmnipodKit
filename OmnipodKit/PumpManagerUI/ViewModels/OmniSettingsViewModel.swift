@@ -1,18 +1,8 @@
-//
-//  OmniSettingsViewModel.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/PumpManagerUI/ViewModels/OmniSettingsViewModel.swift
-//  Created by Pete Schwamb on 3/8/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
+import Combine
+import HealthKit
 import LoopKit
 import LoopKitUI
-import HealthKit
-import Combine
-
+import SwiftUI
 
 enum OmniSettingsViewAlert {
     case suspendError(Error)
@@ -33,7 +23,6 @@ struct OmniSettingsNotice {
 }
 
 class OmniSettingsViewModel: ObservableObject {
-
     @Published var lifeState: PodLifeState
 
     @Published var activatedAt: Date?
@@ -84,8 +73,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     var serviceTimeRemainingString: String? {
         guard let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
-           let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining) else
-        {
+              let serviceTimeRemainingString = timeRemainingFormatter.string(from: serviceTimeRemaining)
+        else {
             return nil
         }
         return serviceTimeRemainingString
@@ -93,15 +82,15 @@ class OmniSettingsViewModel: ObservableObject {
 
     // Expiration reminder date for current pod
     @Published var expirationReminderDate: Date?
-    
+
     var allowedScheduledReminderDates: [Date]? {
-        return pumpManager.allowedExpirationReminderDates
+        pumpManager.allowedExpirationReminderDates
     }
 
     // Hours before expiration
     @Published var expirationReminderDefault: Int {
         didSet {
-            self.pumpManager.defaultExpirationReminderOffset = .hours(Double(expirationReminderDefault))
+            pumpManager.defaultExpirationReminderOffset = .hours(Double(expirationReminderDefault))
         }
     }
 
@@ -145,33 +134,49 @@ class OmniSettingsViewModel: ObservableObject {
 
     @Published var previousPodDetails: PodDetails?
 
-
     var timeZone: TimeZone {
-        return pumpManager.status.timeZone
+        pumpManager.status.timeZone
     }
 
     var viewTitle: String {
-        return pumpManager.podType.description // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
+        pumpManager.podType.description // "Omnipod Classic", "Omnipod DASH" or "Omnipod 5"
     }
 
     var isClockOffset: Bool {
-        return pumpManager.isClockOffset
+        pumpManager.isClockOffset
     }
 
     var isPodDataStale: Bool {
-        return Date().timeIntervalSince(pumpManager.lastSync ?? .distantPast) > .minutes(12)
+        Date().timeIntervalSince(pumpManager.lastSync ?? .distantPast) > .minutes(12)
     }
 
     var recoveryText: String? {
         if case .fault = podCommState {
-            return LocalizedString("⚠️ Insulin delivery stopped. Change Pod now.", comment: "The action string on pod status page when pod faulted")
-        } else if podOk && isPodDataStale {
-            return LocalizedString("Make sure your phone and pod are close to each other. If communication issues persist, move to a new area.", comment: "The action string on pod status page when pod data is stale")
-        } else if let serviceTimeRemaining = pumpManager.podServiceTimeRemaining, serviceTimeRemaining <= Pod.serviceDuration - Pod.nominalPodLife {
+            return LocalizedString(
+                "⚠️ Insulin delivery stopped. Change Pod now.",
+                comment: "The action string on pod status page when pod faulted"
+            )
+        } else if podOk, isPodDataStale {
+            return LocalizedString(
+                "Make sure your phone and pod are close to each other. If communication issues persist, move to a new area.",
+                comment: "The action string on pod status page when pod data is stale"
+            )
+        } else if let serviceTimeRemaining = pumpManager.podServiceTimeRemaining,
+                  serviceTimeRemaining <= Pod.serviceDuration - Pod.nominalPodLife
+        {
             if let serviceTimeRemainingString = serviceTimeRemainingString {
-                return String(format: LocalizedString("Change Pod now. Insulin delivery will stop in %1$@ or when no more insulin remains.", comment: "Format string for the action string on pod status page when pod expired. (1: service time remaining)"), serviceTimeRemainingString)
+                return String(
+                    format: LocalizedString(
+                        "Change Pod now. Insulin delivery will stop in %1$@ or when no more insulin remains.",
+                        comment: "Format string for the action string on pod status page when pod expired. (1: service time remaining)"
+                    ),
+                    serviceTimeRemainingString
+                )
             } else {
-                return LocalizedString("Change Pod now. Insulin delivery will stop 8 hours after the Pod has expired or when no more insulin remains.", comment: "The action string on pod status page when pod expired")
+                return LocalizedString(
+                    "Change Pod now. Insulin delivery will stop 8 hours after the Pod has expired or when no more insulin remains.",
+                    comment: "The action string on pod status page when pod expired"
+                )
             }
         } else {
             return nil
@@ -182,7 +187,11 @@ class OmniSettingsViewModel: ObservableObject {
         if pumpManager.isClockOffset {
             return OmniSettingsNotice(
                 title: LocalizedString("Time Change Detected", comment: "title for time change detected notice"),
-                description: LocalizedString("The time on your pump is different from the current time. Your pump’s time controls your scheduled therapy settings. Scroll down to Pump Time row to review the time difference and configure your pump.", comment: "description for time change detected notice"))
+                description: LocalizedString(
+                    "The time on your pump is different from the current time. Your pump’s time controls your scheduled therapy settings. Scroll down to Pump Time row to review the time difference and configure your pump.",
+                    comment: "description for time change detected notice"
+                )
+            )
         } else {
             return nil
         }
@@ -190,9 +199,15 @@ class OmniSettingsViewModel: ObservableObject {
 
     var isScheduledBasal: Bool {
         switch basalDeliveryState {
-        case .active(_), .initiatingTempBasal:
+        case .active(_),
+             .initiatingTempBasal:
             return true
-        case .tempBasal(_), .cancelingTempBasal, .suspending, .suspended(_), .resuming, .none:
+        case .cancelingTempBasal,
+             .none,
+             .resuming,
+             .suspended(_),
+             .suspending,
+             .tempBasal:
             return false
         }
     }
@@ -229,7 +244,7 @@ class OmniSettingsViewModel: ObservableObject {
     }()
 
     var manualBasalTimeRemaining: TimeInterval? {
-        if case .tempBasal(let dose) = basalDeliveryState, !(dose.automatic ?? true) {
+        if case let .tempBasal(dose) = basalDeliveryState, !(dose.automatic ?? true) {
             let remaining = dose.endDate.timeIntervalSinceNow
             if remaining > 0 {
                 return remaining
@@ -248,7 +263,7 @@ class OmniSettingsViewModel: ObservableObject {
 
     init(pumpManager: OmniPumpManager) {
         self.pumpManager = pumpManager
-        
+
         lifeState = pumpManager.lifeState
         activatedAt = pumpManager.podActivatedAt
         expiresAt = pumpManager.expiresAt
@@ -276,7 +291,7 @@ class OmniSettingsViewModel: ObservableObject {
         pumpManager.setSyncSilencePodState(syncSilencePodState)
 
         // Trigger refresh
-        pumpManager.getPodStatus() { _ in }
+        pumpManager.getPodStatus { _ in }
 
         if pumpManager.podType.usesRileyLink {
             pumpManager.updateRLConnectionStatus()
@@ -285,7 +300,7 @@ class OmniSettingsViewModel: ObservableObject {
 
     func changeTimeZoneTapped() {
         synchronizingTime = true
-        pumpManager.setTime { (error) in
+        pumpManager.setTime { error in
             DispatchQueue.main.async {
                 self.synchronizingTime = false
                 self.lifeState = self.pumpManager.lifeState
@@ -297,13 +312,13 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func doneTapped() {
-        self.didFinish?()
+        didFinish?()
     }
 
     // Stop using currently selected pod type
     func stopUsingPodTypeTapped() {
         // Setting podType to unknownOmnipodType forces OmniUICoordinator to selectPodType
-        self.pumpManager.podType = unknownOmnipodType
+        pumpManager.podType = unknownOmnipodType
         DispatchQueue.main.async {
             self.didFinish?()
         }
@@ -312,7 +327,7 @@ class OmniSettingsViewModel: ObservableObject {
     // Stop using the OmnipodKit pumpManager altogether
     func stopUsingPumpTypeTapped() {
         // Prevent a later "Bluetooth use unsupported on this device" error
-        self.pumpManager.forgetBluetoothManager()
+        pumpManager.forgetBluetoothManager()
         pumpManager.notifyDelegateOfDeactivation {
             DispatchQueue.main.async {
                 self.didFinish?()
@@ -321,7 +336,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func suspendDelivery(duration: TimeInterval) {
-        pumpManager.suspendDelivery(withSuspendReminders: duration) { (error) in
+        pumpManager.suspendDelivery(withSuspendReminders: duration) { error in
             DispatchQueue.main.async {
                 if let error = error {
                     self.activeAlert = .suspendError(error)
@@ -331,7 +346,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func resumeDelivery() {
-        pumpManager.resumeDelivery { (error) in
+        pumpManager.resumeDelivery { error in
             DispatchQueue.main.async {
                 if let error = error {
                     self.activeAlert = .resumeError(error)
@@ -340,17 +355,21 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    func runTemporaryBasalProgram(unitsPerHour: Double, for duration: TimeInterval, completion: @escaping (PumpManagerError?) -> Void) {
+    func runTemporaryBasalProgram(
+        unitsPerHour: Double,
+        for duration: TimeInterval,
+        completion: @escaping (PumpManagerError?) -> Void
+    ) {
         pumpManager.enactTempBasal(unitsPerHour: unitsPerHour, for: duration, automatic: false, completion: completion)
     }
 
     func saveScheduledExpirationReminder(_ selectedDate: Date?, _ completion: @escaping (Error?) -> Void) {
         if let podExpiresAt = pumpManager.podExpiresAt {
-            var intervalBeforeExpiration : TimeInterval?
+            var intervalBeforeExpiration: TimeInterval?
             if let selectedDate = selectedDate {
                 intervalBeforeExpiration = .hours(round(podExpiresAt.timeIntervalSince(selectedDate).hours))
             }
-            pumpManager.updateExpirationReminder(intervalBeforeExpiration) { (error) in
+            pumpManager.updateExpirationReminder(intervalBeforeExpiration) { error in
                 DispatchQueue.main.async {
                     if error == nil {
                         self.expirationReminderDate = selectedDate
@@ -362,7 +381,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func saveLowReservoirReminder(_ selectedValue: Int, _ completion: @escaping (Error?) -> Void) {
-        pumpManager.updateLowReservoirReminder(selectedValue) { (error) in
+        pumpManager.updateLowReservoirReminder(selectedValue) { error in
             DispatchQueue.main.async {
                 if error == nil {
                     self.lowReservoirAlertValue = selectedValue
@@ -373,7 +392,7 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func saveDefaultLowReservoirReminder(_ selectedValue: Int, _ completion: @escaping (Error?) -> Void) {
-        pumpManager.updateLowReservoirDefaultReminder(selectedValue) { (error) in
+        pumpManager.updateLowReservoirDefaultReminder(selectedValue) { error in
             DispatchQueue.main.async {
                 if error == nil {
                     self.defaultLowReservoirAlertValue = selectedValue
@@ -406,11 +425,16 @@ class OmniSettingsViewModel: ObservableObject {
         }
     }
 
-    func setSilencePod(_ silencePodPreference: SilencePodPreference, silencePodEnd: Date?,
-                       _ completion: @escaping (_ error: LocalizedError?) -> Void)
+    func setSilencePod(
+        _ silencePodPreference: SilencePodPreference,
+        silencePodEnd: Date?,
+        _ completion: @escaping (_ error: LocalizedError?) -> Void
+    )
     {
-        pumpManager.setSilencePod(silencePod: silencePodPreference == .enabled,
-                                  silencePodEnd: silencePodEnd) { error in
+        pumpManager.setSilencePod(
+            silencePod: silencePodPreference == .enabled,
+            silencePodEnd: silencePodEnd
+        ) { error in
             DispatchQueue.main.async {
                 if error == nil {
                     self.silencePodPreference = silencePodPreference
@@ -426,14 +450,17 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     func didChangeInsulinType(_ newType: InsulinType?) {
-        self.pumpManager.insulinType = newType
+        pumpManager.insulinType = newType
     }
 
     var podOk: Bool {
         guard basalDeliveryState != nil else { return false }
 
         switch podCommState {
-        case .noPod, .activating, .deactivating, .fault:
+        case .activating,
+             .deactivating,
+             .fault,
+             .noPod:
             return false
         default:
             return true
@@ -441,16 +468,16 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var noPod: Bool {
-        return podCommState == .noPod
+        podCommState == .noPod
     }
 
     var diagnosticCommands: DiagnosticCommands {
-        return pumpManager
+        pumpManager
     }
 
     var podError: String? {
         switch podCommState {
-        case .fault(let status):
+        case let .fault(status):
             guard let status = status else {
                 return LocalizedString("Pod Fault", comment: "Error message for reservoir view during unspecified pod fault")
             }
@@ -459,12 +486,28 @@ class OmniSettingsViewModel: ObservableObject {
                 return LocalizedString("No Insulin", comment: "Error message for reservoir view when reservoir empty")
             case .exceededMaximumPodLife80Hrs:
                 return LocalizedString("Pod Expired", comment: "Error message for reservoir view when pod expired")
-            case .occluded, .occlusionCheckStartup1, .occlusionCheckStartup2, .occlusionCheckTimeouts1, .occlusionCheckTimeouts2, .occlusionCheckTimeouts3, .occlusionCheckPulseIssue, .occlusionCheckBolusProblem, .occlusionCheckAboveThreshold, .occlusionCheckValueTooHigh:
-                return LocalizedString("Pod Occlusion", comment: "Error message for reservoir view when pod occlusion checks failed")
+            case .occluded,
+                 .occlusionCheckAboveThreshold,
+                 .occlusionCheckBolusProblem,
+                 .occlusionCheckPulseIssue,
+                 .occlusionCheckStartup1,
+                 .occlusionCheckStartup2,
+                 .occlusionCheckTimeouts1,
+                 .occlusionCheckTimeouts2,
+                 .occlusionCheckTimeouts3,
+                 .occlusionCheckValueTooHigh:
+                return LocalizedString(
+                    "Pod Occlusion",
+                    comment: "Error message for reservoir view when pod occlusion checks failed"
+                )
             default:
-                return String(format: LocalizedString("Pod Fault %1$@",
-                                comment: "Error message for reservoir view during general pod fault: (1: fault code value)"),
-                                String(format: "%03u", status.faultEventCode.rawValue))
+                return String(
+                    format: LocalizedString(
+                        "Pod Fault %1$@",
+                        comment: "Error message for reservoir view during general pod fault: (1: fault code value)"
+                    ),
+                    String(format: "%03u", status.faultEventCode.rawValue)
+                )
             }
         case .active:
             if isPodDataStale {
@@ -482,17 +525,29 @@ class OmniSettingsViewModel: ObservableObject {
         case .aboveThreshold:
             let quantity = HKQuantity(unit: .internationalUnit(), doubleValue: Pod.maximumReservoirReading)
             let thresholdString = reservoirVolumeFormatter.string(from: quantity, includeUnit: false) ?? ""
-            let unitString = reservoirVolumeFormatter.localizedUnitStringWithPlurality(forValue: Pod.maximumReservoirReading, avoidLineBreaking: true)
-            return String(format: LocalizedString("%1$@+ %2$@", comment: "Format string for reservoir level above max measurable threshold. (1: measurable reservoir threshold) (2: units)"),
-                          thresholdString, unitString)
-        case .valid(let value):
+            let unitString = reservoirVolumeFormatter.localizedUnitStringWithPlurality(
+                forValue: Pod.maximumReservoirReading,
+                avoidLineBreaking: true
+            )
+            return String(
+                format: LocalizedString(
+                    "%1$@+ %2$@",
+                    comment: "Format string for reservoir level above max measurable threshold. (1: measurable reservoir threshold) (2: units)"
+                ),
+                thresholdString,
+                unitString
+            )
+        case let .valid(value):
             let quantity = HKQuantity(unit: .internationalUnit(), doubleValue: value)
             return reservoirVolumeFormatter.string(from: quantity) ?? ""
         }
     }
 
     var suspendResumeActionText: String {
-        let defaultText = LocalizedString("Suspend Insulin Delivery", comment: "Text for suspend resume button when insulin delivery active")
+        let defaultText = LocalizedString(
+            "Suspend Insulin Delivery",
+            comment: "Text for suspend resume button when insulin delivery active"
+        )
 
         guard podOk else {
             return defaultText
@@ -500,11 +555,20 @@ class OmniSettingsViewModel: ObservableObject {
 
         switch basalDeliveryState {
         case .suspending:
-            return LocalizedString("Suspending insulin delivery...", comment: "Text for suspend resume button when insulin delivery is suspending")
+            return LocalizedString(
+                "Suspending insulin delivery...",
+                comment: "Text for suspend resume button when insulin delivery is suspending"
+            )
         case .suspended:
-            return LocalizedString("Resume Insulin Delivery", comment: "Text for suspend resume button when insulin delivery is suspended")
+            return LocalizedString(
+                "Resume Insulin Delivery",
+                comment: "Text for suspend resume button when insulin delivery is suspended"
+            )
         case .resuming:
-            return LocalizedString("Resuming insulin delivery...", comment: "Text for suspend resume button when insulin delivery is resuming")
+            return LocalizedString(
+                "Resuming insulin delivery...",
+                comment: "Text for suspend resume button when insulin delivery is resuming"
+            )
         default:
             return defaultText
         }
@@ -512,7 +576,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     var basalTransitioning: Bool {
         switch basalDeliveryState {
-        case .suspending, .resuming:
+        case .resuming,
+             .suspending:
             return true
         default:
             return false
@@ -524,7 +589,8 @@ class OmniSettingsViewModel: ObservableObject {
             return Color.secondary
         }
         switch basalDeliveryState {
-        case .suspending, .resuming:
+        case .resuming,
+             .suspending:
             return Color.secondary
         case .suspended:
             return guidanceColors.warning
@@ -538,7 +604,8 @@ class OmniSettingsViewModel: ObservableObject {
             return Color.secondary
         }
         switch basalDeliveryState {
-        case .suspending, .resuming:
+        case .resuming,
+             .suspending:
             return Color.secondary
         default:
             return Color.accentColor
@@ -547,7 +614,8 @@ class OmniSettingsViewModel: ObservableObject {
 
     var isSuspendedOrResuming: Bool {
         switch basalDeliveryState {
-        case .suspended, .resuming:
+        case .resuming,
+             .suspended:
             return true
         default:
             return false
@@ -555,48 +623,45 @@ class OmniSettingsViewModel: ObservableObject {
     }
 
     var allowedTempBasalRates: [Double] {
-        return Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maxBasalRateUnitsPerHour }
+        Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maxBasalRateUnitsPerHour }
     }
 
     var podType: PodType {
-        return pumpManager.podType
+        pumpManager.podType
     }
-
 }
-
 
 extension OmniSettingsViewModel: PodStateObserver {
     func podStateDidUpdate(_ state: PodState?) {
-        lifeState = self.pumpManager.lifeState
-        basalDeliveryRate = self.pumpManager.basalDeliveryRate
-        reservoirLevel = self.pumpManager.reservoirLevel
+        lifeState = pumpManager.lifeState
+        basalDeliveryRate = pumpManager.basalDeliveryRate
+        reservoirLevel = pumpManager.reservoirLevel
         activatedAt = state?.activatedAt
         expiresAt = state?.expiresAt
-        reservoirLevelHighlightState = self.pumpManager.reservoirLevelHighlightState
-        expirationReminderDate = self.pumpManager.scheduledExpirationReminder
-        podCommState = self.pumpManager.podCommState
-        beepPreference = self.pumpManager.beepPreference
-        insulinType = self.pumpManager.insulinType
-        podDetails = self.pumpManager.podDetails
-        previousPodDetails = self.pumpManager.previousPodDetails
+        reservoirLevelHighlightState = pumpManager.reservoirLevelHighlightState
+        expirationReminderDate = pumpManager.scheduledExpirationReminder
+        podCommState = pumpManager.podCommState
+        beepPreference = pumpManager.beepPreference
+        insulinType = pumpManager.insulinType
+        podDetails = pumpManager.podDetails
+        previousPodDetails = pumpManager.previousPodDetails
     }
- 
+
     func podConnectionStateDidChange(isConnected: Bool) {
-        self.hasConnection = isConnected
+        hasConnection = isConnected
     }
 }
 
-
 extension OmniSettingsViewModel: PumpManagerStatusObserver {
-    func pumpManager(_ pumpManager: PumpManager, didUpdate status: PumpManagerStatus, oldStatus: PumpManagerStatus) {
-        basalDeliveryState = self.pumpManager.status.basalDeliveryState
+    func pumpManager(_: PumpManager, didUpdate _: PumpManagerStatus, oldStatus _: PumpManagerStatus) {
+        basalDeliveryState = pumpManager.status.basalDeliveryState
     }
 }
 
 extension OmniPumpManager {
     var lifeState: PodLifeState {
         switch podCommState {
-        case .fault(let status):
+        case let .fault(status):
             guard let status = status else {
                 return .expired
             }
@@ -623,7 +688,10 @@ extension OmniPumpManager {
             if let podTimeRemaining = podTimeRemaining {
                 if podTimeRemaining > 0 {
                     let podTimeUntilReminder = podTimeRemaining - (state.scheduledExpirationReminderOffset ?? 0)
-                    return .timeRemaining(timeUntilExpiration: podTimeRemaining, timeUntilExpirationReminder: podTimeUntilReminder)
+                    return .timeRemaining(
+                        timeUntilExpiration: podTimeRemaining,
+                        timeUntilExpirationReminder: podTimeUntilReminder
+                    )
                 } else {
                     return .expired
                 }
@@ -634,7 +702,7 @@ extension OmniPumpManager {
     }
 
     var basalDeliveryRate: Double? {
-        guard let podState = state.podState, !podState.isFaulted && !podState.isSuspended else {
+        guard let podState = state.podState, !podState.isFaulted, !podState.isSuspended else {
             return nil // no pod, pod is faulted, or pod is suspended
         }
         if let tempBasal = podState.unfinalizedTempBasal, !tempBasal.isFinished() {
@@ -647,7 +715,7 @@ extension OmniPumpManager {
         return state.basalSchedule.currentRate(using: calendar, at: dateGenerator())
     }
 
-    fileprivate var podServiceTimeRemaining : TimeInterval? {
+    fileprivate var podServiceTimeRemaining: TimeInterval? {
         guard let podTimeRemaining = podTimeRemaining, state.podState?.isFaulted == false else {
             return nil
         }
@@ -655,7 +723,7 @@ extension OmniPumpManager {
     }
 
     private func podDetails(fromPodState podState: PodState, andDeviceName deviceName: String?) -> PodDetails {
-        return PodDetails(
+        PodDetails(
             podType: podState.podType,
             address: podState.address,
             lotNumber: podState.lotNo,
@@ -685,11 +753,10 @@ extension OmniPumpManager {
         }
         return podDetails(fromPodState: podState, andDeviceName: nil)
     }
-
 }
 
 extension OmniPumpManager: DiagnosticCommands {
     func pumpManagerDetails() -> String {
-        return debugDescription
+        debugDescription
     }
 }

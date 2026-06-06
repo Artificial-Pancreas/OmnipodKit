@@ -1,12 +1,3 @@
-//
-//  MessageBlock.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/MessageBlock.swift
-//  Created by Pete Schwamb on 10/14/17.
-//  Copyright © 2017 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 enum MessageBlockError: Error {
@@ -17,23 +8,23 @@ enum MessageBlockError: Error {
 
 // See https://github.com/openaps/openomni/wiki/Message-Types
 enum MessageBlockType: UInt8 {
-    case versionResponse    = 0x01
-    case podInfoResponse    = 0x02
-    case setupPod           = 0x03
-    case errorResponse      = 0x06
-    case assignAddress      = 0x07
-    case faultConfig        = 0x08
-    case getStatus          = 0x0e
-    case acknowledgeAlert   = 0x11
+    case versionResponse = 0x01
+    case podInfoResponse = 0x02
+    case setupPod = 0x03
+    case errorResponse = 0x06
+    case assignAddress = 0x07
+    case faultConfig = 0x08
+    case getStatus = 0x0E
+    case acknowledgeAlert = 0x11
     case basalScheduleExtra = 0x13
-    case tempBasalExtra     = 0x16
-    case bolusExtra         = 0x17
-    case configureAlerts    = 0x19
-    case setInsulinSchedule = 0x1a
-    case deactivatePod      = 0x1c
-    case statusResponse     = 0x1d
-    case beepConfig         = 0x1e
-    case cancelDelivery     = 0x1f
+    case tempBasalExtra = 0x16
+    case bolusExtra = 0x17
+    case configureAlerts = 0x19
+    case setInsulinSchedule = 0x1A
+    case deactivatePod = 0x1C
+    case statusResponse = 0x1D
+    case beepConfig = 0x1E
+    case cancelDelivery = 0x1F
 
     var blockType: MessageBlock.Type {
         switch self {
@@ -79,9 +70,9 @@ protocol MessageBlock {
     init(encodedData: Data) throws
 
     var blockType: MessageBlockType { get }
-    var data: Data { get  }
+    var data: Data { get }
 }
 
-protocol NonceResyncableMessageBlock : MessageBlock {
+protocol NonceResyncableMessageBlock: MessageBlock {
     var nonce: UInt32 { get set }
 }

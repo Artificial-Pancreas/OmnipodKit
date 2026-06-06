@@ -1,15 +1,5 @@
-//
-//  DeactivatePodViewModel.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/PumpManagerUI/ViewModels/DeactivatePodViewModel.swift
-//  Created by Pete Schwamb on 3/9/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 import LoopKitUI
-
 
 protocol PodDeactivater {
     func deactivatePod(completion: @escaping (OmniPumpManagerError?) -> Void)
@@ -18,32 +8,42 @@ protocol PodDeactivater {
 
 extension OmniPumpManager: PodDeactivater {}
 
-
 class DeactivatePodViewModel: ObservableObject, Identifiable {
-    
     enum DeactivatePodViewModelState {
         case active
         case deactivating
         case resultError(DeactivationError)
         case finished
-        
+
         var actionButtonAccessibilityLabel: String {
             switch self {
             case .active:
-                return LocalizedString("Deactivate Pod", comment: "Deactivate pod action button accessibility label while ready to deactivate")
+                return LocalizedString(
+                    "Deactivate Pod",
+                    comment: "Deactivate pod action button accessibility label while ready to deactivate"
+                )
             case .deactivating:
-                return LocalizedString("Deactivating.", comment: "Deactivate pod action button accessibility label while deactivating")
-            case .resultError(let error):
+                return LocalizedString(
+                    "Deactivating.",
+                    comment: "Deactivate pod action button accessibility label while deactivating"
+                )
+            case let .resultError(error):
                 return String(format: "%@ %@", error.errorDescription ?? "", error.recoverySuggestion ?? "")
             case .finished:
-                return LocalizedString("Pod deactivated successfully. Continue.", comment: "Deactivate pod action button accessibility label when deactivation complete")
+                return LocalizedString(
+                    "Pod deactivated successfully. Continue.",
+                    comment: "Deactivate pod action button accessibility label when deactivation complete"
+                )
             }
         }
 
         var actionButtonDescription: String {
             switch self {
             case .active:
-                return LocalizedString("Slide to Deactivate Pod", comment: "Action button description for deactivate while pod still active")
+                return LocalizedString(
+                    "Slide to Deactivate Pod",
+                    comment: "Action button description for deactivate while pod still active"
+                )
             case .resultError:
                 return LocalizedString("Retry", comment: "Action button description for deactivate after failed attempt")
             case .deactivating:
@@ -52,7 +52,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                 return LocalizedString("Continue", comment: "Action button description when deactivated")
             }
         }
-        
+
         var actionButtonStyle: ActionButton.ButtonType {
             switch self {
             case .active:
@@ -62,10 +62,10 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
             }
         }
 
-        
         var progressState: ProgressIndicatorState {
             switch self {
-            case .active, .resultError:
+            case .active,
+                 .resultError:
                 return .hidden
             case .deactivating:
                 return .indeterminantProgress
@@ -73,7 +73,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                 return .completed
             }
         }
-        
+
         var showProgressDetail: Bool {
             switch self {
             case .active:
@@ -82,7 +82,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                 return true
             }
         }
-        
+
         var isProcessing: Bool {
             switch self {
             case .deactivating:
@@ -91,19 +91,18 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                 return false
             }
         }
-        
+
         var isFinished: Bool {
             if case .finished = self {
                 return true
             }
             return false
         }
-
     }
-    
+
     @Published var state: DeactivatePodViewModelState = .active
 
-    var stateNeedsDeliberateUserAcceptance : Bool {
+    var stateNeedsDeliberateUserAcceptance: Bool {
         switch state {
         case .active:
             true
@@ -113,16 +112,16 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
     }
 
     var error: DeactivationError? {
-        if case .resultError(let error) = self.state {
+        if case let .resultError(error) = state {
             return error
         }
         return nil
     }
 
     var didFinish: (() -> Void)?
-    
+
     var didCancel: (() -> Void)?
-    
+
     var podDeactivator: PodDeactivater
 
     var podAttachedToBody: Bool
@@ -130,12 +129,13 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
     var instructionText: String
 
     init(podDeactivator: PodDeactivater, podAttachedToBody: Bool, fault: DetailedStatus?) {
-
         var text: String = ""
         if let faultEventCode = fault?.faultEventCode {
             let notificationString = faultEventCode.notificationTitle
             switch faultEventCode.faultType {
-            case .exceededMaximumPodLife80Hrs, .reservoirEmpty, .occluded:
+            case .exceededMaximumPodLife80Hrs,
+                 .occluded,
+                 .reservoirEmpty:
                 // Just prepend a simple sentence with the notification string for these faults.
                 // Other occluded related 0x6? faults will be treated as a general pod error as per the PDM.
                 text = String(format: "%@. ", notificationString)
@@ -145,8 +145,12 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
                     text = String(format: "⚠️ %1$@\n", PodCommsError.activationTimeExceeded.errorDescription!)
                 } else {
                     // Display the fault code value, the fault description and the pdmRef string for other errors.
-                    text = String(format: "⚠️ %1$@ (%2$@)\n%3$@\n", notificationString,
-                        String(format: "0x%02X", faultEventCode.rawValue), faultEventCode.faultDescription)
+                    text = String(
+                        format: "⚠️ %1$@ (%2$@)\n%3$@\n",
+                        notificationString,
+                        String(format: "0x%02X", faultEventCode.rawValue),
+                        faultEventCode.faultDescription
+                    )
                     if let pdmRef = fault?.pdmRef {
                         text += LocalizedString("Ref: ", comment: "PDM Ref string line") + pdmRef + "\n\n"
                     }
@@ -155,22 +159,28 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
         }
 
         if podAttachedToBody {
-            text += LocalizedString("Please deactivate the pod. When deactivation is complete, you may remove it and pair a new pod.", comment: "Instructions for deactivate pod when pod is on body")
+            text += LocalizedString(
+                "Please deactivate the pod. When deactivation is complete, you may remove it and pair a new pod.",
+                comment: "Instructions for deactivate pod when pod is on body"
+            )
         } else {
-            text += LocalizedString("Please deactivate the pod. When deactivation is complete, you may pair a new pod.", comment: "Instructions for deactivate pod when pod not on body")
+            text += LocalizedString(
+                "Please deactivate the pod. When deactivation is complete, you may pair a new pod.",
+                comment: "Instructions for deactivate pod when pod not on body"
+            )
         }
 
         self.podDeactivator = podDeactivator
         self.podAttachedToBody = podAttachedToBody
-        self.instructionText = text
+        instructionText = text
     }
-    
+
     func continueButtonTapped() {
         if case .finished = state {
             didFinish?()
         } else {
-            self.state = .deactivating
-            podDeactivator.deactivatePod { (error) in
+            state = .deactivating
+            podDeactivator.deactivatePod { error in
                 DispatchQueue.main.async {
                     if let error = error {
                         self.state = .resultError(DeactivationError.OmniPumpManagerError(error))
@@ -181,7 +191,7 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
             }
         }
     }
-    
+
     func discardPod(navigateOnCompletion: Bool = true) {
         podDeactivator.forgetPod {
             DispatchQueue.main.async {
@@ -195,19 +205,22 @@ class DeactivatePodViewModel: ObservableObject, Identifiable {
     }
 }
 
-enum DeactivationError : LocalizedError {
+enum DeactivationError: LocalizedError {
     case OmniPumpManagerError(OmniPumpManagerError)
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .OmniPumpManagerError:
-            return LocalizedString("There was a problem communicating with the pod. If this problem persists, tap Discard Pod. You can then activate a new Pod.", comment: "Format string for recovery suggestion during deactivate pod.")
+            return LocalizedString(
+                "There was a problem communicating with the pod. If this problem persists, tap Discard Pod. You can then activate a new Pod.",
+                comment: "Format string for recovery suggestion during deactivate pod."
+            )
         }
     }
-    
+
     var errorDescription: String? {
         switch self {
-        case .OmniPumpManagerError(let error):
+        case let .OmniPumpManagerError(error):
             return error.errorDescription
         }
     }

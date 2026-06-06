@@ -1,12 +1,3 @@
-//
-//  PodDoseProgressEstimator.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/PodDoseProgressEstimator.swift
-//  Created by Pete Schwamb on 3/12/19.
-//  Copyright © 2019 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 import LoopKit
 
@@ -15,11 +6,12 @@ open class PodDoseProgressEstimator: DoseProgressTimerEstimator {
 
     weak var pumpManager: PumpManager?
 
-    public override var progress: DoseProgress {
+    override public var progress: DoseProgress {
         let elapsed = -dose.startDate.timeIntervalSinceNow
         let duration = dose.endDate.timeIntervalSince(dose.startDate)
         let percentComplete = min(elapsed / duration, 1)
-        let delivered = pumpManager?.roundToSupportedBolusVolume(units: percentComplete * dose.programmedUnits) ?? dose.programmedUnits
+        let delivered = pumpManager?.roundToSupportedBolusVolume(units: percentComplete * dose.programmedUnits) ?? dose
+            .programmedUnits
         return DoseProgress(deliveredUnits: delivered, percentComplete: percentComplete)
     }
 
@@ -29,13 +21,14 @@ open class PodDoseProgressEstimator: DoseProgressTimerEstimator {
         super.init(reportingQueue: reportingQueue)
     }
 
-    public override func timerParameters() -> (delay: TimeInterval, repeating: TimeInterval) {
+    override public func timerParameters() -> (delay: TimeInterval, repeating: TimeInterval) {
         let timeSinceStart = dose.startDate.timeIntervalSinceNow
         let timeBetweenPulses: TimeInterval
         switch dose.type {
         case .bolus:
             timeBetweenPulses = Pod.pulseSize / Pod.bolusDeliveryRate
-        case .basal, .tempBasal:
+        case .basal,
+             .tempBasal:
             timeBetweenPulses = Pod.pulseSize / (dose.unitsPerHour / TimeInterval(hours: 1))
         default:
             fatalError("Can only estimate progress on basal rates or boluses.")

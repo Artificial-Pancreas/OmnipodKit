@@ -5,9 +5,9 @@
 //  Created by Joe Moran on 3/25/25.
 //  Copyright © 2025 LoopKit Authors. All rights reserved.
 //
-import Foundation
-import CryptoSwift
 import CryptoKit
+import CryptoSwift
+import Foundation
 import os.log
 
 class O5LTKExchanger {
@@ -18,15 +18,15 @@ class O5LTKExchanger {
         return id
     }()
 
-    static private let SP1 = "SP1="
-    static private let SP2 = ",SP2="
-    static private let SPS0 = "SPS0="
-    static private let SPS1 = "SPS1="
-    static private let SPS2_1 = "SPS2.1="
-    static private let SPS2 = "SPS2="
-    static private let SP0GP0 = "SP0,GP0"
-    static private let P0 = "P0="
-    static private let EXPECTED_P0_PAYLOAD = Data([0xa5]) // unknown meaning
+    private static let SP1 = "SP1="
+    private static let SP2 = ",SP2="
+    private static let SPS0 = "SPS0="
+    private static let SPS1 = "SPS1="
+    private static let SPS2_1 = "SPS2.1="
+    private static let SPS2 = "SPS2="
+    private static let SP0GP0 = "SP0,GP0"
+    private static let P0 = "P0="
+    private static let EXPECTED_P0_PAYLOAD = Data([0xA5]) // unknown meaning
 
     private let manager: PeripheralManager
     private let ids: Ids
@@ -40,8 +40,12 @@ class O5LTKExchanger {
     init(manager: PeripheralManager, ids: Ids) throws {
         self.manager = manager
         self.ids = ids
-        self.certStore = try O5CertificateStore(controllerId: ids.myIdAddr)
-        self.keyExchange = try O5KeyExchange(P256KeyGenerator(), OmniRandomByteGenerator(), controllerIdData: certStore.controllerIdData)
+        certStore = try O5CertificateStore(controllerId: ids.myIdAddr)
+        keyExchange = try O5KeyExchange(
+            P256KeyGenerator(),
+            OmniRandomByteGenerator(),
+            controllerIdData: certStore.controllerIdData
+        )
     }
 
     func o5negotiateLTK() throws -> PairResult {
@@ -57,12 +61,15 @@ class O5LTKExchanger {
     }
 
     private func o5negotiateLTKBody() throws -> PairResult {
-
         log.default("=== O5 Pairing Start === myId=0x%{public}x podId=0x%{public}x", ids.myId.toUInt32(), ids.podId.toUInt32())
         let maxWriteNoResp = manager.peripheral.maximumWriteValueLength(for: .withoutResponse)
         let maxWriteWithResp = manager.peripheral.maximumWriteValueLength(for: .withResponse)
-        log.bleDebug("maxWriteValue at pairing start: withoutResponse=%{public}d, withResponse=%{public}d, packetMaxPayloadSize=%{public}d",
-                    maxWriteNoResp, maxWriteWithResp, manager.profile.packetLayout.maxPayloadSize)
+        log.bleDebug(
+            "maxWriteValue at pairing start: withoutResponse=%{public}d, withResponse=%{public}d, packetMaxPayloadSize=%{public}d",
+            maxWriteNoResp,
+            maxWriteWithResp,
+            manager.profile.packetLayout.maxPayloadSize
+        )
         log.default("Sending SP1+SP2")
         let sp1sp2 = PairMessage(
             sequenceNumber: seq,
@@ -92,7 +99,11 @@ class O5LTKExchanger {
         try validatePodO5sps0(podSps0)
 
         // send and receive 80-byte SPS1 pairing messages
-        log.default("Sending SPS1 (80 bytes: pubkey=%{public}d + nonce=%{public}d)", keyExchange.pdmPublic.count, keyExchange.pdmNonce.count)
+        log.default(
+            "Sending SPS1 (80 bytes: pubkey=%{public}d + nonce=%{public}d)",
+            keyExchange.pdmPublic.count,
+            keyExchange.pdmNonce.count
+        )
         seq += 1
         let sps1 = PairMessage(
             sequenceNumber: seq,
@@ -125,7 +136,11 @@ class O5LTKExchanger {
             payloads: [sps2_1_payload]
         )
 
-        log.default("Sending SPS2.1 (%{public}d bytes)... peripheral state=%{public}@", sps2_1.message.payload.count, peripheralStateString())
+        log.default(
+            "Sending SPS2.1 (%{public}d bytes)... peripheral state=%{public}@",
+            sps2_1.message.payload.count,
+            peripheralStateString()
+        )
         let sps21SendStart = Date()
         try o5throwOnSendError(sps2_1.message, O5LTKExchanger.SPS2_1)
         log.default("SPS2.1 sent in %{public}.3f sec", Date().timeIntervalSince(sps21SendStart))
@@ -136,18 +151,31 @@ class O5LTKExchanger {
         let podSPS2_1: MessagePacket
         do {
             guard let resp = try manager.readMessagePacket() else {
-                log.error("SPS2.1 read returned nil after %{public}.3f sec. peripheral state=%{public}@", Date().timeIntervalSince(sps21ReadStart), peripheralStateString())
+                log.error(
+                    "SPS2.1 read returned nil after %{public}.3f sec. peripheral state=%{public}@",
+                    Date().timeIntervalSince(sps21ReadStart),
+                    peripheralStateString()
+                )
                 logPeripheralState("SPS2.1")
                 throw PodProtocolError.pairingException("Could not read SPS2.1")
             }
             podSPS2_1 = resp
             log.default("SPS2.1 response read in %{public}.3f sec", Date().timeIntervalSince(sps21ReadStart))
         } catch {
-            log.error("SPS2.1 read threw error after %{public}.3f sec: %{public}@. peripheral state=%{public}@", Date().timeIntervalSince(sps21ReadStart), String(describing: error), peripheralStateString())
+            log.error(
+                "SPS2.1 read threw error after %{public}.3f sec: %{public}@. peripheral state=%{public}@",
+                Date().timeIntervalSince(sps21ReadStart),
+                String(describing: error),
+                peripheralStateString()
+            )
             logPeripheralState("SPS2.1-exception")
             throw error
         }
-        log.default("SPS2.1 response received (%{public}d bytes). peripheral state=%{public}@", podSPS2_1.payload.count, peripheralStateString())
+        log.default(
+            "SPS2.1 response received (%{public}d bytes). peripheral state=%{public}@",
+            podSPS2_1.payload.count,
+            peripheralStateString()
+        )
         try o5validatePodSps2_1(podSPS2_1)
         log.default("=== SPS2.1 PHASE COMPLETE ===")
 
@@ -192,7 +220,12 @@ class O5LTKExchanger {
             throw PodProtocolError.invalidLTKKey("Invalid Key, got \(String(data: keyExchange.ltk, encoding: .utf8) ?? "")")
         }
 
-        log.default("=== O5 Pairing Complete === LTK: %{public}@, address: 0x%{public}x, seq: %{public}d", keyExchange.ltk.hexadecimalString, ids.podId.toUInt32(), seq)
+        log.default(
+            "=== O5 Pairing Complete === LTK: %{public}@, address: 0x%{public}x, seq: %{public}d",
+            keyExchange.ltk.hexadecimalString,
+            ids.podId.toUInt32(),
+            seq
+        )
         return PairResult(
             ltk: keyExchange.ltk,
             address: ids.podId.toUInt32(),
@@ -201,20 +234,36 @@ class O5LTKExchanger {
     }
 
     private func o5throwOnSendError(_ msg: MessagePacket, _ msgType: String) throws {
-        log.default("[o5throwOnSendError] %{public}@: begin (payload %{public}d bytes, seq %{public}d). peripheral state=%{public}@",
-                    msgType, msg.payload.count, seq, peripheralStateString())
+        log.default(
+            "[o5throwOnSendError] %{public}@: begin (payload %{public}d bytes, seq %{public}d). peripheral state=%{public}@",
+            msgType,
+            msg.payload.count,
+            seq,
+            peripheralStateString()
+        )
         let result = manager.sendMessagePacket(msg)
         switch result {
         case .sentWithAcknowledgment:
-            log.default("[o5throwOnSendError] %{public}@: sentWithAcknowledgment (SUCCESS received). peripheral state=%{public}@",
-                        msgType, peripheralStateString())
-        case .sentWithError(let error):
-            log.error("[o5throwOnSendError] %{public}@: sentWithError — data was sent but error occurred: %{public}@. peripheral state=%{public}@",
-                      msgType, String(describing: error), peripheralStateString())
+            log.default(
+                "[o5throwOnSendError] %{public}@: sentWithAcknowledgment (SUCCESS received). peripheral state=%{public}@",
+                msgType,
+                peripheralStateString()
+            )
+        case let .sentWithError(error):
+            log.error(
+                "[o5throwOnSendError] %{public}@: sentWithError — data was sent but error occurred: %{public}@. peripheral state=%{public}@",
+                msgType,
+                String(describing: error),
+                peripheralStateString()
+            )
             throw PodProtocolError.pairingException("Send \(msgType) failure (seq \(seq), \(msg.payload.count) bytes): \(result)")
-        case .unsentWithError(let error):
-            log.error("[o5throwOnSendError] %{public}@: unsentWithError — data was NOT sent: %{public}@. peripheral state=%{public}@",
-                      msgType, String(describing: error), peripheralStateString())
+        case let .unsentWithError(error):
+            log.error(
+                "[o5throwOnSendError] %{public}@: unsentWithError — data was NOT sent: %{public}@. peripheral state=%{public}@",
+                msgType,
+                String(describing: error),
+                peripheralStateString()
+            )
             throw PodProtocolError.pairingException("Send \(msgType) failure (seq \(seq), \(msg.payload.count) bytes): \(result)")
         }
     }
@@ -257,8 +306,14 @@ class O5LTKExchanger {
         } else {
             serviceCount = -1
         }
-        log.error("Read failed at %{public}@: peripheral state=%{public}@ (isConnected=%{public}@), central state=%{public}@, services=%{public}d",
-                  step, periState, String(describing: isConnected), centralState, serviceCount)
+        log.error(
+            "Read failed at %{public}@: peripheral state=%{public}@ (isConnected=%{public}@), central state=%{public}@, services=%{public}d",
+            step,
+            periState,
+            String(describing: isConnected),
+            centralState,
+            serviceCount
+        )
     }
 
     /// The 11-byte O5 SP2 payload is an encoded type 0 get pod status command for the requested id including the calculated CRC-16
@@ -296,7 +351,12 @@ class O5LTKExchanger {
         do {
             payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS0], msg.payload)[0]
         } catch {
-            log.error("SPS0 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@", msg.payload.count, msg.payload.hexadecimalString, String(describing: error))
+            log.error(
+                "SPS0 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@",
+                msg.payload.count,
+                msg.payload.hexadecimalString,
+                String(describing: error)
+            )
             throw error
         }
 
@@ -305,16 +365,19 @@ class O5LTKExchanger {
         }
 
         // Validate the structure: first byte 0x00, direction 0x00 (pod), algorithm 0x09
-        guard payload[0] == 0x00 && payload[1] == 0x00 && payload[2] == 0x09 else {
+        guard payload[0] == 0x00, payload[1] == 0x00, payload[2] == 0x09 else {
             throw PodProtocolError.pairingException("Unexpected SPS0 header bytes: \(payload.bytes.toHexString())")
         }
 
         // Verify CRC-16/XMODEM over the first 3 bytes
-        let header = payload.subdata(in: 0..<3)
+        let header = payload.subdata(in: 0 ..< 3)
         let expectedCRC = O5LTKExchanger.crc16XMODEM(header)
         let receivedCRC = payload[3...].toBigEndian(UInt16.self)
         guard expectedCRC == receivedCRC else {
-            throw PodProtocolError.pairingException("SPS0 CRC mismatch: expected \(String(format: "%04x", expectedCRC)), received \(String(format: "%04x", receivedCRC))")
+            throw PodProtocolError
+                .pairingException(
+                    "SPS0 CRC mismatch: expected \(String(format: "%04x", expectedCRC)), received \(String(format: "%04x", receivedCRC))"
+                )
         }
     }
 
@@ -327,10 +390,19 @@ class O5LTKExchanger {
         do {
             payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS1], msg.payload)[0]
         } catch {
-            log.error("SPS1 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@", msg.payload.count, msg.payload.hexadecimalString, String(describing: error))
+            log.error(
+                "SPS1 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@",
+                msg.payload.count,
+                msg.payload.hexadecimalString,
+                String(describing: error)
+            )
             throw error
         }
-        log.default("SPS1 payload from pod: %{public}d bytes (expected %{public}d)", payload.count, O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE)
+        log.default(
+            "SPS1 payload from pod: %{public}d bytes (expected %{public}d)",
+            payload.count,
+            O5KeyExchange.PUBLIC_KEY_SIZE + O5KeyExchange.NONCE_SIZE
+        )
 
         try keyExchange.o5updatePodPublicData(payload)
     }
@@ -353,8 +425,12 @@ class O5LTKExchanger {
         // Encrypt cert-only plaintext with AES-CCM: key=conf, nonce=13B, tag=8
         let nonce = keyExchange.getSPSNonce(direction: .write)
         let key = keyExchange.conf
-        log.info("Encrypting SPS2.1: key=%{public}@, nonce=%{public}@, plaintext=%{public}d bytes",
-                 key.bytes.toHexString(), nonce.bytes.toHexString(), certDER.count)
+        log.info(
+            "Encrypting SPS2.1: key=%{public}@, nonce=%{public}@, plaintext=%{public}d bytes",
+            key.bytes.toHexString(),
+            nonce.bytes.toHexString(),
+            certDER.count
+        )
         let encrypted: [UInt8]
         do {
             let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: certDER.count)
@@ -381,7 +457,12 @@ class O5LTKExchanger {
         do {
             payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS2_1], msg.payload)[0]
         } catch {
-            log.error("SPS2.1 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@", msg.payload.count, msg.payload.hexadecimalString, String(describing: error))
+            log.error(
+                "SPS2.1 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@",
+                msg.payload.count,
+                msg.payload.hexadecimalString,
+                String(describing: error)
+            )
             throw error
         }
         log.default("Received pod SPS2.1: %{public}d bytes", payload.count)
@@ -389,14 +470,25 @@ class O5LTKExchanger {
         // Decrypt the pod's SPS2.1 payload
         let nonce = keyExchange.getSPSNonce(direction: .read)
         let key = keyExchange.conf
-        log.info("Decrypting pod SPS2.1: key=%{public}@, nonce=%{public}@, ciphertext=%{public}d bytes", key.toHexString(), nonce.bytes.toHexString(), payload.count)
+        log.info(
+            "Decrypting pod SPS2.1: key=%{public}@, nonce=%{public}@, ciphertext=%{public}d bytes",
+            key.toHexString(),
+            nonce.bytes.toHexString(),
+            payload.count
+        )
         let decryptedPayload: Data
         do {
             let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: payload.count - 8)
             let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
             decryptedPayload = Data(try aes.decrypt(payload.bytes))
         } catch {
-            log.error("AES-CCM decrypt FAILED for pod SPS2.1: key=%{public}@, nonce=%{public}@, payload=%{public}d bytes, error=%{public}@", key.toHexString(), nonce.bytes.toHexString(), payload.count, String(describing: error))
+            log.error(
+                "AES-CCM decrypt FAILED for pod SPS2.1: key=%{public}@, nonce=%{public}@, payload=%{public}d bytes, error=%{public}@",
+                key.toHexString(),
+                nonce.bytes.toHexString(),
+                payload.count,
+                String(describing: error)
+            )
             throw PodProtocolError.pairingException("Pod SPS2.1 decrypt failed (\(payload.count) bytes): \(error)")
         }
         keyExchange.incrementNonce(direction: .read)
@@ -445,14 +537,21 @@ class O5LTKExchanger {
         plaintext.append(certDER)
         plaintext.append(signatureRaw)
 
-        log.default("SPS2: TLS cert (%{public}d bytes) + sig (64) = %{public}d plaintext",
-                    certDER.count, plaintext.count)
+        log.default(
+            "SPS2: TLS cert (%{public}d bytes) + sig (64) = %{public}d plaintext",
+            certDER.count,
+            plaintext.count
+        )
 
         // Encrypt with AES-CCM: key=conf, nonce=13B, tag=8
         let nonce = keyExchange.getSPSNonce(direction: .write)
         let key = keyExchange.conf
-        log.info("Encrypting SPS2: key=%{public}@, nonce=%{public}@, plaintext=%{public}d bytes",
-                 key.bytes.toHexString(), nonce.bytes.toHexString(), plaintext.count)
+        log.info(
+            "Encrypting SPS2: key=%{public}@, nonce=%{public}@, plaintext=%{public}d bytes",
+            key.bytes.toHexString(),
+            nonce.bytes.toHexString(),
+            plaintext.count
+        )
         let encrypted: [UInt8]
         do {
             let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: plaintext.count)
@@ -478,7 +577,12 @@ class O5LTKExchanger {
         do {
             payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.SPS2], msg.payload)[0]
         } catch {
-            log.error("SPS2 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@", msg.payload.count, msg.payload.hexadecimalString, String(describing: error))
+            log.error(
+                "SPS2 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@",
+                msg.payload.count,
+                msg.payload.hexadecimalString,
+                String(describing: error)
+            )
             throw error
         }
         log.default("Received pod SPS2: %{public}d bytes", payload.count)
@@ -486,14 +590,25 @@ class O5LTKExchanger {
         // Decrypt the pod's SPS2 payload
         let nonce = keyExchange.getSPSNonce(direction: .read)
         let key = keyExchange.conf
-        log.info("Decrypting pod SPS2: key=%{public}@, nonce=%{public}@, ciphertext=%{public}d bytes", key.toHexString(), nonce.bytes.toHexString(), payload.count)
+        log.info(
+            "Decrypting pod SPS2: key=%{public}@, nonce=%{public}@, ciphertext=%{public}d bytes",
+            key.toHexString(),
+            nonce.bytes.toHexString(),
+            payload.count
+        )
         let decryptedPayload: Data
         do {
             let ccm = CCM(iv: nonce.bytes, tagLength: 8, messageLength: payload.count - 8)
             let aes = try AES(key: key.bytes, blockMode: ccm, padding: .noPadding)
             decryptedPayload = Data(try aes.decrypt(payload.bytes))
         } catch {
-            log.error("AES-CCM decrypt FAILED for pod SPS2: key=%{public}@, nonce=%{public}@, payload=%{public}d bytes, error=%{public}@", key.toHexString(), nonce.bytes.toHexString(), payload.count, String(describing: error))
+            log.error(
+                "AES-CCM decrypt FAILED for pod SPS2: key=%{public}@, nonce=%{public}@, payload=%{public}d bytes, error=%{public}@",
+                key.toHexString(),
+                nonce.bytes.toHexString(),
+                payload.count,
+                String(describing: error)
+            )
             throw PodProtocolError.pairingException("Pod SPS2 decrypt failed (\(payload.count) bytes): \(error)")
         }
         keyExchange.incrementNonce(direction: .read)
@@ -504,10 +619,15 @@ class O5LTKExchanger {
         }
 
         let certLen = decryptedPayload.count - 64
-        let podCertDER = decryptedPayload.subdata(in: 0..<certLen)
-        let podSignature = decryptedPayload.subdata(in: certLen..<decryptedPayload.count)
+        let podCertDER = decryptedPayload.subdata(in: 0 ..< certLen)
+        let podSignature = decryptedPayload.subdata(in: certLen ..< decryptedPayload.count)
 
-        log.default("Pod SPS2 decrypted: %{public}d bytes (cert_DER=%{public}d + sig=%{public}d)", decryptedPayload.count, certLen, podSignature.count)
+        log.default(
+            "Pod SPS2 decrypted: %{public}d bytes (cert_DER=%{public}d + sig=%{public}d)",
+            decryptedPayload.count,
+            certLen,
+            podSignature.count
+        )
         log.info("Pod cert DER (%{public}d bytes): %{public}@", podCertDER.count, podCertDER.hexadecimalString)
         log.info("Pod signature (64 bytes): %{public}@", podSignature.hexadecimalString)
 
@@ -543,12 +663,21 @@ class O5LTKExchanger {
         do {
             payload = try StringLengthPrefixEncoding.parseKeys([O5LTKExchanger.P0], msg.payload)[0]
         } catch {
-            log.error("P0 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@", msg.payload.count, msg.payload.hexadecimalString, String(describing: error))
+            log.error(
+                "P0 parse failed. Raw payload (%{public}d bytes): %{public}@, error: %{public}@",
+                msg.payload.count,
+                msg.payload.hexadecimalString,
+                String(describing: error)
+            )
             throw error
         }
         log.debug("P0 payload from pod: %{public}@", payload.hexadecimalString)
         if payload != O5LTKExchanger.EXPECTED_P0_PAYLOAD {
-            log.error("Unexpected P0 payload: got %{public}@, expected %{public}@", payload.hexadecimalString, O5LTKExchanger.EXPECTED_P0_PAYLOAD.hexadecimalString)
+            log.error(
+                "Unexpected P0 payload: got %{public}@, expected %{public}@",
+                payload.hexadecimalString,
+                O5LTKExchanger.EXPECTED_P0_PAYLOAD.hexadecimalString
+            )
             throw PodProtocolError.pairingException("Received unexpected P0 payload: \(payload.hexadecimalString)")
         }
     }
@@ -561,7 +690,7 @@ class O5LTKExchanger {
         var crc: UInt16 = 0x0000
         for byte in data {
             crc ^= UInt16(byte) << 8
-            for _ in 0..<8 {
+            for _ in 0 ..< 8 {
                 if crc & 0x8000 != 0 {
                     crc = (crc << 1) ^ 0x1021
                 } else {

@@ -1,12 +1,3 @@
-//
-//  EapMessage.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/Bluetooth/Session/EapMessage.swift
-//  Created by Randall Knutson on 11/8/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 enum EapCode: UInt8 {
@@ -23,14 +14,13 @@ struct EapMessage {
     var attributes: [EapAkaAttribute]
 
     func toData() -> Data {
-
         var joinedAttributes = Data()
         for attribute in attributes {
             joinedAttributes.append(attribute.toData())
         }
 
         let attrSize = joinedAttributes.count
-        if (attrSize == 0) {
+        if attrSize == 0 {
             return Data([code.rawValue, identifier, 0x00, 0x04])
         }
         let totalSize = EapMessage.HEADER_SIZE + attrSize
@@ -60,18 +50,17 @@ struct EapMessage {
         let totalSize = (Int(payload[2]) << 8) | Int(payload[3])
         guard payload.count == totalSize else { throw MessageError.notEnoughData }
 
-
-        if (payload.count == 4) { // SUCCESS/FAILURE
+        if payload.count == 4 { // SUCCESS/FAILURE
             return EapMessage(
                 code: EapCode(rawValue: payload[0])!,
                 identifier: payload[1],
                 attributes: []
             )
         }
-        if (totalSize > 0 && payload[4] != AKA_PACKET_TYPE) {
+        if totalSize > 0, payload[4] != AKA_PACKET_TYPE {
             throw MessageError.validationFailed(description: "Invalid eap payload.")
         }
-        let attributesPayload = payload.subdata(in: 8..<totalSize)
+        let attributesPayload = payload.subdata(in: 8 ..< totalSize)
 
         return EapMessage(
             code: EapCode(rawValue: payload[0])!,
@@ -79,6 +68,5 @@ struct EapMessage {
             subType: payload[5],
             attributes: try EapAkaAttribute.parseAttributes(payload: attributesPayload)
         )
-        
     }
 }

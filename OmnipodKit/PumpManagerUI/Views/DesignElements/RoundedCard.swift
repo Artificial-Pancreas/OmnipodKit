@@ -7,15 +7,15 @@
 //
 import SwiftUI
 
-fileprivate let inset: CGFloat = 16
+private let inset: CGFloat = 16
 
 struct RoundedCardTitle: View {
     var title: String
-    
+
     init(_ title: String) {
         self.title = title
     }
-    
+
     var body: some View {
         Text(title)
             .font(.headline)
@@ -25,11 +25,11 @@ struct RoundedCardTitle: View {
 
 struct RoundedCardFooter: View {
     var text: String
-    
+
     init(_ text: String) {
         self.text = text
     }
-    
+
     var body: some View {
         Text(text)
             .font(.caption)
@@ -50,7 +50,7 @@ struct RoundedCardValueRow: View {
         self.highlightValue = highlightValue
         self.disclosure = disclosure
     }
-    
+
     var body: some View {
         HStack {
             Text(label)
@@ -78,7 +78,12 @@ struct RoundedCard<Content: View>: View {
     var footer: String?
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
-    init(title: String? = nil, footer: String? = nil, alignment: HorizontalAlignment = .leading, @ViewBuilder content: @escaping () -> Content? = { nil }) {
+    init(
+        title: String? = nil,
+        footer: String? = nil,
+        alignment: HorizontalAlignment = .leading,
+        @ViewBuilder content: @escaping () -> Content? = { nil }
+    ) {
         self.content = content
         self.alignment = alignment
         self.title = title
@@ -120,28 +125,27 @@ struct RoundedCard<Content: View>: View {
             }
         }
     }
-    
+
     var borderLine: some View {
         Rectangle().fill(Color(.quaternaryLabel))
             .frame(height: 0.5)
     }
-    
+
     private var isCompact: Bool {
-        return self.horizontalSizeClass == .compact
+        horizontalSizeClass == .compact
     }
-    
+
     private var titleInset: CGFloat {
-        return isCompact ? inset : 0
+        isCompact ? inset : 0
     }
-    
+
     private var padding: CGFloat {
-        return isCompact ? 0 : inset
+        isCompact ? 0 : inset
     }
 
     private var cornerRadius: CGFloat {
-        return isCompact ? 0 : 8
+        isCompact ? 0 : 8
     }
-
 }
 
 struct RoundedCardScrollView<Content: View>: View {
@@ -153,7 +157,7 @@ struct RoundedCardScrollView<Content: View>: View {
         self.title = title
         self.content = content
     }
-    
+
     var body: some View {
         ScrollView {
             if let title = title {
@@ -170,9 +174,8 @@ struct RoundedCardScrollView<Content: View>: View {
         }
         .background(Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all))
     }
-    
-    private var padding: CGFloat {
-        return self.horizontalSizeClass == .regular ? inset : 0
-    }
 
+    private var padding: CGFloat {
+        horizontalSizeClass == .regular ? inset : 0
+    }
 }

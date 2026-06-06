@@ -1,25 +1,15 @@
-//
-//  Id.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/Bluetooth/Id.swift
-//  Created by Randall Knutson on 8/5/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 // For O5, the controller ID comes from the TLS certificate's pdmid via O5CertificateStore.
 // For DASH, the controller ID is randomly generated with the pod type's topIdByte.
 
 class Id: Equatable {
-
     static func fromInt(_ v: Int) -> Id {
-        return Id(Data(bigEndian: v).subdata(in: 4..<8))
+        Id(Data(bigEndian: v).subdata(in: 4 ..< 8))
     }
 
     static func fromUInt32(_ v: UInt32) -> Id {
-        return Id(Data(bigEndian: v))
+        Id(Data(bigEndian: v))
     }
 
     let address: Data
@@ -35,17 +25,17 @@ class Id: Equatable {
     }
 
     func toInt64() -> Int64 {
-        return address.toBigEndian(Int64.self)
+        address.toBigEndian(Int64.self)
     }
 
     func toUInt32() -> UInt32 {
-        return address.toBigEndian(UInt32.self)
+        address.toBigEndian(UInt32.self)
     }
 
     // MARK: Comparable
 
     static func == (lhs: Id, rhs: Id) -> Bool {
-        return lhs.address == rhs.address
+        lhs.address == rhs.address
     }
 }
 
@@ -99,14 +89,14 @@ func nextIds(podType: PodType, controllerId: UInt32 = 0, podId: UInt32 = 0) -> (
 
 /// The podId's cycle between 3 #'s of +1,+2,+3,+1, ...
 /// This seems to be required for O5 pods, but not for DASH pods
-fileprivate let controllerIdBitMask: UInt32 = 0b11
+private let controllerIdBitMask: UInt32 = 0b11
 
 /// Returns the controllerId for the specified podId
 func controllerIdForPodId(podId: UInt32) -> UInt32 {
-    return podId & ~controllerIdBitMask
+    podId & ~controllerIdBitMask
 }
 
-fileprivate func nextPodId(lastPodId: UInt32) -> UInt32 {
+private func nextPodId(lastPodId: UInt32) -> UInt32 {
     if (lastPodId & controllerIdBitMask) == controllerIdBitMask {
         // start over at the base + 1
         return (lastPodId & ~controllerIdBitMask) + 1
@@ -119,6 +109,6 @@ fileprivate func nextPodId(lastPodId: UInt32) -> UInt32 {
 /// controllerId base to be used as the base for the rotating podId's (O5).
 /// The top byte will be set for the given pod type, the bottom 2 bits will be
 /// clear for use with the cycling 3 podIds, while the other 22 bits are random.
-fileprivate func createControllerId(podType: PodType) -> UInt32 {
-    return (UInt32(podType.topIdByte) << 24) | ((arc4random() & 0x003FFFFF) << 2)
+private func createControllerId(podType: PodType) -> UInt32 {
+    (UInt32(podType.topIdByte) << 24) | ((arc4random() & 0x003F_FFFF) << 2)
 }

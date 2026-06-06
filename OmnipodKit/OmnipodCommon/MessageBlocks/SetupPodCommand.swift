@@ -1,16 +1,6 @@
-//
-//  Setup PodCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/SetupPodCommand.swift
-//  Created by Pete Schwamb on 2/17/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
-struct SetupPodCommand : MessageBlock {
-
+struct SetupPodCommand: MessageBlock {
     let blockType: MessageBlockType = .setupPod
 
     let address: UInt32
@@ -35,9 +25,9 @@ struct SetupPodCommand : MessageBlock {
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            19,
-            ])
-        data.appendBigEndian(self.address)
+            19
+        ])
+        data.appendBigEndian(address)
 
         let year = UInt8((dateComponents.year ?? 2000) - 2000)
         let month = UInt8(dateComponents.month ?? 0)
@@ -45,7 +35,7 @@ struct SetupPodCommand : MessageBlock {
         let hour = UInt8(dateComponents.hour ?? 0)
         let minute = UInt8(dateComponents.minute ?? 0)
 
-        let data2: Data = Data([
+        let data2 = Data([
             UInt8(0x14), // Unknown
             packetTimeoutLimit,
             month,
@@ -53,10 +43,10 @@ struct SetupPodCommand : MessageBlock {
             year,
             hour,
             minute
-            ])
+        ])
         data.append(data2)
-        data.appendBigEndian(self.lot)
-        data.appendBigEndian(self.tid)
+        data.appendBigEndian(lot)
+        data.appendBigEndian(tid)
         return data
     }
 
@@ -64,7 +54,7 @@ struct SetupPodCommand : MessageBlock {
         if encodedData.count < 21 {
             throw MessageBlockError.notEnoughData
         }
-        self.address = encodedData[2...].toBigEndian(UInt32.self)
+        address = encodedData[2...].toBigEndian(UInt32.self)
         packetTimeoutLimit = encodedData[7]
         var components = DateComponents()
         components.month = Int(encodedData[8])
@@ -72,9 +62,9 @@ struct SetupPodCommand : MessageBlock {
         components.year = Int(encodedData[10]) + 2000
         components.hour = Int(encodedData[11])
         components.minute = Int(encodedData[12])
-        self.dateComponents = components
-        self.lot = encodedData[13...].toBigEndian(UInt32.self)
-        self.tid = encodedData[17...].toBigEndian(UInt32.self)
+        dateComponents = components
+        lot = encodedData[13...].toBigEndian(UInt32.self)
+        tid = encodedData[17...].toBigEndian(UInt32.self)
     }
 
     init(address: UInt32, dateComponents: DateComponents, lot: UInt32, tid: UInt32, packetTimeoutLimit: UInt8 = 4) {
@@ -88,6 +78,6 @@ struct SetupPodCommand : MessageBlock {
 
 extension SetupPodCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "SetupPodCommand(address:\(Data(bigEndian: address).hexadecimalString), dateComponents:\(dateComponents), lot:\(lot), tid:\(tid), packetTimeoutLimit:\(packetTimeoutLimit))"
+        "SetupPodCommand(address:\(Data(bigEndian: address).hexadecimalString), dateComponents:\(dateComponents), lot:\(lot), tid:\(tid), packetTimeoutLimit:\(packetTimeoutLimit))"
     }
 }

@@ -1,15 +1,6 @@
-//
-//  BasalScheduleExtraCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/BasalScheduleExtraCommand.swift
-//  Created by Pete Schwamb on 3/30/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
- struct BasalScheduleExtraCommand: MessageBlock {
+struct BasalScheduleExtraCommand: MessageBlock {
     let blockType: MessageBlockType = .basalScheduleExtra
 
     let acknowledgementBeep: Bool
@@ -21,13 +12,14 @@ import Foundation
     let rateEntries: [RateEntry]
 
     var data: Data {
-        let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3f) + (completionBeep ? (1<<6) : 0) + (acknowledgementBeep ? (1<<7) : 0)
+        let beepOptions = (UInt8(programReminderInterval.minutes) & 0x3F) + (completionBeep ? (1 << 6) : 0) +
+            (acknowledgementBeep ? (1 << 7) : 0)
         var data = Data([
             blockType.rawValue,
             UInt8(8 + rateEntries.count * 6),
             beepOptions,
             currentEntryIndex
-            ])
+        ])
         data.appendBigEndian(UInt16(round(remainingPulses * 10)))
         data.appendBigEndian(UInt32(round(delayUntilNextTenthOfPulse.milliseconds * 1000)))
         for entry in rateEntries {
@@ -43,26 +35,34 @@ import Foundation
         let length = encodedData[1]
         let numEntries = (length - 8) / 6
 
-        acknowledgementBeep = encodedData[2] & (1<<7) != 0
-        completionBeep = encodedData[2] & (1<<6) != 0
-        programReminderInterval = TimeInterval(minutes: Double(encodedData[2] & 0x3f))
+        acknowledgementBeep = encodedData[2] & (1 << 7) != 0
+        completionBeep = encodedData[2] & (1 << 6) != 0
+        programReminderInterval = TimeInterval(minutes: Double(encodedData[2] & 0x3F))
 
         currentEntryIndex = encodedData[3]
         remainingPulses = Double(encodedData[4...].toBigEndian(UInt16.self)) / 10.0
         let timerCounter = encodedData[6...].toBigEndian(UInt32.self)
         delayUntilNextTenthOfPulse = TimeInterval(hundredthsOfMilliseconds: Double(timerCounter))
         var entries = [RateEntry]()
-        for entryIndex in (0..<numEntries) {
+        for entryIndex in 0 ..< numEntries {
             let offset = 10 + entryIndex * 6
             let totalPulses = Double(encodedData[offset...].toBigEndian(UInt16.self)) / 10.0
-            let timerCounter = encodedData[(offset+2)...].toBigEndian(UInt32.self) & ~nearZeroBasalRateFlag
+            let timerCounter = encodedData[(offset + 2)...].toBigEndian(UInt32.self) & ~nearZeroBasalRateFlag
             let delayBetweenPulses = TimeInterval(hundredthsOfMilliseconds: Double(timerCounter))
             entries.append(RateEntry(totalPulses: totalPulses, delayBetweenPulses: delayBetweenPulses))
         }
         rateEntries = entries
     }
 
-    init(currentEntryIndex: UInt8, remainingPulses: Double, delayUntilNextTenthOfPulse: TimeInterval, rateEntries: [RateEntry], acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0) {
+    init(
+        currentEntryIndex: UInt8,
+        remainingPulses: Double,
+        delayUntilNextTenthOfPulse: TimeInterval,
+        rateEntries: [RateEntry],
+        acknowledgementBeep: Bool = false,
+        completionBeep: Bool = false,
+        programReminderInterval: TimeInterval = 0
+    ) {
         self.currentEntryIndex = currentEntryIndex
         self.remainingPulses = remainingPulses
         self.delayUntilNextTenthOfPulse = delayUntilNextTenthOfPulse
@@ -72,7 +72,14 @@ import Foundation
         self.programReminderInterval = programReminderInterval
     }
 
-    init(schedule: BasalSchedule, scheduleOffset: TimeInterval, acknowledgementBeep: Bool = false, completionBeep: Bool = false, programReminderInterval: TimeInterval = 0, podType: PodType) {
+    init(
+        schedule: BasalSchedule,
+        scheduleOffset: TimeInterval,
+        acknowledgementBeep: Bool = false,
+        completionBeep: Bool = false,
+        programReminderInterval: TimeInterval = 0,
+        podType: PodType
+    ) {
         var rateEntries = [RateEntry]()
 
         let mergedSchedule = BasalSchedule(entries: schedule.entries.adjacentEqualRatesMerged())
@@ -91,14 +98,14 @@ import Foundation
         var entryIndex: UInt8 = 0
         for rateEntry in rateEntries {
             let rateEntryDuration = rateEntry.duration
-            if scheduleOffsetNearestSecond >= t && scheduleOffsetNearestSecond <= t + rateEntryDuration {
-                self.currentEntryIndex = entryIndex
+            if scheduleOffsetNearestSecond >= t, scheduleOffsetNearestSecond <= t + rateEntryDuration {
+                currentEntryIndex = entryIndex
 
                 let timeRemaining = (t + rateEntryDuration) - scheduleOffsetNearestSecond
-                self.delayUntilNextTenthOfPulse = timeRemaining.truncatingRemainder(dividingBy: (rateEntry.delayBetweenPulses / 10))
+                delayUntilNextTenthOfPulse = timeRemaining.truncatingRemainder(dividingBy: rateEntry.delayBetweenPulses / 10)
 
                 let pulsesRemaining = rateEntry.totalPulses * (timeRemaining / rateEntryDuration)
-                self.remainingPulses = pulsesRemaining == 0 ? 0.1 : ceil(pulsesRemaining * 10) / 10
+                remainingPulses = pulsesRemaining == 0 ? 0.1 : ceil(pulsesRemaining * 10) / 10
                 return
             }
             t += rateEntryDuration

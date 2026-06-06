@@ -1,15 +1,5 @@
-//
-//  PodDetailsView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/PodDetailsView.swift
-//  Created by Pete Schwamb on 4/14/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
-
+import SwiftUI
 
 struct PodDetails {
     var podType: PodType
@@ -29,10 +19,10 @@ struct PodDetails {
 
 struct PodDetailsView: View {
     @Environment(\.guidanceColors) var guidanceColors
-    
+
     var podDetails: PodDetails
     var title: String
-    
+
     let statusAgeFormatter: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
 
@@ -72,7 +62,10 @@ struct PodDetailsView: View {
 
     var totalDeliveryText: String {
         if let delivery = podDetails.totalDelivery {
-            return String(format: LocalizedString("%@ U", comment: "Format string for total delivery on pod details screen"), delivery.twoDecimals)
+            return String(
+                format: LocalizedString("%@ U", comment: "Format string for total delivery on pod details screen"),
+                delivery.twoDecimals
+            )
         } else {
             return LocalizedString("NA", comment: "String shown on pod details for total delivery when not available.")
         }
@@ -92,8 +85,13 @@ struct PodDetailsView: View {
     }
 
     var lastStatusText: String {
-        if let lastStatus = podDetails.lastStatus, let ageString = statusAgeFormatter.string(from: Date().timeIntervalSince(lastStatus)) {
-            return String(format: LocalizedString("%@ ago", comment: "Format string for last status date on pod details screen"), ageString)
+        if let lastStatus = podDetails.lastStatus,
+           let ageString = statusAgeFormatter.string(from: Date().timeIntervalSince(lastStatus))
+        {
+            return String(
+                format: LocalizedString("%@ ago", comment: "Format string for last status date on pod details screen"),
+                ageString
+            )
         } else {
             return LocalizedString("NA", comment: "String shown on pod details for last status date when not available.")
         }
@@ -101,36 +99,75 @@ struct PodDetailsView: View {
 
     var body: some View {
         List {
-            row(LocalizedString("Pod Type", comment: "description label for pod type pod details row"), value: String(describing: podDetails.podType.description))
+            row(
+                LocalizedString("Pod Type", comment: "description label for pod type pod details row"),
+                value: String(describing: podDetails.podType.description)
+            )
             if let deviceName = podDetails.deviceName {
-                row(LocalizedString("Device Name", comment: "description label for device name pod details row"), value: deviceName)
+                row(
+                    LocalizedString("Device Name", comment: "description label for device name pod details row"),
+                    value: deviceName
+                )
             }
-            row(LocalizedString("Address", comment: "description label for address pod details row"), value: String(format: "0x%08X", podDetails.address))
+            row(
+                LocalizedString("Address", comment: "description label for address pod details row"),
+                value: String(format: "0x%08X", podDetails.address)
+            )
             if podDetails.podType.isEros {
-                row(LocalizedString("Lot", comment: "description label for lot pod details row"),
-                    value: String(format: "L%05u", podDetails.lotNumber))
+                row(
+                    LocalizedString("Lot", comment: "description label for lot pod details row"),
+                    value: String(format: "L%05u", podDetails.lotNumber)
+                )
             } else {
-                row(LocalizedString("Lot", comment: "description label for lot pod details row"),
-                    value: lotDecode(lot: podDetails.lotNumber).readableText)
-                row(LocalizedString("Lot Number", comment: "description label for lot number pod details row"),
-                    value: String(describing: podDetails.lotNumber))
+                row(
+                    LocalizedString("Lot", comment: "description label for lot pod details row"),
+                    value: lotDecode(lot: podDetails.lotNumber).readableText
+                )
+                row(
+                    LocalizedString("Lot Number", comment: "description label for lot number pod details row"),
+                    value: String(describing: podDetails.lotNumber)
+                )
             }
-            row(LocalizedString("Sequence Number", comment: "description label for sequence number pod details row"), value: String(format: "%07d", podDetails.sequenceNumber))
-            row(LocalizedString("Firmware Version", comment: "description label for firmware version pod details row"), value: podDetails.firmwareVersion)
-            row(LocalizedString("BLE Firmware Version", comment: "description label for ble firmware version pod details row"), value: podDetails.bleFirmwareVersion)
-            row(LocalizedString("Total Delivery", comment: "description label for total delivery pod details row"), value: totalDeliveryText)
+            row(
+                LocalizedString("Sequence Number", comment: "description label for sequence number pod details row"),
+                value: String(format: "%07d", podDetails.sequenceNumber)
+            )
+            row(
+                LocalizedString("Firmware Version", comment: "description label for firmware version pod details row"),
+                value: podDetails.firmwareVersion
+            )
+            row(
+                LocalizedString("BLE Firmware Version", comment: "description label for ble firmware version pod details row"),
+                value: podDetails.bleFirmwareVersion
+            )
+            row(
+                LocalizedString("Total Delivery", comment: "description label for total delivery pod details row"),
+                value: totalDeliveryText
+            )
             row(LocalizedString("Pod Hours", comment: "description label for pod hours pod details row"), value: podHoursText)
             if let activatedAt = podDetails.activatedAt {
-                row(LocalizedString("Activation", comment: "description label for activation pod details row"), value: dateFormatter.string(from: activatedAt))
+                row(
+                    LocalizedString("Activation", comment: "description label for activation pod details row"),
+                    value: dateFormatter.string(from: activatedAt)
+                )
             }
             if let deliveryStoppedAt = podDetails.deliveryStoppedAt {
                 if podDetails.fault != nil {
-                    row(LocalizedString("Faulted", comment: "description label for faulted pod details row"), value: dateFormatter.string(from: deliveryStoppedAt))
+                    row(
+                        LocalizedString("Faulted", comment: "description label for faulted pod details row"),
+                        value: dateFormatter.string(from: deliveryStoppedAt)
+                    )
                 } else {
-                    row(LocalizedString("Deactivation", comment: "description label for deactivation pod details row"), value: dateFormatter.string(from: deliveryStoppedAt))
+                    row(
+                        LocalizedString("Deactivation", comment: "description label for deactivation pod details row"),
+                        value: dateFormatter.string(from: deliveryStoppedAt)
+                    )
                 }
             } else {
-                row(LocalizedString("Last Status", comment: "description label for last status date pod details row"), value: lastStatusText)
+                row(
+                    LocalizedString("Last Status", comment: "description label for last status date pod details row"),
+                    value: lastStatusText
+                )
             }
             if let fault = podDetails.fault, let pdmRef = fault.pdmRef {
                 Section {
@@ -142,9 +179,15 @@ struct PodDetailsView: View {
                                 .fontWeight(.semibold)
                         }.padding(.vertical, 4)
                         let faultCode = fault.faultEventCode
-                        Text(String(format: LocalizedString("Internal Pod fault code %1$@\n%2$@\nRef: %3$@\n",
-                                comment: "The format string for the pod fault info: (1: fault code) (2: fault description) (3: pdm ref string)"),
-                                String(format: "%03u", faultCode.rawValue), faultCode.faultDescription, pdmRef))
+                        Text(String(
+                            format: LocalizedString(
+                                "Internal Pod fault code %1$@\n%2$@\nRef: %3$@\n",
+                                comment: "The format string for the pod fault info: (1: fault code) (2: fault description) (3: pdm ref string)"
+                            ),
+                            String(format: "%03u", faultCode.rawValue),
+                            faultCode.faultDescription,
+                            pdmRef
+                        ))
                             .fixedSize(horizontal: false, vertical: true)
                             .foregroundColor(.secondary)
                     }
@@ -158,6 +201,23 @@ struct PodDetailsView: View {
 
 struct PodDetailsView_Previews: PreviewProvider {
     static var previews: some View {
-        PodDetailsView(podDetails: PodDetails(podType: dashType, address: 0x17012345, lotNumber: 123456789, sequenceNumber: 1234567, firmwareVersion: "4.3.2", bleFirmwareVersion: "1.2.3", deviceName: "DashPreviewPod", totalDelivery: 99, lastStatus: Date(), fault: nil, activatedAt: Date().addingTimeInterval(.days(2)), deliveryStoppedAt: nil, podTime: .days(2)), title: "Pod Details")
+        PodDetailsView(
+            podDetails: PodDetails(
+                podType: dashType,
+                address: 0x1701_2345,
+                lotNumber: 123_456_789,
+                sequenceNumber: 1_234_567,
+                firmwareVersion: "4.3.2",
+                bleFirmwareVersion: "1.2.3",
+                deviceName: "DashPreviewPod",
+                totalDelivery: 99,
+                lastStatus: Date(),
+                fault: nil,
+                activatedAt: Date().addingTimeInterval(.days(2)),
+                deliveryStoppedAt: nil,
+                podTime: .days(2)
+            ),
+            title: "Pod Details"
+        )
     }
 }

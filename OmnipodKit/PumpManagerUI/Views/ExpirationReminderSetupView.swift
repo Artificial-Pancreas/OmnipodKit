@@ -1,19 +1,9 @@
-//
-//  ExpirationReminderSetupView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/ExpirationReminderSetupView.swift
-//  Created by Pete Schwamb on 5/17/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
-
+import SwiftUI
 
 struct ExpirationReminderSetupView: View {
     @State var expirationReminderDefault: Int = 2
-    
+
     var valueChanged: ((_ value: Int) -> Void)?
     var continueButtonTapped: (() -> Void)?
     var cancelButtonTapped: (() -> Void)?
@@ -21,12 +11,19 @@ struct ExpirationReminderSetupView: View {
     var body: some View {
         GuidePage(content: {
             VStack(alignment: .leading, spacing: 15) {
-                Text(LocalizedString("You will be notified in advance of Pod expiration.\n\nScroll to set the number of hours advance notice you would like to have.", comment: "Description text on ExpirationReminderSetupView")).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedString(
+                    "You will be notified in advance of Pod expiration.\n\nScroll to set the number of hours advance notice you would like to have.",
+                    comment: "Description text on ExpirationReminderSetupView"
+                )).fixedSize(horizontal: false, vertical: true)
                 Divider()
-                ExpirationReminderPickerView(expirationReminderDefault: $expirationReminderDefault, collapsible: false, showingHourPicker: true)
-                    .onChange(of: expirationReminderDefault) { value in
-                        valueChanged?(value)
-                    }
+                ExpirationReminderPickerView(
+                    expirationReminderDefault: $expirationReminderDefault,
+                    collapsible: false,
+                    showingHourPicker: true
+                )
+                .onChange(of: expirationReminderDefault) { value in
+                    valueChanged?(value)
+                }
             }
             .padding(.vertical, 8)
         }) {

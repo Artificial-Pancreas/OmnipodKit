@@ -1,15 +1,6 @@
-//
-//  StatusResponse.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/StatusResponse.swift
-//  Created by Pete Schwamb on 10/23/17.
-//  Copyright © 2017 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
-struct StatusResponse : MessageBlock {
+struct StatusResponse: MessageBlock {
     let blockType: MessageBlockType = .statusResponse
     let length: UInt8 = 10
     let deliveryStatus: DeliveryStatus
@@ -35,26 +26,26 @@ struct StatusResponse : MessageBlock {
         }
         self.deliveryStatus = deliveryStatus
 
-        guard let podProgressStatus = PodProgressStatus(rawValue: encodedData[1] & 0xf) else {
-            throw MessageError.unknownValue(value: encodedData[1] & 0xf, typeDescription: "PodProgressStatus")
+        guard let podProgressStatus = PodProgressStatus(rawValue: encodedData[1] & 0xF) else {
+            throw MessageError.unknownValue(value: encodedData[1] & 0xF, typeDescription: "PodProgressStatus")
         }
         self.podProgressStatus = podProgressStatus
 
-        let minutes = ((Int(encodedData[7]) & 0x7f) << 6) + (Int(encodedData[8]) >> 2)
-        self.timeActive = TimeInterval(minutes: Double(minutes))
+        let minutes = ((Int(encodedData[7]) & 0x7F) << 6) + (Int(encodedData[8]) >> 2)
+        timeActive = TimeInterval(minutes: Double(minutes))
 
-        let highInsulinBits = Int(encodedData[2] & 0xf) << 9
+        let highInsulinBits = Int(encodedData[2] & 0xF) << 9
         let midInsulinBits = Int(encodedData[3]) << 1
         let lowInsulinBits = Int(encodedData[4] >> 7)
-        self.insulinDelivered = Double(highInsulinBits | midInsulinBits | lowInsulinBits) / Pod.pulsesPerUnit
+        insulinDelivered = Double(highInsulinBits | midInsulinBits | lowInsulinBits) / Pod.pulsesPerUnit
 
-        self.lastProgrammingMessageSeqNum = (encodedData[4] >> 3) & 0xf
+        lastProgrammingMessageSeqNum = (encodedData[4] >> 3) & 0xF
 
-        self.bolusNotDelivered = Double((Int(encodedData[4] & 0x3) << 8) | Int(encodedData[5])) / Pod.pulsesPerUnit
+        bolusNotDelivered = Double((Int(encodedData[4] & 0x3) << 8) | Int(encodedData[5])) / Pod.pulsesPerUnit
 
-        self.alerts = AlertSet(rawValue: ((encodedData[6] & 0x7f) << 1) | (encodedData[7] >> 7))
+        alerts = AlertSet(rawValue: ((encodedData[6] & 0x7F) << 1) | (encodedData[7] >> 7))
 
-        self.reservoirLevel = Double((Int(encodedData[8] & 0x3) << 8) + Int(encodedData[9])) / Pod.pulsesPerUnit
+        reservoirLevel = Double((Int(encodedData[8] & 0x3) << 8) + Int(encodedData[9])) / Pod.pulsesPerUnit
     }
 
     init(
@@ -65,7 +56,8 @@ struct StatusResponse : MessageBlock {
         insulinDelivered: Double,
         bolusNotDelivered: Double,
         lastProgrammingMessageSeqNum: UInt8,
-        alerts: AlertSet)
+        alerts: AlertSet
+    )
     {
         self.deliveryStatus = deliveryStatus
         self.podProgressStatus = podProgressStatus
@@ -75,26 +67,25 @@ struct StatusResponse : MessageBlock {
         self.bolusNotDelivered = bolusNotDelivered
         self.lastProgrammingMessageSeqNum = lastProgrammingMessageSeqNum
         self.alerts = alerts
-        self.data = Data()
+        data = Data()
     }
 
     // convenience function to create a StatusResponse for a DetailedStatus
     init(detailedStatus: DetailedStatus) {
-        self.deliveryStatus = detailedStatus.deliveryStatus
-        self.podProgressStatus = detailedStatus.podProgressStatus
-        self.timeActive = detailedStatus.timeActive
-        self.reservoirLevel = detailedStatus.reservoirLevel
-        self.insulinDelivered = detailedStatus.totalInsulinDelivered
-        self.bolusNotDelivered = detailedStatus.bolusNotDelivered
-        self.lastProgrammingMessageSeqNum = detailedStatus.lastProgrammingMessageSeqNum
-        self.alerts = detailedStatus.unacknowledgedAlerts
-        self.data = Data()
+        deliveryStatus = detailedStatus.deliveryStatus
+        podProgressStatus = detailedStatus.podProgressStatus
+        timeActive = detailedStatus.timeActive
+        reservoirLevel = detailedStatus.reservoirLevel
+        insulinDelivered = detailedStatus.totalInsulinDelivered
+        bolusNotDelivered = detailedStatus.bolusNotDelivered
+        lastProgrammingMessageSeqNum = detailedStatus.lastProgrammingMessageSeqNum
+        alerts = detailedStatus.unacknowledgedAlerts
+        data = Data()
     }
 }
 
 extension StatusResponse: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "StatusResponse(deliveryStatus:\(deliveryStatus.description), progressStatus:\(podProgressStatus), timeActive:\(timeActive.timeIntervalStr), reservoirLevel:\(reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : reservoirLevel.twoDecimals), insulinDelivered:\(insulinDelivered.twoDecimals), bolusNotDelivered:\(bolusNotDelivered.twoDecimals), lastProgrammingMessageSeqNum:\(lastProgrammingMessageSeqNum), alerts:\(alerts))"
+        "StatusResponse(deliveryStatus:\(deliveryStatus.description), progressStatus:\(podProgressStatus), timeActive:\(timeActive.timeIntervalStr), reservoirLevel:\(reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : reservoirLevel.twoDecimals), insulinDelivered:\(insulinDelivered.twoDecimals), bolusNotDelivered:\(bolusNotDelivered.twoDecimals), lastProgrammingMessageSeqNum:\(lastProgrammingMessageSeqNum), alerts:\(alerts))"
     }
 }
-

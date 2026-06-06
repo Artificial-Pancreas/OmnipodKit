@@ -1,12 +1,3 @@
-//
-//  Pod.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/Pod.swift
-//  Created by Pete Schwamb on 4/4/18.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 struct Pod {
@@ -64,10 +55,10 @@ struct Pod {
     static let minimumBasalScheduleEntryDuration = TimeInterval.minutes(30)
 
     // Supported temp basal durations (30m to 12h)
-    static let supportedTempBasalDurations: [TimeInterval] = (1...24).map { Double($0) * TimeInterval(minutes: 30) }
+    static let supportedTempBasalDurations: [TimeInterval] = (1 ... 24).map { Double($0) * TimeInterval(minutes: 30) }
 
     // Supported temp basal rates are 0 to 30U/hr in 0.05 units increments
-    static let supportedTempBasalRates: [Double] = (0...600).map { Double($0) / Double(Pod.pulsesPerUnit) }
+    static let supportedTempBasalRates: [Double] = (0 ... 600).map { Double($0) / Double(Pod.pulsesPerUnit) }
 
     // Default amount for priming bolus using secondsPerPrimePulse timing.
     // Checked to verify it agrees with value returned by pod during the pairing process.
@@ -83,13 +74,13 @@ struct Pod {
     static let defaultExpirationReminderOffset = TimeInterval(hours: 2)
     static let expirationReminderAlertMinHoursBeforeExpiration = 1
     static let expirationReminderAlertMaxHoursBeforeExpiration = 24
-    
+
     // Threshold used to display pod end of life warnings
     static let timeRemainingWarningThreshold = TimeInterval(days: 1)
-    
+
     // Default low reservoir alert limit in Units
     static let defaultLowReservoirReminder: Double = 10
-    
+
     // Allowed Low Reservoir reminder values
     static let allowedLowReservoirReminderValues = Array(stride(from: 1, through: 50, by: 1))
 
@@ -115,19 +106,20 @@ enum DeliveryStatus: UInt8, CustomStringConvertible {
     case extendedBolusAndTempBasal = 10
 
     var suspended: Bool {
-        return self == .suspended || self == .priming || self == .extendedBolusWhileSuspended
+        self == .suspended || self == .priming || self == .extendedBolusWhileSuspended
     }
 
     var bolusing: Bool {
-        return self == .bolusInProgress || self == .bolusAndTempBasal || self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .priming || self == .extendedBolusWhileSuspended
+        self == .bolusInProgress || self == .bolusAndTempBasal || self == .extendedBolusRunning || self ==
+            .extendedBolusAndTempBasal || self == .priming || self == .extendedBolusWhileSuspended
     }
 
     var tempBasalRunning: Bool {
-        return self == .tempBasalRunning || self == .bolusAndTempBasal || self == .extendedBolusAndTempBasal
+        self == .tempBasalRunning || self == .bolusAndTempBasal || self == .extendedBolusAndTempBasal
     }
 
     var extendedBolusRunning: Bool {
-        return self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .extendedBolusWhileSuspended
+        self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .extendedBolusWhileSuspended
     }
 
     var description: String {
@@ -145,11 +137,17 @@ enum DeliveryStatus: UInt8, CustomStringConvertible {
         case .bolusAndTempBasal:
             return LocalizedString("Bolusing with temp basal", comment: "Delivery status when bolusing and temp basal is running")
         case .extendedBolusWhileSuspended:
-            return LocalizedString("Extended bolus running while suspended", comment: "Delivery status when extended bolus is running while suspended")
+            return LocalizedString(
+                "Extended bolus running while suspended",
+                comment: "Delivery status when extended bolus is running while suspended"
+            )
         case .extendedBolusRunning:
             return LocalizedString("Extended bolus running", comment: "Delivery status when extended bolus is running")
         case .extendedBolusAndTempBasal:
-            return LocalizedString("Extended bolus running with temp basal", comment: "Delivery status when extended bolus and temp basal is running")
+            return LocalizedString(
+                "Extended bolus running with temp basal",
+                comment: "Delivery status when extended bolus and temp basal is running"
+            )
         }
     }
 }

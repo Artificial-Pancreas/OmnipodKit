@@ -1,17 +1,7 @@
-//
-//  LocalizationTests.swift
-//  OmniTests
-//
-//  Catches printf format issues in OmnipodKit string catalogs (see loopandlearn/OmnipodKit#65).
-//  Stray-% check adapted from Trio LocalizationTests.swift:
-//  https://github.com/nightscout/Trio/blob/main/TrioTests/LocalizationTests.swift
-//
-
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class LocalizationTests: XCTestCase {
-
     private static var catalog: LocalizationCatalogLoader.Snapshot!
     private static var xcstringsValidation: XcstringsValidationResult!
     private static var bundleTables: [BundleStringsTable]!

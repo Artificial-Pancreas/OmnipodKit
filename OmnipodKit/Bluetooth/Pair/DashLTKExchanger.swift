@@ -11,22 +11,22 @@ import os.log
 
 class DashLTKExchanger {
     // This is the binary representation of a "GetPodStatus command" for podID 0xffc32db used in the SP2 payload
-    static let GET_POD_STATUS_HEX_COMMAND: Data = Data(hex: "ffc32dbd08030e0100008a")
+    static let GET_POD_STATUS_HEX_COMMAND = Data(hex: "ffc32dbd08030e0100008a")
 
-    static private let SP1 = "SP1="
-    static private let SP2 = ",SP2="
-    static private let SPS1 = "SPS1="
-    static private let SPS2 = "SPS2="
-    static private let SP0GP0 = "SP0,GP0"
-    static private let P0 = "P0="
-    static private let UNKNOWN_P0_PAYLOAD = Data([0xa5])
+    private static let SP1 = "SP1="
+    private static let SP2 = ",SP2="
+    private static let SPS1 = "SPS1="
+    private static let SPS2 = "SPS2="
+    private static let SP0GP0 = "SP0,GP0"
+    private static let P0 = "P0="
+    private static let UNKNOWN_P0_PAYLOAD = Data([0xA5])
 
     private let manager: PeripheralManager
     private let ids: Ids
     private let podAddress = Ids.notActivated()
     private let keyExchange = try! DashKeyExchange(X25519KeyGenerator(), OmniRandomByteGenerator())
     private var seq: UInt8 = 1
-    
+
     private let log = OSLog(category: "DashLTKExchanger")
 
     init(manager: PeripheralManager, ids: Ids) {
@@ -102,7 +102,7 @@ class DashLTKExchanger {
             throw PodProtocolError.pairingException("Could not read P0")
         }
         try validateP0(p0!)
-        
+
         guard keyExchange.ltk.count == 16 else {
             throw PodProtocolError.invalidLTKKey("Invalid Key, got \(String(data: keyExchange.ltk, encoding: .utf8) ?? "")")
         }
@@ -114,7 +114,7 @@ class DashLTKExchanger {
         )
     }
 
-    private func throwOnSendError(_ msg: MessagePacket, _ msgType: String) throws {
+    private func throwOnSendError(_ msg: MessagePacket, _: String) throws {
         let result = manager.sendMessagePacket(msg)
         guard case .sentWithAcknowledgment = result else {
             throw PodProtocolError.pairingException("Send failure: \(result)")
@@ -135,7 +135,7 @@ class DashLTKExchanger {
         let payload = try StringLengthPrefixEncoding.parseKeys([DashLTKExchanger.SPS2], msg.payload)[0]
         log.debug("SPS2 payload from pod: %@", payload.hexadecimalString)
 
-        if (payload.count != DashKeyExchange.CMAC_SIZE) {
+        if payload.count != DashKeyExchange.CMAC_SIZE {
             throw PodProtocolError.messageIOException("Invalid payload size")
         }
         try keyExchange.validatePodConf(payload)
@@ -144,7 +144,7 @@ class DashLTKExchanger {
     private func sp2() -> Data {
         // This is GetPodStatus command, with page 0 parameter.
         // We could replace that in the future with the serialized GetPodStatus()
-        return DashLTKExchanger.GET_POD_STATUS_HEX_COMMAND
+        DashLTKExchanger.GET_POD_STATUS_HEX_COMMAND
     }
 
     private func validateP0(_ msg: MessagePacket) throws {
@@ -152,7 +152,7 @@ class DashLTKExchanger {
 
         let payload = try StringLengthPrefixEncoding.parseKeys([DashLTKExchanger.P0], msg.payload)[0]
         log.debug("P0 payload from pod: %@", payload.hexadecimalString)
-        if (payload != DashLTKExchanger.UNKNOWN_P0_PAYLOAD) {
+        if payload != DashLTKExchanger.UNKNOWN_P0_PAYLOAD {
             throw PodProtocolError.pairingException("Reveived invalid P0 payload: \(payload)")
         }
     }

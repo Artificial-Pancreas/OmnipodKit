@@ -1,12 +1,3 @@
-//
-//  LocalizationPercentValidator.swift
-//  OmniTests
-//
-//  Validates printf-style strings in OmnipodKit localizations.
-//  Stray-% logic adapted from Trio LocalizationTests.swift:
-//  https://github.com/nightscout/Trio/blob/main/TrioTests/LocalizationTests.swift
-//
-
 import Foundation
 
 struct LocalizationPercentOffender: Equatable {
@@ -30,7 +21,6 @@ struct XcstringsValidationResult {
 }
 
 enum LocalizationPercentValidator {
-
     private static let xcstringsSource = "Localizable.xcstrings"
 
     // MARK: - Single-pass xcstrings scan
@@ -179,7 +169,8 @@ enum LocalizationPercentValidator {
 
             if cursor < string.endIndex,
                let scalar = string[cursor].unicodeScalars.first,
-               conversionCharacters.contains(scalar) {
+               conversionCharacters.contains(scalar)
+            {
                 specs.append(isPositional ? .positional : .nonPositional)
                 cursor = string.index(after: cursor)
             }
@@ -328,8 +319,10 @@ enum LocalizationPercentValidator {
         source: String
     ) -> [LocalizationPercentOffender] {
         let specs = parsedFormatSpecifiers(in: normalizedForFormatAnalysis(value))
-        let hasPositional = specs.contains { if case .positional = $0 { return true }; return false }
-        let hasNonPositional = specs.contains { if case .nonPositional = $0 { return true }; return false }
+        let hasPositional = specs.contains { if case .positional = $0 { return true }
+            return false }
+        let hasNonPositional = specs.contains { if case .nonPositional = $0 { return true }
+            return false }
 
         guard hasPositional, hasNonPositional else { return [] }
         return [LocalizationPercentOffender(locale: locale, key: key, value: value, source: source)]

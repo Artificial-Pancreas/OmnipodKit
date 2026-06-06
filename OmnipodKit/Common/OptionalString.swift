@@ -1,12 +1,4 @@
-//
-//  OptionalString.swift
-//  OmnipodKit
-//
-//  Created by Joe Moran 2/1/2025
-//  Copyright © 2025 LoopKit Authors. All rights reserved.
-//
-
-func optionalString(_ object : Any?) -> String {
+func optionalString(_ object: Any?) -> String {
     if object == nil {
         return "nil"
     }

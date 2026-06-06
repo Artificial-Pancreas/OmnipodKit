@@ -1,22 +1,13 @@
-//
-//  PodAdvertisement.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/PumpManager/PodAdvertisement.swift
-//  Created by Pete Schwamb on 1/13/22.
-//  Copyright © 2022 LoopKit Authors. All rights reserved.
-//
-
-import Foundation
 import CoreBluetooth
+import Foundation
 
 extension String {
     func subString(location: Int, length: Int? = nil) -> String {
-      let start = min(max(0, location), self.count)
-      let limitedLength = min(self.count - start, length ?? Int.max)
-      let from = index(startIndex, offsetBy: start)
-      let to = index(startIndex, offsetBy: start + limitedLength)
-      return String(self[from..<to])
+        let start = min(max(0, location), count)
+        let limitedLength = min(count - start, length ?? Int.max)
+        let from = index(startIndex, offsetBy: start)
+        let to = index(startIndex, offsetBy: start + limitedLength)
+        return String(self[from ..< to])
     }
 }
 
@@ -32,8 +23,8 @@ struct PodAdvertisement {
         if podType.isDash {
             // For DASH, serviceUUIDs 3 & 4 are the podId and will be "FFFF" & "FFFE" only before pairing
             return serviceUUIDs.count >= 5 &&
-                   serviceUUIDs[3].uuidString.uppercased() == "FFFF" &&
-                   serviceUUIDs[4].uuidString.uppercased() == "FFFE"
+                serviceUUIDs[3].uuidString.uppercased() == "FFFF" &&
+                serviceUUIDs[4].uuidString.uppercased() == "FFFE"
         }
 
         if podType.isO5 {
@@ -71,12 +62,18 @@ struct PodAdvertisement {
             }
 
             let lotNoString: String = serviceUUIDs[5].uuidString + serviceUUIDs[6].uuidString + serviceUUIDs[7].uuidString
-            guard let decodedLotNo = UInt64(lotNoString[lotNoString.startIndex..<lotNoString.index(lotNoString.startIndex, offsetBy: 10)], radix: 16) else {
+            guard let decodedLotNo = UInt64(
+                lotNoString[lotNoString.startIndex ..< lotNoString.index(lotNoString.startIndex, offsetBy: 10)],
+                radix: 16
+            ) else {
                 return nil
             }
 
             let seqString: String = serviceUUIDs[7].uuidString + serviceUUIDs[8].uuidString
-            guard let decodedSeqNo = UInt32(seqString[seqString.index(seqString.startIndex, offsetBy: 2)..<seqString.endIndex], radix: 16) else {
+            guard let decodedSeqNo = UInt32(
+                seqString[seqString.index(seqString.startIndex, offsetBy: 2) ..< seqString.endIndex],
+                radix: 16
+            ) else {
                 return nil
             }
 

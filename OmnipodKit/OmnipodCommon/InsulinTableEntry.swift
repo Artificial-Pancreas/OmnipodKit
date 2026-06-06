@@ -1,12 +1,3 @@
-//
-//  InsulinTableEntry.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/InsulinTableEntry.swift
-//  Created by Joseph Moran on 10/26/22.
-//  Copyright © 2022 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 //
@@ -33,21 +24,21 @@ struct InsulinTableEntry {
 
     var data: Data {
         let pulsesHighBits = UInt8((pulses >> 8) & 0b11)
-        let pulsesLowBits = UInt8(pulses & 0xff)
+        let pulsesLowBits = UInt8(pulses & 0xFF)
         return Data([
             UInt8((segments - 1) << 4) + UInt8((alternateSegmentPulse ? 1 : 0) << 3) + pulsesHighBits,
             UInt8(pulsesLowBits)
-            ])
+        ])
     }
 
     func checksum() -> UInt16 {
-        let checksumPerSegment = (pulses & 0xff) + (pulses >> 8)
+        let checksumPerSegment = (pulses & 0xFF) + (pulses >> 8)
         return UInt16(checksumPerSegment * segments + (alternateSegmentPulse ? segments / 2 : 0))
     }
 }
 
 extension InsulinTableEntry: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "InsulinTableEntry(segments:\(segments), pulses:\(pulses), alternateSegmentPulse:\(alternateSegmentPulse))"
+        "InsulinTableEntry(segments:\(segments), pulses:\(pulses), alternateSegmentPulse:\(alternateSegmentPulse))"
     }
 }

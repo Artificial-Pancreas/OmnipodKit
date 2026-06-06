@@ -1,16 +1,7 @@
-//
-//  RileyLinkSelectionView.swift
-//  OmnipodKit
-//
-//  From OmniKitUI/OmniKitUI/Views/RileyLinkSelectionView.swift
-//  Created by Pete Schwamb on 6/7/22.
-//  Copyright © 2022 Pete Schwamb. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
 import RileyLinkKit
 import RileyLinkKitUI
+import SwiftUI
 
 struct RileyLinkSetupView: View {
     var cancelButtonTapped: (() -> Void)?
@@ -27,7 +18,6 @@ struct RileyLinkSetupView: View {
     }
 
     @State private var isOn: Bool = false
-
 
     var body: some View {
         VStack {
@@ -50,7 +40,7 @@ struct RileyLinkSetupView: View {
                             HStack {
                                 Text(device.name ?? "Unknown")
                                 Spacer()
-                                Text(formatRSSI(rssi:device.rssi)).foregroundColor(.secondary)
+                                Text(formatRSSI(rssi: device.rssi)).foregroundColor(.secondary)
                             }
                         }
                     }
@@ -59,7 +49,6 @@ struct RileyLinkSetupView: View {
             Spacer()
             continueButton
                 .padding([.bottom, .horizontal])
-
         }
         .navigationTitle(LocalizedString("RileyLink Setup", comment: "Navigation title for RileyLinkSetupView"))
         .toolbar {
@@ -93,19 +82,19 @@ struct RileyLinkSetupView: View {
     }
 
     var imageTint: UIColor {
-        return UIColor(named: "RileyLink Tint", in: Bundle(for: RileyLinkCell.self), compatibleWith: nil) ?? .gray
+        UIColor(named: "RileyLink Tint", in: Bundle(for: RileyLinkCell.self), compatibleWith: nil) ?? .gray
     }
 
-    @ViewBuilder
-    private var bodyText: some View {
-        Text(LocalizedString("RileyLink allows for communication with the pump over Bluetooth", comment: "bodyText for RileyLinkSetupView"))
+    @ViewBuilder  private var bodyText: some View {
+        Text(LocalizedString(
+            "RileyLink allows for communication with the pump over Bluetooth",
+            comment: "bodyText for RileyLinkSetupView"
+        ))
     }
 
     private var continueButton: some View {
         Button(LocalizedString("Continue", comment: "Text for continue button on PodSetupView"), action: nextAction)
             .buttonStyle(ActionButtonStyle())
             .disabled(!dataSource.connecting)
-
     }
-
 }

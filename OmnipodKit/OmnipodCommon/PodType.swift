@@ -1,11 +1,3 @@
-//
-//  PodType.swift
-//  OmnipodKit
-//
-//  Created by Joe Moran on 1/18/25.
-//  Copyright © 2025 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 struct PodType: CustomStringConvertible, Equatable {
@@ -13,7 +5,6 @@ struct PodType: CustomStringConvertible, Equatable {
 
     // Product ID code values returned in the VersionResponse productId byte
     enum PodModelType: UInt8 {
-
         case productIdUnknown = 0x0 // can be used before actual pod type is known
 
         // 1 is unsupported, larger form factor first gen Omnipod using 4 batteries
@@ -25,11 +16,10 @@ struct PodType: CustomStringConvertible, Equatable {
         case productIdDash = 4 // Omnipod DASH, both TWI BOARD (firmware 4.x.y) or NXP BLE (firmware 3.x.y)
 
         case productIdOmnipod5 = 5 // Still needs to be verified!!!
-
     }
 
     var podType: PodModelType? {
-        return PodModelType(rawValue: rawValue)
+        PodModelType(rawValue: rawValue)
     }
 
     init(rawValue: UInt8) {
@@ -37,17 +27,26 @@ struct PodType: CustomStringConvertible, Equatable {
     }
 
     init(podType: PodModelType) {
-        self.rawValue = podType.rawValue
+        rawValue = podType.rawValue
     }
 
     var localizedDescription: String {
         switch podType {
         case .productIdEros:
-            return LocalizedString("Omnipod Classic Pods (also known as Eros Pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These Pods require the use of a RileyLink to communicate with the iPhone.", comment: "Description for Omnipod Classic pods")
+            return LocalizedString(
+                "Omnipod Classic Pods (also known as Eros Pods) have a clear needle tab with a 6-character LOT number starting with 'L'. These Pods require the use of a RileyLink to communicate with the iPhone.",
+                comment: "Description for Omnipod Classic pods"
+            )
         case .productIdDash:
-            return LocalizedString("Omnipod DASH Pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.", comment: "Description for Omnipod DASH pods")
+            return LocalizedString(
+                "Omnipod DASH Pods have a blue needle tab with a 12-character LOT number typically starting with 'PD1'.",
+                comment: "Description for Omnipod DASH pods"
+            )
         case .productIdOmnipod5:
-            return LocalizedString("Omnipod 5 Pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The Pod's \"SmartAdjust\" technology will not be used for closed loop control.", comment: "Description for Omnipod 5 pods")
+            return LocalizedString(
+                "Omnipod 5 Pods have a clear needle tab with a 12-character LOT number typically starting with 'PH1'. The Pod's \"SmartAdjust\" technology will not be used for closed loop control.",
+                comment: "Description for Omnipod 5 pods"
+            )
         default:
             return LocalizedString("Unknown Omnipod Pod Type", comment: "Description for an unknown Omnipod pod type")
         }
@@ -86,7 +85,9 @@ struct PodType: CustomStringConvertible, Equatable {
     var fullName: String {
         if let podType = podType {
             switch podType {
-            case .productIdEros, .productIdDash, .productIdOmnipod5:
+            case .productIdDash,
+                 .productIdEros,
+                 .productIdOmnipod5:
                 return String(format: "Product ID %d %@", rawValue, description)
             default:
                 break
@@ -166,15 +167,15 @@ struct PodType: CustomStringConvertible, Equatable {
     }
 
     var isEros: Bool {
-        return podType == .productIdEros
+        podType == .productIdEros
     }
 
     var isDash: Bool {
-        return podType == .productIdDash
+        podType == .productIdDash
     }
 
     var isO5: Bool {
-        return podType == .productIdOmnipod5
+        podType == .productIdOmnipod5
     }
 }
 
@@ -183,4 +184,3 @@ let erosType = PodType(podType: .productIdEros)
 let dashType = PodType(podType: .productIdDash)
 let omnipod5Type = PodType(podType: .productIdOmnipod5)
 let unknownOmnipodType = PodType(podType: .productIdUnknown)
-

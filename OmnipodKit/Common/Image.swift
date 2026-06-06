@@ -1,12 +1,3 @@
-//
-//  Image.swift
-//  OmnipodKit
-//
-//  From OmniBLE/Commmon/Image.swift
-//  Created by Pete Schwamb on 2/7/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import SwiftUI
 
 private class FrameworkBundle {

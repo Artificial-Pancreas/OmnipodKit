@@ -1,50 +1,37 @@
-//
-//  BasalStateView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/BasalStateView.swift
-//  Created by Nathan Racklyeft on 5/12/16.
-//  Copyright © 2016 Nathan Racklyeft. All rights reserved.
-//
-
-import UIKit
 import SwiftUI
-
+import UIKit
 
 struct BasalStateSwiftUIView: UIViewRepresentable {
-
     var netBasalPercent: Double
-    
+
     init(netBasalPercent: Double) {
         self.netBasalPercent = netBasalPercent
     }
-    
-    func makeUIView(context: UIViewRepresentableContext<BasalStateSwiftUIView>) -> BasalStateView {
+
+    func makeUIView(context _: UIViewRepresentableContext<BasalStateSwiftUIView>) -> BasalStateView {
         let view = BasalStateView()
         view.netBasalPercent = netBasalPercent
         return view
     }
 
-    func updateUIView(_ uiView: BasalStateView, context: UIViewRepresentableContext<BasalStateSwiftUIView>) {
+    func updateUIView(_ uiView: BasalStateView, context _: UIViewRepresentableContext<BasalStateSwiftUIView>) {
         uiView.netBasalPercent = netBasalPercent
     }
 }
 
-
 final class BasalStateView: UIView {
-    
     var netBasalPercent: Double = 0 {
         didSet {
             animateToPath(drawPath())
         }
     }
 
-    override class var layerClass : AnyClass {
-        return CAShapeLayer.self
+    override class var layerClass: AnyClass {
+        CAShapeLayer.self
     }
 
     private var shapeLayer: CAShapeLayer {
-        return layer as! CAShapeLayer
+        layer as! CAShapeLayer
     }
 
     override init(frame: CGRect) {
@@ -84,8 +71,8 @@ final class BasalStateView: UIView {
         let path = UIBezierPath()
         path.move(to: CGPoint(x: startX, y: midY))
 
-        let leftAnchor = startX + 1/6 * bounds.size.width
-        let rightAnchor = startX + 5/6 * bounds.size.width
+        let leftAnchor = startX + 1 / 6 * bounds.size.width
+        let rightAnchor = startX + 5 / 6 * bounds.size.width
 
         let yAnchor = bounds.midY - CGFloat(netBasalPercent) * (bounds.size.height - shapeLayer.lineWidth) / 2
 
@@ -121,7 +108,7 @@ final class BasalStateView: UIView {
 
 struct BasalStateSwiftUIViewPreviewWrapper: View {
     @State private var percent: Double = 1
-    
+
     var body: some View {
         VStack(spacing: 20) {
             BasalStateSwiftUIView(netBasalPercent: percent).frame(width: 100, height: 100, alignment: .center)

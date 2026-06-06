@@ -1,12 +1,3 @@
-//
-//  BeepType.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/BeepType.swift
-//  Created by Joseph Moran on 5/12/19.
-//  Copyright © 2019 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 //
@@ -30,8 +21,10 @@ enum BeepType: UInt8 {
     case beeeeeep = 0x6
     case bipBipBipbipBipBip = 0x7
     case beeepBeeep = 0x8
-    case unusedBeepType0x9 = 0x9 // silent for 0x1F Cancel & inactive 0x19 alerts; error for 0x1E Beep Options & active 0x19 alerts
-    case unusedBeepType0xA = 0xA // silent for 0x1F Cancel & inactive 0x19 alerts; error for 0x1E Beep Options & active 0x19 alerts
+    case unusedBeepType0x9 =
+        0x9 // silent for 0x1F Cancel & inactive 0x19 alerts; error for 0x1E Beep Options & active 0x19 alerts
+    case unusedBeepType0xA =
+        0xA // silent for 0x1F Cancel & inactive 0x19 alerts; error for 0x1E Beep Options & active 0x19 alerts
     case beepBeep = 0xB
     case beeep = 0xC
     case bipBeeeeep = 0xD

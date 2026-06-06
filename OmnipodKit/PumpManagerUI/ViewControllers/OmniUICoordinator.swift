@@ -1,22 +1,13 @@
-//
-//  OmniUIController.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/PumpManagerUI/ViewControllers/OmniBLEUIController.swift
-//  Created by Pete Schwamb on 2/16/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
-import UIKit
-import SwiftUI
 import Combine
 import LoopKit
 import LoopKitUI
-import RileyLinkKit
 import RileyLinkBLEKit
+import RileyLinkKit
 import RileyLinkKitUI
+import SwiftUI
+import UIKit
 
 enum OmniUIScreen {
     case firstRunScreen
@@ -76,7 +67,6 @@ protocol OmniUINavigator: AnyObject {
 }
 
 class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, CompletionNotifying, UINavigationControllerDelegate {
-
     weak var pumpManagerOnboardingDelegate: PumpManagerOnboardingDelegate?
 
     weak var completionDelegate: CompletionDelegate?
@@ -88,7 +78,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
     private var disposables = Set<AnyCancellable>()
 
     var currentScreen: OmniUIScreen {
-        return screenStack.last!
+        screenStack.last!
     }
 
     var screenStack = [OmniUIScreen]()
@@ -104,19 +94,22 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
     private func viewControllerForScreen(_ screen: OmniUIScreen) -> UIViewController {
         switch screen {
         case .firstRunScreen:
-            let view = PodSetupView(nextAction: { [weak self] in self?.stepFinished() },
-                                    allowDebugFeatures: allowDebugFeatures,
-                                    skipOnboarding: { [weak self] in    // NOTE: DEBUG FEATURES - DEBUG AND TEST ONLY
-                                        guard let self = self else { return }
-                                        self.pumpManager.completeOnboard()
-                                        self.completionDelegate?.completionNotifyingDidComplete(self)
-                                    })
+            let view = PodSetupView(
+                nextAction: { [weak self] in self?.stepFinished() },
+                allowDebugFeatures: allowDebugFeatures,
+                skipOnboarding: { [weak self] in // NOTE: DEBUG FEATURES - DEBUG AND TEST ONLY
+                    guard let self = self else { return }
+                    self.pumpManager.completeOnboard()
+                    self.completionDelegate?.completionNotifyingDidComplete(self)
+                }
+            )
             let controller = hostingController(rootView: view)
             controller.navigationItem.title = pumpManager.localizedTitle
             return controller
 
         case .expirationReminderSetup:
-            var view = ExpirationReminderSetupView(expirationReminderDefault: Int(pumpManager.defaultExpirationReminderOffset.hours))
+            var view =
+                ExpirationReminderSetupView(expirationReminderDefault: Int(pumpManager.defaultExpirationReminderOffset.hours))
             view.valueChanged = { [weak self] value in
                 self?.pumpManager.defaultExpirationReminderOffset = .hours(Double(value))
             }
@@ -132,7 +125,10 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.setupCanceled()
             }
             let hostedView = hostingController(rootView: view)
-            hostedView.navigationItem.title = LocalizedString("Expiration Reminder", comment: "Title for ExpirationReminderSetupView")
+            hostedView.navigationItem.title = LocalizedString(
+                "Expiration Reminder",
+                comment: "Title for ExpirationReminderSetupView"
+            )
             return hostedView
 
         case .lowReservoirReminderSetup:
@@ -157,21 +153,26 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             return hostedView
 
         case .insulinTypeSelection:
-            let didConfirm: (InsulinType) -> Void = { [weak self] (confirmedType) in
+            let didConfirm: (InsulinType) -> Void = { [weak self] confirmedType in
                 self?.pumpManager.insulinType = confirmedType
                 self?.stepFinished()
             }
             let didCancel: () -> Void = { [weak self] in
                 self?.setupCanceled()
             }
-            
-            let insulinSelectionView = InsulinTypeConfirmation(initialValue: .novolog, supportedInsulinTypes: allowedInsulinTypes, didConfirm: didConfirm, didCancel: didCancel)
+
+            let insulinSelectionView = InsulinTypeConfirmation(
+                initialValue: .novolog,
+                supportedInsulinTypes: allowedInsulinTypes,
+                didConfirm: didConfirm,
+                didCancel: didCancel
+            )
             let hostedView = hostingController(rootView: insulinSelectionView)
             hostedView.navigationItem.title = LocalizedString("Insulin Type", comment: "Title for insulin type selection screen")
             return hostedView
 
         case .selectPodType:
-            let didConfirm: (PodType) -> Void = { [weak self] (selectedPodType) in
+            let didConfirm: (PodType) -> Void = { [weak self] selectedPodType in
                 self?.podType = selectedPodType
                 self?.pumpManager.podType = selectedPodType
                 self?.stepFinished()
@@ -179,9 +180,14 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             let didCancel: () -> Void = { [weak self] in
                 self?.setupCanceled()
             }
- 
+
             let o5NotAvailable = O5CertificateStore.isEmpty
-            let podTypeSelectionView = PodTypeSelection(initialValue: self.podType, o5NotAvailable: o5NotAvailable, didConfirm: didConfirm, didCancel: didCancel)
+            let podTypeSelectionView = PodTypeSelection(
+                initialValue: podType,
+                o5NotAvailable: o5NotAvailable,
+                didConfirm: didConfirm,
+                didCancel: didCancel
+            )
             let hostedView = hostingController(rootView: podTypeSelectionView)
             hostedView.navigationItem.title = LocalizedString("Pod Type", comment: "Title for Pod Type selection screen")
             return hostedView
@@ -191,16 +197,21 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
             let dataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
             var view = RileyLinkSetupView(
                 dataSource: dataSource,
-                nextAction: { [weak self] in self?.stepFinished() })
+                nextAction: { [weak self] in self?.stepFinished() }
+            )
             view.cancelButtonTapped = { [weak self] in
-                 self?.setupCanceled()
+                self?.setupCanceled()
             }
             let controller = hostingController(rootView: view)
             controller.navigationItem.title = pumpManager.localizedTitle
             return controller
 
         case .deactivate:
-            let viewModel = DeactivatePodViewModel(podDeactivator: pumpManager, podAttachedToBody: pumpManager.podAttachmentConfirmed, fault: pumpManager.state.podState?.fault)
+            let viewModel = DeactivatePodViewModel(
+                podDeactivator: pumpManager,
+                podAttachedToBody: pumpManager.podAttachmentConfirmed,
+                fault: pumpManager.state.podState?.fault
+            )
 
             viewModel.didFinish = { [weak self] in
                 self?.stepFinished()
@@ -222,7 +233,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 }
                 self?.stepFinished()
             }
-            viewModel.navigateTo = { [weak self] (screen) in
+            viewModel.navigateTo = { [weak self] screen in
                 self?.navigateTo(screen)
             }
             let rileyLinkListDataSource = RileyLinkListDataSource(rileyLinkPumpManager: pumpManager)
@@ -240,7 +251,12 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 }
             }
 
-            let view = OmniSettingsView(viewModel: viewModel, rileyLinkListDataSource: rileyLinkListDataSource, handleRileyLinkSelection: handleRileyLinkSelection, supportedInsulinTypes: allowedInsulinTypes)
+            let view = OmniSettingsView(
+                viewModel: viewModel,
+                rileyLinkListDataSource: rileyLinkListDataSource,
+                handleRileyLinkSelection: handleRileyLinkSelection,
+                supportedInsulinTypes: allowedInsulinTypes
+            )
             let controller = hostingController(rootView: view)
             controller.navigationItem.title = pumpManager.localizedTitle
             return controller
@@ -261,8 +277,15 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.navigateTo(.deactivate)
             }
 
-            let view = hostingController(rootView: PairPodView(viewModel: viewModel).onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
-            view.navigationItem.title = String(format: LocalizedString("Pair %1$@ Pod", comment: "Title for pod pairing screen (1: pod type brief name)"), self.podType.briefName)
+            let view = hostingController(
+                rootView: PairPodView(viewModel: viewModel)
+                    .onAppear(perform: { UIApplication.shared.isIdleTimerDisabled = true }),
+                onDisappear: { UIApplication.shared.isIdleTimerDisabled = false }
+            )
+            view.navigationItem.title = String(
+                format: LocalizedString("Pair %1$@ Pod", comment: "Title for pod pairing screen (1: pod type brief name)"),
+                podType.briefName
+            )
             view.navigationItem.backButtonDisplayMode = .generic
             return view
 
@@ -278,7 +301,10 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 podTabColor: pumpManager.podType.tabColor
             )
 
-            let vc = hostingController(rootView: view.onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
+            let vc = hostingController(
+                rootView: view.onAppear(perform: { UIApplication.shared.isIdleTimerDisabled = true }),
+                onDisappear: { UIApplication.shared.isIdleTimerDisabled = false }
+            )
             vc.navigationItem.title = LocalizedString("Attach Pod", comment: "Title for Attach Pod screen")
             vc.navigationItem.hidesBackButton = true
             return vc
@@ -293,7 +319,11 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.navigateTo(.deactivate)
             }
 
-            let view = hostingController(rootView: InsertCannulaView(viewModel: viewModel).onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
+            let view = hostingController(
+                rootView: InsertCannulaView(viewModel: viewModel)
+                    .onAppear(perform: { UIApplication.shared.isIdleTimerDisabled = true }),
+                onDisappear: { UIApplication.shared.isIdleTimerDisabled = false }
+            )
             view.navigationItem.title = LocalizedString("Insert Cannula", comment: "Title for insert cannula screen")
             view.navigationItem.hidesBackButton = true
             return view
@@ -308,7 +338,10 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 }
             )
 
-            let hostedView = hostingController(rootView: view.onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
+            let hostedView = hostingController(
+                rootView: view.onAppear(perform: { UIApplication.shared.isIdleTimerDisabled = true }),
+                onDisappear: { UIApplication.shared.isIdleTimerDisabled = false }
+            )
             hostedView.navigationItem.title = LocalizedString("Check Cannula", comment: "Title for check cannula screen")
             hostedView.navigationItem.hidesBackButton = true
             return hostedView
@@ -327,8 +360,8 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 scheduledReminderDate: pumpManager.scheduledExpirationReminder,
                 dateFormatter: formatter,
                 allowedDates: allowedExpirationReminderDates,
-                onSaveScheduledExpirationReminder: { [weak self] (newExpirationReminderDate, completion) in
-                    var intervalBeforeExpiration : TimeInterval?
+                onSaveScheduledExpirationReminder: { [weak self] newExpirationReminderDate, completion in
+                    var intervalBeforeExpiration: TimeInterval?
                     if let newExpirationReminderDate = newExpirationReminderDate {
                         intervalBeforeExpiration = podExpiresAt.timeIntervalSince(newExpirationReminderDate)
                     }
@@ -342,16 +375,25 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 }
             )
 
-            let hostedView = hostingController(rootView: view.onAppear(perform: {UIApplication.shared.isIdleTimerDisabled = true}), onDisappear: {UIApplication.shared.isIdleTimerDisabled = false})
+            let hostedView = hostingController(
+                rootView: view.onAppear(perform: { UIApplication.shared.isIdleTimerDisabled = true }),
+                onDisappear: { UIApplication.shared.isIdleTimerDisabled = false }
+            )
             hostedView.navigationItem.title = LocalizedString("Setup Complete", comment: "Title for setup complete screen")
             return hostedView
 
         case .pendingCommandRecovery:
-            guard let podState = pumpManager.state.podState, let pendingCommand = podState.unacknowledgedCommand, podState.needsCommsRecovery == true else {
+            guard let podState = pumpManager.state.podState, let pendingCommand = podState.unacknowledgedCommand,
+                  podState.needsCommsRecovery == true
+            else {
                 fatalError("Pending command recovery UI attempted without pending command")
             }
 
-            let model = DeliveryUncertaintyRecoveryViewModel(appName: appName, uncertaintyStartedAt: pendingCommand.commandDate, usesRileyLink: self.pumpManager.podType.usesRileyLink)
+            let model = DeliveryUncertaintyRecoveryViewModel(
+                appName: appName,
+                uncertaintyStartedAt: pendingCommand.commandDate,
+                usesRileyLink: pumpManager.podType.usesRileyLink
+            )
             model.didRecover = { [weak self] in
                 self?.navigateTo(.uncertaintyRecovered)
             }
@@ -364,11 +406,14 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.navigateTo(.settings)
             }
             pumpManager.addStatusObserver(model, queue: DispatchQueue.main)
-            pumpManager.getPodStatus() { _ in }
+            pumpManager.getPodStatus { _ in }
 
             let view = DeliveryUncertaintyRecoveryView(model: model)
             let hostedView = hostingController(rootView: view)
-            hostedView.navigationItem.title = LocalizedString("Unable To Reach Pod", comment: "Title for pending command recovery screen")
+            hostedView.navigationItem.title = LocalizedString(
+                "Unable To Reach Pod",
+                comment: "Title for pending command recovery screen"
+            )
             return hostedView
 
         case .uncertaintyRecovered:
@@ -377,12 +422,18 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 self?.stepFinished()
             }
             let hostedView = hostingController(rootView: view)
-            hostedView.navigationItem.title = LocalizedString("Comms Recovered", comment: "Title for uncertainty recovered screen")
+            hostedView.navigationItem.title = LocalizedString(
+                "Comms Recovered",
+                comment: "Title for uncertainty recovered screen"
+            )
             return hostedView
         }
     }
 
-    private func hostingController<Content: View>(rootView: Content, onDisappear: @escaping () -> Void = {}) -> DismissibleHostingController<some View> {
+    private func hostingController<Content: View>(
+        rootView: Content,
+        onDisappear: @escaping () -> Void = {}
+    ) -> DismissibleHostingController<some View> {
         let rootView = rootView
             .environment(\.appName, Bundle.main.bundleDisplayName)
         return DismissibleHostingController(content: rootView, onDisappear: onDisappear, colorPalette: colorPalette)
@@ -390,7 +441,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
 
     private func stepFinished() {
         if let nextStep = currentScreen.next() {
-            if nextStep == .rileyLinkSetup && !podType.usesRileyLink {
+            if nextStep == .rileyLinkSetup, !podType.usesRileyLink {
                 // Skip rileyLinkSetup to pairAndPrme for non-Eros
                 navigateTo(.pairAndPrime)
             } else {
@@ -409,9 +460,14 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         completionDelegate?.completionNotifyingDidComplete(self)
     }
 
-    init(pumpManager: OmniPumpManager? = nil, colorPalette: LoopUIColorPalette, pumpManagerSettings: PumpManagerSetupSettings? = nil, allowDebugFeatures: Bool, allowedInsulinTypes: [InsulinType] = [])
+    init(
+        pumpManager: OmniPumpManager? = nil,
+        colorPalette: LoopUIColorPalette,
+        pumpManagerSettings: PumpManagerSetupSettings? = nil,
+        allowDebugFeatures: Bool,
+        allowedInsulinTypes: [InsulinType] = []
+    )
     {
-
         if pumpManager == nil, let pumpManagerSettings = pumpManagerSettings {
             let basalSchedule = pumpManagerSettings.basalSchedule
 
@@ -421,11 +477,12 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
                 isOnboarded: false,
                 podState: nil,
                 timeZone: basalSchedule.timeZone,
-                basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, podType: self.podType),
+                basalSchedule: BasalSchedule(repeatingScheduleValues: basalSchedule.items, podType: podType),
                 maxBasalRateUnitsPerHour: pumpManagerSettings.maxBasalRateUnitsPerHour,
                 maxBolusUnits: pumpManagerSettings.maxBolusUnits,
                 insulinType: nil,
-                podType: self.podType)
+                podType: podType
+            )
 
             self.pumpManager = OmniPumpManager(state: pumpManagerState, rileyLinkDeviceProvider: deviceProvider)
         } else {
@@ -444,31 +501,31 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         super.init(navigationBarClass: UINavigationBar.self, toolbarClass: UIToolbar.self)
     }
 
-    required init?(coder aDecoder: NSCoder) {
+    @available(*, unavailable)  required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     private func determineInitialStep() -> OmniUIScreen {
-        self.podType = pumpManager.podType
+        podType = pumpManager.podType
         if pumpManager.state.podState?.needsCommsRecovery == true {
             return .pendingCommandRecovery
         } else if pumpManager.podCommState == .activating {
-            if pumpManager.state.podState?.readyForCannulaInsertion == true && pumpManager.podAttachmentConfirmed {
+            if pumpManager.state.podState?.readyForCannulaInsertion == true, pumpManager.podAttachmentConfirmed {
                 return .insertCannula
             } else {
-                assert(self.podType != unknownOmnipodType)
+                assert(podType != unknownOmnipodType)
                 return .pairAndPrime // need to finish the priming
             }
         } else if !pumpManager.isOnboarded {
             if !pumpManager.initialConfigurationCompleted {
                 return .firstRunScreen
             }
-            if self.podType == unknownOmnipodType {
+            if podType == unknownOmnipodType {
                 return .selectPodType // need to first select a pod type
             }
             return .pairAndPrime // pair and prime a new pod
         } else {
-            if self.podType == unknownOmnipodType {
+            if podType == unknownOmnipodType {
                 return .selectPodType // need to first select a pod type
             }
             return .settings
@@ -498,7 +555,7 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationBar.prefersLargeTitles = true
+        navigationBar.prefersLargeTitles = true
         delegate = self
     }
 
@@ -507,13 +564,12 @@ class OmniUICoordinator: UINavigationController, PumpManagerOnboarding, Completi
         completionDelegate?.completionNotifyingDidComplete(self)
     }
 
-    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-                
+    func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
         setOverrideTraitCollection(customTraitCollection, forChild: viewController)
-        
+
         if viewControllers.count < screenStack.count {
             // Navigation back
-            let _ = screenStack.popLast()
+            _ = screenStack.popLast()
         }
         viewController.view.backgroundColor = UIColor.secondarySystemBackground
     }
@@ -526,7 +582,7 @@ extension OmniUICoordinator: OmniUINavigator {
         screenStack.append(screen)
         let viewController = viewControllerForScreen(screen)
         viewController.isModalInPresentation = false
-        self.pushViewController(viewController, animated: true)
+        pushViewController(viewController, animated: true)
         viewController.view.layoutSubviews()
     }
 }

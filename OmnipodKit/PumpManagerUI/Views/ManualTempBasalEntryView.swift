@@ -1,23 +1,12 @@
-//
-//  ManualTempBasalEntryView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/ManualTempBasalEntryView.swift
-//  Created by Pete Schwamb on 5/14/22.
-//  Copyright © 2022 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
-import LoopKitUI
-import LoopKit
 import HealthKit
-
+import LoopKit
+import LoopKitUI
+import SwiftUI
 
 struct ManualTempBasalEntryView: View {
-
     @Environment(\.guidanceColors) var guidanceColors
 
-    var enactBasal: ((Double,TimeInterval,@escaping (PumpManagerError?)->Void) -> Void)?
+    var enactBasal: ((Double, TimeInterval, @escaping (PumpManagerError?) -> Void) -> Void)?
     var didCancel: (() -> Void)?
 
     @State private var rateEntered: Double = 0.0
@@ -30,7 +19,11 @@ struct ManualTempBasalEntryView: View {
 
     var allowedRates: [Double]
 
-    init(enactBasal: ((Double,TimeInterval,@escaping (PumpManagerError?)->Void) -> Void)? = nil, didCancel: (() -> Void)? = nil, allowedRates: [Double]) {
+    init(
+        enactBasal: ((Double, TimeInterval, @escaping (PumpManagerError?) -> Void) -> Void)? = nil,
+        didCancel: (() -> Void)? = nil,
+        allowedRates: [Double]
+    ) {
         self.enactBasal = enactBasal
         self.didCancel = didCancel
         self.allowedRates = allowedRates
@@ -66,11 +59,11 @@ struct ManualTempBasalEntryView: View {
     }
 
     func formatRate(_ rate: Double) -> String {
-        return ManualTempBasalEntryView.rateFormatter.string(from: HKQuantity(unit: .internationalUnitsPerHour, doubleValue: rate)) ?? ""
+        ManualTempBasalEntryView.rateFormatter.string(from: HKQuantity(unit: .internationalUnitsPerHour, doubleValue: rate)) ?? ""
     }
 
     func formatDuration(_ duration: TimeInterval) -> String {
-        return ManualTempBasalEntryView.durationFormatter.string(from: HKQuantity(unit: .hour(), doubleValue: duration.hours)) ?? ""
+        ManualTempBasalEntryView.durationFormatter.string(from: HKQuantity(unit: .hour(), doubleValue: duration.hours)) ?? ""
     }
 
     var body: some View {
@@ -80,20 +73,34 @@ struct ManualTempBasalEntryView: View {
                     HStack {
                         Text(LocalizedString("Rate", comment: "Label text for basal rate summary"))
                         Spacer()
-                        Text(String(format: LocalizedString("%1$@ for %2$@", comment: "Summary string for temporary basal rate configuration page"), formatRate(rateEntered), formatDuration(durationEntered)))
+                        Text(String(
+                            format: LocalizedString(
+                                "%1$@ for %2$@",
+                                comment: "Summary string for temporary basal rate configuration page"
+                            ),
+                            formatRate(rateEntered),
+                            formatDuration(durationEntered)
+                        ))
                     }
                     HStack {
-                        ResizeablePicker(selection: $rateEntered,
-                                         data: allowedRates,
-                                         formatter: { formatRate($0) })
-                        ResizeablePicker(selection: $durationEntered,
-                                         data: Pod.supportedTempBasalDurations,
-                                         formatter: { formatDuration($0) })
+                        ResizeablePicker(
+                            selection: $rateEntered,
+                            data: allowedRates,
+                            formatter: { formatRate($0) }
+                        )
+                        ResizeablePicker(
+                            selection: $durationEntered,
+                            data: Pod.supportedTempBasalDurations,
+                            formatter: { formatDuration($0) }
+                        )
                     }
                     .frame(maxHeight: 162.0)
                     .alert(isPresented: $showingMissingConfigAlert, content: { missingConfigAlert })
                     Section {
-                        Text(LocalizedString("Your insulin delivery will not be automatically adjusted until the temporary basal rate finishes or is canceled.", comment: "Description text on manual temp basal action sheet"))
+                        Text(LocalizedString(
+                            "Your insulin delivery will not be automatically adjusted until the temporary basal rate finishes or is canceled.",
+                            comment: "Description text on manual temp basal action sheet"
+                        ))
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -101,7 +108,7 @@ struct ManualTempBasalEntryView: View {
                 }
                 Button(action: {
                     enacting = true
-                    enactBasal?(rateEntered, durationEntered) { (error) in
+                    enactBasal?(rateEntered, durationEntered) { error in
                         if let error = error {
                             self.error = error
                             showingErrorAlert = true
@@ -113,7 +120,10 @@ struct ManualTempBasalEntryView: View {
                         if enacting {
                             ProgressView()
                         } else {
-                            Text(LocalizedString("Set Temporary Basal", comment: "Button text for setting manual temporary basal rate"))
+                            Text(LocalizedString(
+                                "Set Temporary Basal",
+                                comment: "Button text for setting manual temporary basal rate"
+                            ))
                         }
                     }
                 }
@@ -131,21 +141,38 @@ struct ManualTempBasalEntryView: View {
         let errorMessage = errorMessage(error: error!)
         return SwiftUI.Alert(
             title: Text(LocalizedString("Temporary Basal Failed", comment: "Alert title for a failure to set temporary basal")),
-            message: errorMessage)
+            message: errorMessage
+        )
     }
 
     func errorMessage(error: PumpManagerError) -> Text {
         if let recovery = error.recoverySuggestion {
-            return Text(String(format: LocalizedString("Unable to set a temporary basal rate: %1$@\n\n%2$@", comment: "Alert format string for a failure to set temporary basal with recovery suggestion. (1: error description) (2: recovery text)"), error.localizedDescription, recovery))
+            return Text(String(
+                format: LocalizedString(
+                    "Unable to set a temporary basal rate: %1$@\n\n%2$@",
+                    comment: "Alert format string for a failure to set temporary basal with recovery suggestion. (1: error description) (2: recovery text)"
+                ),
+                error.localizedDescription,
+                recovery
+            ))
         } else {
-            return Text(String(format: LocalizedString("Unable to set a temporary basal rate: %1$@", comment: "Alert format string for a failure to set temporary basal. (1: error description)"), error.localizedDescription))
+            return Text(String(
+                format: LocalizedString(
+                    "Unable to set a temporary basal rate: %1$@",
+                    comment: "Alert format string for a failure to set temporary basal. (1: error description)"
+                ),
+                error.localizedDescription
+            ))
         }
     }
 
     var missingConfigAlert: SwiftUI.Alert {
-        return SwiftUI.Alert(
+        SwiftUI.Alert(
             title: Text(LocalizedString("Missing Config", comment: "Alert title for missing temp basal configuration")),
-            message: Text(LocalizedString("This PumpManager has not been configured with a maximum basal rate because it was added before manual temp basal was a feature. Please set a new maximum basal rate.", comment: "Alert format string for missing temp basal configuration."))
+            message: Text(LocalizedString(
+                "This PumpManager has not been configured with a maximum basal rate because it was added before manual temp basal was a feature. Please set a new maximum basal rate.",
+                comment: "Alert format string for missing temp basal configuration."
+            ))
         )
     }
 
@@ -156,5 +183,3 @@ struct ManualTempBasalEntryView: View {
         .accessibility(identifier: "button_cancel")
     }
 }
-
-

@@ -1,12 +1,3 @@
-//
-//  SessionKeys.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/Bluetooth/Session/SessionKeys.swift
-//  Created by Randall Knutson on 11/8/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 struct SessionKeys {

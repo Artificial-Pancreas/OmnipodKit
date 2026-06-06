@@ -1,12 +1,3 @@
-//
-//  CancelDeliveryCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/CancelDeliveryCommand.swift
-//  Created by Pete Schwamb on 2/23/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct CancelDeliveryCommand: NonceResyncableMessageBlock {
@@ -29,10 +20,10 @@ struct CancelDeliveryCommand: NonceResyncableMessageBlock {
     struct DeliveryType: OptionSet, Equatable {
         let rawValue: UInt8
 
-        static let none          = DeliveryType()
-        static let basal         = DeliveryType(rawValue: 1 << 0)
-        static let tempBasal     = DeliveryType(rawValue: 1 << 1)
-        static let bolus         = DeliveryType(rawValue: 1 << 2)
+        static let none = DeliveryType()
+        static let basal = DeliveryType(rawValue: 1 << 0)
+        static let tempBasal = DeliveryType(rawValue: 1 << 1)
+        static let bolus = DeliveryType(rawValue: 1 << 2)
 
         static let allButBasal: DeliveryType = [.tempBasal, .bolus]
         static let all: DeliveryType = [.none, .basal, .tempBasal, .bolus]
@@ -54,7 +45,7 @@ struct CancelDeliveryCommand: NonceResyncableMessageBlock {
             case .allButBasal:
                 return "AllButBasal"
             default:
-                return "\(self.rawValue)"
+                return "\(rawValue)"
             }
         }
     }
@@ -68,8 +59,8 @@ struct CancelDeliveryCommand: NonceResyncableMessageBlock {
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            5,
-            ])
+            5
+        ])
         data.appendBigEndian(nonce)
         data.append((beepType.rawValue << 4) + deliveryType.rawValue)
         return data
@@ -79,9 +70,9 @@ struct CancelDeliveryCommand: NonceResyncableMessageBlock {
         if encodedData.count < 7 {
             throw MessageBlockError.notEnoughData
         }
-        self.nonce = encodedData[2...].toBigEndian(UInt32.self)
-        self.deliveryType = DeliveryType(rawValue: encodedData[6] & 0xf)
-        self.beepType = BeepType(rawValue: encodedData[6] >> 4)!
+        nonce = encodedData[2...].toBigEndian(UInt32.self)
+        deliveryType = DeliveryType(rawValue: encodedData[6] & 0xF)
+        beepType = BeepType(rawValue: encodedData[6] >> 4)!
     }
 
     init(nonce: UInt32, deliveryType: DeliveryType, beepType: BeepType) {
@@ -93,6 +84,6 @@ struct CancelDeliveryCommand: NonceResyncableMessageBlock {
 
 extension CancelDeliveryCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "CancelDeliveryCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), deliveryType:\(deliveryType.debugDescription), beepType:\(beepType))"
+        "CancelDeliveryCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), deliveryType:\(deliveryType.debugDescription), beepType:\(beepType))"
     }
 }

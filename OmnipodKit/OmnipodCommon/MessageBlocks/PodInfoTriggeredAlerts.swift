@@ -1,12 +1,3 @@
-//
-//  PodInfoTriggeredAlerts.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/PodInfoTriggeredAlerts.swift
-//  Created by Eelke Jager on 16/09/2018.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 // Type 1 Pod Info returns information about the currently unacknowledged triggered alert values
@@ -28,12 +19,12 @@ struct PodInfoTriggeredAlerts: PodInfo {
         }
 
         // initialize the eight VVVV triggered alert values starting at offset 3
-        for i in 0..<8 {
+        for i in 0 ..< 8 {
             let j = 3 + (2 * i)
-            self.alertActivations[i] = TimeInterval(minutes: Double(encodedData[j...].toBigEndian(UInt16.self)))
+            alertActivations[i] = TimeInterval(minutes: Double(encodedData[j...].toBigEndian(UInt16.self)))
         }
-        self.unknown_word = encodedData[1...].toBigEndian(UInt16.self)
-        self.data = encodedData
+        unknown_word = encodedData[1...].toBigEndian(UInt16.self)
+        data = encodedData
     }
 }
 
@@ -50,7 +41,7 @@ private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sep
         let description = AlertSlot(rawValue: UInt8(index)).debugDescription
         let start = description.index(description.startIndex, offsetBy: startOffset)
         let end = description.index(description.endIndex, offsetBy: -1)
-        let range = start..<end
+        let range = start ..< end
 
         let triggeredTimeStr: String
         if printZeroVals || podInfoTriggeredAlerts.alertActivations[index] != 0 {
@@ -65,11 +56,11 @@ private func triggeredAlerts(podInfoTriggeredAlerts: PodInfoTriggeredAlerts, sep
 }
 
 func triggeredAlertsString(podInfoTriggeredAlerts: PodInfoTriggeredAlerts) -> String {
-    return triggeredAlerts(podInfoTriggeredAlerts: podInfoTriggeredAlerts, sepString: "\n", printZeroVals: false)
+    triggeredAlerts(podInfoTriggeredAlerts: podInfoTriggeredAlerts, sepString: "\n", printZeroVals: false)
 }
 
 extension PodInfoTriggeredAlerts: CustomDebugStringConvertible {
     var debugDescription: String {
-        return triggeredAlerts(podInfoTriggeredAlerts: self, sepString: ", ", printZeroVals: true)
+        triggeredAlerts(podInfoTriggeredAlerts: self, sepString: ", ", printZeroVals: true)
     }
 }

@@ -1,12 +1,3 @@
-//
-//  PodState.swift
-//  OmnipodKit
-//
-//  Based on Omni{BLE,Kit}/PumpManager/PodState.swift
-//  Created by Joe Moran on 12/31/24.
-//  Copyright © 2024 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 import LoopKit
 import os.log
@@ -27,27 +18,27 @@ enum SetupProgress: Int {
     case podIncompatible
 
     var isPaired: Bool {
-        return self.rawValue >= SetupProgress.podPaired.rawValue
+        rawValue >= SetupProgress.podPaired.rawValue
     }
 
     var primingNeverAttempted: Bool {
-        return self.rawValue < SetupProgress.startingPrime.rawValue
+        rawValue < SetupProgress.startingPrime.rawValue
     }
 
     var primingNeeded: Bool {
-        return self.rawValue < SetupProgress.priming.rawValue
+        rawValue < SetupProgress.priming.rawValue
     }
 
     var needsInitialBasalSchedule: Bool {
-        return self.rawValue < SetupProgress.initialBasalScheduleSet.rawValue
+        rawValue < SetupProgress.initialBasalScheduleSet.rawValue
     }
 
     var needsCannulaInsertion: Bool {
-        return self.rawValue < SetupProgress.completed.rawValue
+        rawValue < SetupProgress.completed.rawValue
     }
 
     var cannulaInsertionSuccessfullyStarted: Bool {
-        return self.rawValue > SetupProgress.startingInsertCannula.rawValue
+        rawValue > SetupProgress.startingInsertCannula.rawValue
     }
 }
 
@@ -57,7 +48,6 @@ enum SetupProgress: Int {
 // }
 // XXX still needs be declared public with the current Trio implementation
 public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertible {
-
     public typealias RawValue = [String: Any]
 
     let address: UInt32
@@ -96,7 +86,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     var dosesToStore: [UnfinalizedDose] {
         /// Also include unfinalized bolus and temp basal doses which are mututable until finalized.
         /// Suspends and resumes are now "finalized" upon getting a response confirming delivery state.
-        return finalizedDoses + [unfinalizedBolus, unfinalizedTempBasal].compactMap {$0}
+        finalizedDoses + [unfinalizedBolus, unfinalizedTempBasal].compactMap { $0 }
     }
 
     var suspendState: SuspendState
@@ -125,16 +115,15 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // BLE specific variables
     var bleMessageTransportState: BleMessageTransportState
-    var ltk: Data? = nil
-    var bleIdentifier: String? = nil
-    var signingKey: Data? = nil // O5 only
+    var ltk: Data?
+    var bleIdentifier: String?
+    var signingKey: Data? // O5 only
 
     // Eros specific variables
     var erosMessageTransportState: ErosMessageTransportState
-    var nonceState: NonceState? = nil
+    var nonceState: NonceState?
 
     var lastDeliveryStatusReceived: DeliveryStatus? // this variable is not persistent across app restarts
-
 
     init(
         address: UInt32,
@@ -155,7 +144,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         erosMessageTransportState: ErosMessageTransportState? = nil,
 
         setupUnitsDelivered: Double? = nil,
-        initialDeliveryStatus: DeliveryStatus? = nil)
+        initialDeliveryStatus: DeliveryStatus? = nil
+    )
     {
         self.address = address
         self.firmwareVersion = firmwareVersion
@@ -166,17 +156,17 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         self.podType = podType
 
         self.setupUnitsDelivered = setupUnitsDelivered // can be non-zero with simulator
-        self.lastDeliveryStatusReceived = initialDeliveryStatus // can be non-nil when testing
+        lastDeliveryStatusReceived = initialDeliveryStatus // can be non-nil when testing
 
-        self.lastInsulinMeasurements = nil
-        self.finalizedDoses = []
-        self.suspendState = .resumed(Date())
-        self.fault = nil
-        self.activeAlertSlots = .none
-        self.primeFinishTime = nil
-        self.setupProgress = .addressAssigned
-        self.configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
-        self.podTime = 0
+        lastInsulinMeasurements = nil
+        finalizedDoses = []
+        suspendState = .resumed(Date())
+        fault = nil
+        activeAlertSlots = .none
+        primeFinishTime = nil
+        setupProgress = .addressAssigned
+        configuredAlerts = [.slot7Expired: .waitingForPairingReminder]
+        podTime = 0
 
         if podType.isEros {
             // Eros specific initializations, nonceState will be initialized on initial nonce resync()
@@ -200,11 +190,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
-
     // MARK: - PodState computed var's
 
     var unfinishedSetup: Bool {
-        return setupProgress != .completed
+        setupProgress != .completed
     }
 
     var readyForCannulaInsertion: Bool {
@@ -215,16 +204,16 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     var isActive: Bool {
-        return setupProgress == .completed && fault == nil
+        setupProgress == .completed && fault == nil
     }
 
     // variation on isActive that doesn't care if Pod is faulted
     var isSetupComplete: Bool {
-        return setupProgress == .completed
+        setupProgress == .completed
     }
 
     var isFaulted: Bool {
-        return fault != nil || setupProgress == .activationTimeout || setupProgress == .podIncompatible
+        fault != nil || setupProgress == .activationTimeout || setupProgress == .podIncompatible
     }
 
     // MARK: - 32-bit message nonce var's and func's
@@ -235,25 +224,25 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             return self.nonceState!.currentNonce
         }
         // For non-Eros pods the 32-bit message nonce must be this particular fixed value
-        let fixedNonceValue: UInt32 = 0x494E532E
+        let fixedNonceValue: UInt32 = 0x494E_532E
         return fixedNonceValue
     }
 
     mutating func advanceToNextNonce() {
-        if self.nonceState != nil {
+        if nonceState != nil {
             // Eros pod, advance to the next 32-bit message nonce
-            self.nonceState!.advanceToNextNonce()
+            nonceState!.advanceToNextNonce()
             return
         }
         // For non-Eros pods this 32-bit message nonce is fixed and is never advanced
     }
 
     mutating func resyncNonce(syncWord: UInt16, sentNonce: UInt32, messageSequenceNum: Int) {
-        if self.podType.isEros {
+        if podType.isEros {
             // Need to initialize or reseed the pod's nonceState
             let sum = (sentNonce & 0xFFFF) + UInt32(crc16Table[messageSequenceNum]) + (lotNo & 0xFFFF) + (lotSeq & 0xFFFF)
             let seed = UInt16(sum & 0xFFFF) ^ syncWord
-            self.nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
+            nonceState = NonceState(lot: lotNo, tid: lotSeq, seed: seed)
         } else {
             print("resyncNonce expectedly called!") // Should never be called for non-Eros pod!
         }
@@ -261,7 +250,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
     // BLE specific
     mutating func incrementEapSeq() -> Int {
-        self.bleMessageTransportState.eapSeq += 1
+        bleMessageTransportState.eapSeq += 1
         return bleMessageTransportState.eapSeq
     }
 
@@ -272,34 +261,39 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     private mutating func updatePodTimes(timeActive: TimeInterval) -> Date {
         let now = Date()
 
-        guard timeActive >= self.podTime else {
+        guard timeActive >= podTime else {
             // The pod active time went backwards and thus we have an apparent reset fault.
             // Don't update any times or displayed expiresAt time will expectedly jump.
             return now
         }
 
-        self.podTime = timeActive
-        self.podTimeUpdated = now
+        podTime = timeActive
+        podTimeUpdated = now
 
         let activatedAtComputed = now - timeActive
         if activatedAt == nil {
-            self.activatedAt = activatedAtComputed
+            activatedAt = activatedAtComputed
         }
         let expiresAtComputed = activatedAtComputed + Pod.nominalPodLife
         if expiresAt == nil {
-            self.expiresAt = expiresAtComputed
-        } else if expiresAtComputed < self.expiresAt! || expiresAtComputed > (self.expiresAt! + TimeInterval(minutes: 1)) {
+            expiresAt = expiresAtComputed
+        } else if expiresAtComputed < expiresAt! || expiresAtComputed > (expiresAt! + TimeInterval(minutes: 1)) {
             // The computed expiresAt time is earlier than or more than a minute later than the current expiresAt time,
             // so use the computed expiresAt time instead to handle Pod clock drift and/or system time changes issues.
             // The more than a minute later test prevents oscillation of expiresAt based on the timing of the responses.
-            self.expiresAt = expiresAtComputed
+            expiresAt = expiresAtComputed
         }
         return now
     }
 
     mutating func updateFromStatusResponse(_ response: StatusResponse, at date: Date = Date()) {
         let now = updatePodTimes(timeActive: response.timeActive)
-        updateDeliveryStatus(deliveryStatus: response.deliveryStatus, podProgressStatus: response.podProgressStatus, bolusNotDelivered: response.bolusNotDelivered, at: date)
+        updateDeliveryStatus(
+            deliveryStatus: response.deliveryStatus,
+            podProgressStatus: response.podProgressStatus,
+            bolusNotDelivered: response.bolusNotDelivered,
+            at: date
+        )
 
         let setupUnits = setupUnitsDelivered ?? Pod.primeUnits + Pod.cannulaInsertionUnits + Pod.cannulaInsertionUnitsExtra
 
@@ -310,7 +304,11 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         let prevDelivered = lastInsulinMeasurements?.delivered ?? 0
         let insulinDelivered = max(calcDelivered, prevDelivered)
 
-        lastInsulinMeasurements = PodInsulinMeasurements(insulinDelivered: insulinDelivered, reservoirLevel: response.reservoirLevel, validTime: now)
+        lastInsulinMeasurements = PodInsulinMeasurements(
+            insulinDelivered: insulinDelivered,
+            reservoirLevel: response.reservoirLevel,
+            validTime: now
+        )
 
         activeAlertSlots = response.alerts
     }
@@ -338,7 +336,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
 
         switch pendingCommand {
-        case .program(let program, _, let commandDate, _):
+        case let .program(program, _, commandDate, _):
 
             if let dose = program.unfinalizedDose(at: commandDate, withCertainty: .uncertain, insulinType: insulinType) {
                 switch dose.doseType {
@@ -350,7 +348,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                     }
                 case .tempBasal:
                     // Assume a high temp succeeded, but low temp failed
-                    if case .tempBasal(_, _, let isHighTemp, _) = program, isHighTemp {
+                    if case let .tempBasal(_, _, isHighTemp, _) = program, isHighTemp {
                         if dose.isFinished() {
                             finalizedDoses.append(dose)
                         } else {
@@ -363,40 +361,54 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                     break // start program is never a suspend
                 }
             }
-        case .stopProgram(let stopProgram, _, let commandDate, _):
+        case let .stopProgram(stopProgram, _, commandDate, _):
             // All stop programs result in reduced delivery, except for stopping a low temp, so we assume all stop
             // commands failed, except for low temp
 
             if stopProgram.contains(.tempBasal),
-                let tempBasal = unfinalizedTempBasal,
-                tempBasal.isHighTemp,
-                !tempBasal.isFinished(at: commandDate)
+               let tempBasal = unfinalizedTempBasal,
+               tempBasal.isHighTemp,
+               !tempBasal.isFinished(at: commandDate)
             {
                 unfinalizedTempBasal?.cancel(at: commandDate)
             }
         }
-        self.unacknowledgedCommand = nil
+        unacknowledgedCommand = nil
     }
 
-    private mutating func updateDeliveryStatus(deliveryStatus: DeliveryStatus, podProgressStatus: PodProgressStatus, bolusNotDelivered: Double, at date: Date) {
-
+    private mutating func updateDeliveryStatus(
+        deliveryStatus: DeliveryStatus,
+        podProgressStatus: PodProgressStatus,
+        bolusNotDelivered: Double,
+        at date: Date
+    ) {
         // save the current pod delivery state for verification before any insulin delivery command
-        self.lastDeliveryStatusReceived = deliveryStatus
+        lastDeliveryStatusReceived = deliveryStatus
 
         // See if the pod's deliveryStatus indicates some insulin delivery that podState isn't tracking
-        if deliveryStatus.bolusing && unfinalizedBolus == nil { // active bolus that we aren't tracking
+        if deliveryStatus.bolusing, unfinalizedBolus == nil { // active bolus that we aren't tracking
             if podProgressStatus.readyForDelivery {
                 // Create an unfinalizedBolus with the remaining bolus amount to capture what we can.
-                unfinalizedBolus = UnfinalizedDose(bolusAmount: bolusNotDelivered, startTime: date, scheduledCertainty: .certain, insulinType: insulinType, automatic: false)
+                unfinalizedBolus = UnfinalizedDose(
+                    bolusAmount: bolusNotDelivered,
+                    startTime: date,
+                    scheduledCertainty: .certain,
+                    insulinType: insulinType,
+                    automatic: false
+                )
             }
         }
-        if deliveryStatus.tempBasalRunning && unfinalizedTempBasal == nil { // active temp basal that we aren't tracking
+        if deliveryStatus.tempBasalRunning, unfinalizedTempBasal == nil { // active temp basal that we aren't tracking
             // unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: 0, startTime: date, duration: .minutes(30), isHighTemp: false, scheduledCertainty: .certain, insulinType: insulinType)
         }
-        if !deliveryStatus.suspended && isSuspended { // active basal that we aren't tracking
+        if !deliveryStatus.suspended, isSuspended { // active basal that we aren't tracking
             let resumeStartTime = date
             suspendState = .resumed(resumeStartTime)
-            unfinalizedResume = UnfinalizedDose(resumeStartTime: resumeStartTime, scheduledCertainty: .certain, insulinType: insulinType)
+            unfinalizedResume = UnfinalizedDose(
+                resumeStartTime: resumeStartTime,
+                scheduledCertainty: .certain,
+                insulinType: insulinType
+            )
         }
 
         if var bolus = unfinalizedBolus, !deliveryStatus.bolusing {
@@ -431,10 +443,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
     }
 
-    @discardableResult
-    mutating func handleCancelDosing(deliveryType: CancelDeliveryCommand.DeliveryType, bolusNotDelivered: Double, at now: Date = Date()) -> UnfinalizedDose?
+    @discardableResult  mutating func handleCancelDosing(
+        deliveryType: CancelDeliveryCommand.DeliveryType,
+        bolusNotDelivered: Double,
+        at now: Date = Date()
+    ) -> UnfinalizedDose?
     {
-        var canceledDose: UnfinalizedDose? = nil
+        var canceledDose: UnfinalizedDose?
 
         if deliveryType.contains(.basal) {
             unfinalizedSuspend = UnfinalizedDose(suspendStartTime: now, scheduledCertainty: .certain)
@@ -442,9 +457,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
 
         if let tempBasal = unfinalizedTempBasal,
-            let finishTime = tempBasal.finishTime,
-            deliveryType.contains(.tempBasal),
-            finishTime > now
+           let finishTime = tempBasal.finishTime,
+           deliveryType.contains(.tempBasal),
+           finishTime > now
         {
             unfinalizedTempBasal?.cancel(at: now)
             if !deliveryType.contains(.basal) {
@@ -455,9 +470,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         }
 
         if let bolus = unfinalizedBolus,
-            let finishTime = bolus.finishTime,
-            deliveryType.contains(.bolus),
-            finishTime > now
+           let finishTime = bolus.finishTime,
+           deliveryType.contains(.bolus),
+           finishTime > now
         {
             unfinalizedBolus?.cancel(at: now, withRemaining: bolusNotDelivered)
             canceledDose = unfinalizedBolus
@@ -468,6 +483,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
     }
 
     // MARK: - RawRepresentable
+
     public init?(rawValue: RawValue) {
         log.bleDebug("[PodState] init with rawValue: %{public}@", String(describing: rawValue))
 
@@ -475,9 +491,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             let address = rawValue["address"] as? UInt32,
             let lotNo = rawValue["lotNo"] as? UInt32 ?? rawValue["lot"] as? UInt32,
             let lotSeq = rawValue["lotSeq"] as? UInt32 ?? rawValue["tid"] as? UInt32
-            else {
-                return nil
-            }
+        else {
+            return nil
+        }
 
         self.address = address
         self.lotNo = lotNo
@@ -488,7 +504,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let firmwareVersion = rawValue["firmwareVersion"] as? String {
             self.firmwareVersion = firmwareVersion
         } else if let pmVersion = rawValue["pmVersion"] as? String {
-            self.firmwareVersion = pmVersion // OmniKit
+            firmwareVersion = pmVersion // OmniKit
         } else {
             return nil
         }
@@ -496,9 +512,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         if let iFirmwareVersion = rawValue["iFirmwareVersion"] as? String {
             self.iFirmwareVersion = iFirmwareVersion
         } else if let bleFirmwareVersion = rawValue["bleFirmwareVersion"] as? String {
-            self.iFirmwareVersion = bleFirmwareVersion // OmniBLE
+            iFirmwareVersion = bleFirmwareVersion // OmniBLE
         } else if let piVersion = rawValue["piVersion"] as? String {
-            self.iFirmwareVersion = piVersion // OmniKit
+            iFirmwareVersion = piVersion // OmniKit
         } else {
             return nil
         }
@@ -508,23 +524,23 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             if let expiresAt = rawValue["expiresAt"] as? Date {
                 self.expiresAt = expiresAt
             } else {
-                self.expiresAt = activatedAt + Pod.nominalPodLife
+                expiresAt = activatedAt + Pod.nominalPodLife
             }
             if let deliveryStoppedAt = rawValue["deliveryStoppedAt"] as? Date {
                 self.deliveryStoppedAt = deliveryStoppedAt
             } else if let activeTime = rawValue["activeTime"] as? TimeInterval {
-                self.deliveryStoppedAt = activatedAt + activeTime
+                deliveryStoppedAt = activatedAt + activeTime
             }
         }
 
         if let podTime = rawValue["podTime"] as? TimeInterval,
-            let podTimeUpdated = rawValue["podTimeUpdated"] as? Date
+           let podTimeUpdated = rawValue["podTimeUpdated"] as? Date
         {
             self.podTime = podTime
             self.podTimeUpdated = podTimeUpdated
         } else {
-            self.podTime = 0
-            self.podTimeUpdated = Date()
+            podTime = 0
+            podTimeUpdated = Date()
         }
 
         if let setupUnitsDelivered = rawValue["setupUnitsDelivered"] as? Double {
@@ -538,7 +554,9 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             } else {
                 suspendState = .resumed(Date())
             }
-        } else if let rawSuspendState = rawValue["suspendState"] as? SuspendState.RawValue, let suspendState = SuspendState(rawValue: rawSuspendState) {
+        } else if let rawSuspendState = rawValue["suspendState"] as? SuspendState.RawValue,
+                  let suspendState = SuspendState(rawValue: rawSuspendState)
+        {
             self.suspendState = suspendState
         } else {
             return nil
@@ -546,37 +564,37 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         if let rawPendingCommand = rawValue["unacknowledgedCommand"] as? PendingCommand.RawValue {
             // When loading from raw state, we know comms are no longer in progress; this helps recover from a crash
-            self.unacknowledgedCommand = PendingCommand(rawValue: rawPendingCommand)?.commsFinished
+            unacknowledgedCommand = PendingCommand(rawValue: rawPendingCommand)?.commsFinished
         } else {
-            self.unacknowledgedCommand = nil
+            unacknowledgedCommand = nil
         }
 
         if let rawUnfinalizedBolus = rawValue["unfinalizedBolus"] as? UnfinalizedDose.RawValue {
-            self.unfinalizedBolus = UnfinalizedDose(rawValue: rawUnfinalizedBolus)
+            unfinalizedBolus = UnfinalizedDose(rawValue: rawUnfinalizedBolus)
         }
 
         if let rawUnfinalizedTempBasal = rawValue["unfinalizedTempBasal"] as? UnfinalizedDose.RawValue {
-            self.unfinalizedTempBasal = UnfinalizedDose(rawValue: rawUnfinalizedTempBasal)
+            unfinalizedTempBasal = UnfinalizedDose(rawValue: rawUnfinalizedTempBasal)
         }
 
         if let rawUnfinalizedSuspend = rawValue["unfinalizedSuspend"] as? UnfinalizedDose.RawValue {
-            self.unfinalizedSuspend = UnfinalizedDose(rawValue: rawUnfinalizedSuspend)
+            unfinalizedSuspend = UnfinalizedDose(rawValue: rawUnfinalizedSuspend)
         }
 
         if let rawUnfinalizedResume = rawValue["unfinalizedResume"] as? UnfinalizedDose.RawValue {
-            self.unfinalizedResume = UnfinalizedDose(rawValue: rawUnfinalizedResume)
+            unfinalizedResume = UnfinalizedDose(rawValue: rawUnfinalizedResume)
         }
 
         if let rawLastInsulinMeasurements = rawValue["lastInsulinMeasurements"] as? PodInsulinMeasurements.RawValue {
-            self.lastInsulinMeasurements = PodInsulinMeasurements(rawValue: rawLastInsulinMeasurements)
+            lastInsulinMeasurements = PodInsulinMeasurements(rawValue: rawLastInsulinMeasurements)
         } else {
-            self.lastInsulinMeasurements = nil
+            lastInsulinMeasurements = nil
         }
 
         if let rawFinalizedDoses = rawValue["finalizedDoses"] as? [UnfinalizedDose.RawValue] {
-            self.finalizedDoses = rawFinalizedDoses.compactMap( { UnfinalizedDose(rawValue: $0) } )
+            finalizedDoses = rawFinalizedDoses.compactMap({ UnfinalizedDose(rawValue: $0) })
         } else {
-            self.finalizedDoses = []
+            finalizedDoses = []
         }
 
         if let rawFault = rawValue["fault"] as? DetailedStatus.RawValue,
@@ -585,35 +603,37 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         {
             self.fault = fault
         } else {
-            self.fault = nil
+            fault = nil
         }
 
         if let alarmsRawValue = rawValue["alerts"] as? UInt8 {
-            self.activeAlertSlots = AlertSet(rawValue: alarmsRawValue)
+            activeAlertSlots = AlertSet(rawValue: alarmsRawValue)
         } else {
-            self.activeAlertSlots = .none
+            activeAlertSlots = .none
         }
 
         if let setupProgressRaw = rawValue["setupProgress"] as? Int,
-            let setupProgress = SetupProgress(rawValue: setupProgressRaw)
+           let setupProgress = SetupProgress(rawValue: setupProgressRaw)
         {
             self.setupProgress = setupProgress
         } else {
             // Migrate
-            self.setupProgress = .completed
+            setupProgress = .completed
         }
 
         if let rawConfiguredAlerts = rawValue["configuredAlerts"] as? [String: PodAlert.RawValue], formatVersion >= 2 {
             var configuredAlerts = [AlertSlot: PodAlert]()
             for (rawSlot, rawAlert) in rawConfiguredAlerts {
-                if let slotNum = UInt8(rawSlot), let slot = AlertSlot(rawValue: slotNum), let alert = PodAlert(rawValue: rawAlert) {
+                if let slotNum = UInt8(rawSlot), let slot = AlertSlot(rawValue: slotNum),
+                   let alert = PodAlert(rawValue: rawAlert)
+                {
                     configuredAlerts[slot] = alert
                 }
             }
             self.configuredAlerts = configuredAlerts
         } else {
             // Assume migration, and set up with alerts that are normally configured
-            self.configuredAlerts = [
+            configuredAlerts = [
                 .slot2ShutdownImminent: .shutdownImminent(offset: 0, absAlertTime: 0),
                 .slot3ExpirationReminder: .expirationReminder(offset: 0, absAlertTime: 0),
                 .slot4LowReservoir: .lowReservoir(units: 0),
@@ -623,53 +643,56 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             ]
         }
 
-        self.primeFinishTime = rawValue["primeFinishTime"] as? Date
+        primeFinishTime = rawValue["primeFinishTime"] as? Date
 
-        if let rawInsulinType = rawValue["insulinType"] as? InsulinType.RawValue, let insulinType = InsulinType(rawValue: rawInsulinType) {
+        if let rawInsulinType = rawValue["insulinType"] as? InsulinType.RawValue,
+           let insulinType = InsulinType(rawValue: rawInsulinType)
+        {
             self.insulinType = insulinType
         } else {
-            self.insulinType = .novolog
+            insulinType = .novolog
         }
 
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
-            self.podType = PodType(rawValue: podTypeRaw)
+            podType = PodType(rawValue: podTypeRaw)
         } else if rawValue["ltk"] != nil {
             log.error("[PodState] init with rawValue has missing podType, assuming dashType")
-            self.podType = dashType // assume OmniBLE
+            podType = dashType // assume OmniBLE
         } else {
-            self.podType = erosType // OmniKit
+            podType = erosType // OmniKit
         }
 
         switch podType {
         case erosType:
-            self.bleMessageTransportState = BleMessageTransportState() /// dummy intialization
+            bleMessageTransportState = BleMessageTransportState() /// dummy intialization
             if let erosMessageTransportStateRaw = rawValue["erosMessageTransportState"] as? ErosMessageTransportState.RawValue,
-                let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
+               let erosMessageTransportState = ErosMessageTransportState(rawValue: erosMessageTransportStateRaw)
             {
                 self.erosMessageTransportState = erosMessageTransportState
             } else {
-                self.erosMessageTransportState = ErosMessageTransportState()
+                erosMessageTransportState = ErosMessageTransportState()
             }
 
-        case dashType, omnipod5Type:
-            self.erosMessageTransportState = ErosMessageTransportState() /// dummy initialization
+        case dashType,
+             omnipod5Type:
+            erosMessageTransportState = ErosMessageTransportState() /// dummy initialization
             if let bleMessageTransportStateRaw = rawValue["bleMessageTransportState"] as? BleMessageTransportState.RawValue,
-                let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+               let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
             {
                 self.bleMessageTransportState = bleMessageTransportState
             } else if let bleMessageTransportStateRaw = rawValue["messageTransportState"] as? BleMessageTransportState.RawValue,
-                let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
+                      let bleMessageTransportState = BleMessageTransportState(rawValue: bleMessageTransportStateRaw)
             {
                 self.bleMessageTransportState = bleMessageTransportState
             } else {
-                self.bleMessageTransportState = BleMessageTransportState()
+                bleMessageTransportState = BleMessageTransportState()
             }
 
             // BLE pod type specific values
             if let ltkString = rawValue["ltk"] as? String,
-                let bleIdentifier = rawValue["bleIdentifier"] as? String
+               let bleIdentifier = rawValue["bleIdentifier"] as? String
             {
-                self.ltk = Data(hexadecimalString: ltkString)
+                ltk = Data(hexadecimalString: ltkString)
                 self.bleIdentifier = bleIdentifier
             }
 
@@ -677,13 +700,13 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
                 if let signingKeyString = rawValue["signingKey"] as? String {
                     // This is the normal path for new O5 pods which should
                     // have the 32-byte signingKey initialized during pairing.
-                    self.signingKey = Data(hexadecimalString: signingKeyString)
+                    signingKey = Data(hexadecimalString: signingKeyString)
                 } else {
                     // One time during conversion due to adding signingKey to PodState,
                     // for new pods this will automatically be initialized during pairing.
                     let controllerId = controllerIdForPodId(podId: address)
-                    self.signingKey = try? O5CertificateStore(controllerId: controllerId).signingKey.rawRepresentation
-                    if self.signingKey == nil {
+                    signingKey = try? O5CertificateStore(controllerId: controllerId).signingKey.rawRepresentation
+                    if signingKey == nil {
                         // Without a saved signingKey as well as the needed certificate for pdmId,
                         // this pod will not be able to do any insulin, cancel, or deactivation commands.
                         // This should only occur for an artificially created testing situation.
@@ -708,10 +731,10 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "lotNo": lotNo,
             "lotSeq": lotSeq,
             "suspendState": suspendState.rawValue,
-            "finalizedDoses": finalizedDoses.map({ $0.rawValue }),
+            "finalizedDoses": finalizedDoses.map(\.rawValue),
             "alerts": activeAlertSlots.rawValue,
             "setupProgress": setupProgress.rawValue,
-            "insulinType": insulinType.rawValue,
+            "insulinType": insulinType.rawValue
         ]
 
         rawValue["podType"] = podType.rawValue
@@ -730,9 +753,12 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
         rawValue["podTimeUpdated"] = podTimeUpdated
         rawValue["setupUnitsDelivered"] = setupUnitsDelivered
 
-        if configuredAlerts.count > 0 {
-            let rawConfiguredAlerts = Dictionary(uniqueKeysWithValues:
-                                                    configuredAlerts.map { slot, alarm in (String(describing: slot.rawValue), alarm.rawValue) })
+        if !configuredAlerts.isEmpty {
+            let rawConfiguredAlerts = Dictionary(
+                uniqueKeysWithValues:
+                configuredAlerts
+                    .map { slot, alarm in (String(describing: slot.rawValue), alarm.rawValue) }
+            )
             rawValue["configuredAlerts"] = rawConfiguredAlerts
         }
 
@@ -754,7 +780,6 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
 
         return rawValue
     }
-
 
     // MARK: - CustomDebugStringConvertible
 
@@ -790,7 +815,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
             "* insulinType: \(optionalString(insulinType))",
             "* messageTransportState: \(podType.usesRileyLink ? String(describing: erosMessageTransportState) : String(describing: bleMessageTransportState))",
             "* pdmRef: \(optionalString(fault?.pdmRef))",
-            "* fault: \(optionalString(fault))",
+            "* fault: \(optionalString(fault))"
         ].joined(separator: "\n")
         return retVal
     }
@@ -800,7 +825,8 @@ enum SuspendState: Equatable, RawRepresentable {
     typealias RawValue = [String: Any]
 
     private enum SuspendStateType: Int {
-        case suspend, resume
+        case suspend
+        case resume
     }
 
     case suspended(Date)
@@ -817,8 +843,9 @@ enum SuspendState: Equatable, RawRepresentable {
 
     init?(rawValue: RawValue) {
         guard let suspendStateType = rawValue["case"] as? SuspendStateType.RawValue,
-            let date = rawValue["date"] as? Date else {
-                return nil
+              let date = rawValue["date"] as? Date
+        else {
+            return nil
         }
         switch SuspendStateType(rawValue: suspendStateType) {
         case .suspend?:
@@ -832,12 +859,12 @@ enum SuspendState: Equatable, RawRepresentable {
 
     var rawValue: RawValue {
         switch self {
-        case .suspended(let date):
+        case let .suspended(date):
             return [
                 "case": SuspendStateType.suspend.rawValue,
                 "date": date
             ]
-        case .resumed(let date):
+        case let .resumed(date):
             return [
                 "case": SuspendStateType.resume.rawValue,
                 "date": date

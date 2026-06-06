@@ -1,15 +1,6 @@
-//
-//  OmniPumpManagerState.swift
-//  OmnipodKit
-//
-//  Based on Omni{BLE,Kit}/PumpManager/OmniBLEPumpManagerState.swift
-//  Created by Joe Moran on 12/29/24.
-//  Copyright © 2024 LoopKit Authors. All rights reserved.
-//
-
-import RileyLinkBLEKit
 import LoopKit
 import os.log
+import RileyLinkBLEKit
 
 private let log = OSLog(category: "OmniPumpManagerState")
 
@@ -20,7 +11,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     var isOnboarded: Bool = false
 
     // XXX still needs be declared public with the current Trio implementation
-    private(set) public var podState: PodState?
+    public private(set) var podState: PodState?
 
     // State should only be modifiable by PodComms
     mutating func updatePodStateFromPodComms(_ podState: PodState?) {
@@ -71,7 +62,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     internal var maxBolusUnits: Double
 
-
     // From last status response
     var reservoirLevel: ReservoirLevel? {
         guard let level = podState?.lastInsulinMeasurements?.reservoirLevel else {
@@ -83,15 +73,14 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
     var podType: PodType
 
     // Eros only state
-    var rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil
-    var pairingAttemptAddress: UInt32? = nil
-    var rileyLinkBatteryAlertLevel: Int? = nil
+    var rileyLinkConnectionManagerState: RileyLinkConnectionState?
+    var pairingAttemptAddress: UInt32?
+    var rileyLinkBatteryAlertLevel: Int?
     var lastRileyLinkBatteryAlertDate: Date = .distantPast
 
     // BLE only state
     var controllerId: UInt32 = 0
     var podId: UInt32 = 0
-
 
     // Temporal state not persisted
 
@@ -109,7 +98,6 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
     internal var lastStatusChange: Date = .distantPast
 
-
     // MARK: -
 
     init(
@@ -123,7 +111,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         podType: PodType,
         rileyLinkConnectionManagerState: RileyLinkConnectionState? = nil, // Eros
         controllerId: UInt32? = nil, // BLE
-        podId: UInt32? = nil) // BLE
+        podId: UInt32? = nil
+    ) // BLE
     {
         self.isOnboarded = isOnboarded
         self.podState = podState
@@ -132,16 +121,16 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         self.insulinType = insulinType
         self.maxBasalRateUnitsPerHour = maxBasalRateUnitsPerHour
         self.maxBolusUnits = maxBolusUnits
-        self.unstoredDoses = []
-        self.silencePod = false
-        self.silencePodEnd = nil
-        self.confirmationBeeps = .manualCommands
-        self.lowReservoirReminderValue = Pod.defaultLowReservoirReminder
-        self.defaultLowReservoirReminderValue = Pod.defaultLowReservoirReminder
-        self.podAttachmentConfirmed = false
-        self.acknowledgedTimeOffsetAlert = false
-        self.activeAlerts = []
-        self.alertsWithPendingAcknowledgment = []
+        unstoredDoses = []
+        silencePod = false
+        silencePodEnd = nil
+        confirmationBeeps = .manualCommands
+        lowReservoirReminderValue = Pod.defaultLowReservoirReminder
+        defaultLowReservoirReminderValue = Pod.defaultLowReservoirReminder
+        podAttachmentConfirmed = false
+        acknowledgedTimeOffsetAlert = false
+        activeAlerts = []
+        alertsWithPendingAcknowledgment = []
 
         self.podType = podType
 
@@ -160,9 +149,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             (self.controllerId, self.podId) = nextIds(podType: podType)
         }
 
-        log.debug("[OmniPumpManagerState] init finished: %{public}@",
-                  self.debugDescription)
-
+        log.debug(
+            "[OmniPumpManagerState] init finished: %{public}@",
+            debugDescription
+        )
     }
 
     public init?(rawValue: RawValue) {
@@ -181,8 +171,10 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         if let podTypeRaw = rawValue["podType"] as? UInt8 {
             podType = PodType(rawValue: podTypeRaw)
         } else if let podState = podState {
-            log.error("[OmniPumpManagerState] init with rawValue has no podType, using podState.podType=%{public}@",
-                      String(describing: podState.podType))
+            log.error(
+                "[OmniPumpManagerState] init with rawValue has no podType, using podState.podType=%{public}@",
+                String(describing: podState.podType)
+            )
             podType = podState.podType
         } else if rawValue["controllerId"] != nil {
             log.error("[OmniPumpManagerState] init with rawValue has no podType, assuming dashType")
@@ -193,7 +185,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         let timeZone: TimeZone
         if let timeZoneSeconds = rawValue["timeZone"] as? Int,
-            let tz = TimeZone(secondsFromGMT: timeZoneSeconds) {
+           let tz = TimeZone(secondsFromGMT: timeZoneSeconds)
+        {
             timeZone = tz
         } else {
             timeZone = TimeZone.currentFixed
@@ -201,8 +194,8 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
         let basalSchedule: BasalSchedule
         guard let rawBasalSchedule = rawValue["basalSchedule"] as? BasalSchedule.RawValue,
-            let schedule = BasalSchedule(rawValue: rawBasalSchedule) else
-        {
+              let schedule = BasalSchedule(rawValue: rawBasalSchedule)
+        else {
             return nil
         }
         basalSchedule = schedule
@@ -213,7 +206,7 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         }
 
         let maxBasalRateUnitsPerHour = rawValue["maxBasalRateUnitsPerHour"] as? Double ??
-                                        rawValue["maximumTempBasalRate"] as? Double ?? Pod.maximumBasalUnitsPerHour
+            rawValue["maximumTempBasalRate"] as? Double ?? Pod.maximumBasalUnitsPerHour
 
         let maxBolusUnits = rawValue["maxBolusUnits"] as? Double ?? Pod.maximumBolusUnits
 
@@ -221,7 +214,9 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         let rileyLinkConnectionManagerState: RileyLinkConnectionState?
         var controllerId, podId: UInt32?
         if podType.usesRileyLink {
-            if let rileyLinkConnectionManagerStateRaw = rawValue["rileyLinkConnectionManagerState"] as? RileyLinkConnectionState.RawValue {
+            if let rileyLinkConnectionManagerStateRaw = rawValue["rileyLinkConnectionManagerState"] as? RileyLinkConnectionState
+                .RawValue
+            {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(rawValue: rileyLinkConnectionManagerStateRaw)
             } else {
                 rileyLinkConnectionManagerState = RileyLinkConnectionState(autoConnectIDs: [])
@@ -271,67 +266,70 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
         )
 
         if let rawUnstoredDoses = rawValue["unstoredDoses"] as? [UnfinalizedDose.RawValue] {
-            self.unstoredDoses = rawUnstoredDoses.compactMap( { UnfinalizedDose(rawValue: $0) } )
+            unstoredDoses = rawUnstoredDoses.compactMap({ UnfinalizedDose(rawValue: $0) })
         } else {
-            self.unstoredDoses = []
+            unstoredDoses = []
         }
 
         if let silencePodEnd = rawValue["silencePodEnd"] as? Date {
             /// Don't do anything here if silencePodEnd time has been reached so that
             /// the pod will be reprogrammed to use audible beeps on the next pod op.
             self.silencePodEnd = silencePodEnd
-            self.silencePod = true /// must be true with a silence end time
+            silencePod = true /// must be true with a silence end time
         } else {
-            self.silencePodEnd = nil
-            self.silencePod = rawValue["silencePod"] as? Bool ?? false
+            silencePodEnd = nil
+            silencePod = rawValue["silencePod"] as? Bool ?? false
         }
 
-        if let rawBeeps = rawValue["confirmationBeeps"] as? BeepPreference.RawValue, let confirmationBeeps = BeepPreference(rawValue: rawBeeps) {
+        if let rawBeeps = rawValue["confirmationBeeps"] as? BeepPreference.RawValue,
+           let confirmationBeeps = BeepPreference(rawValue: rawBeeps)
+        {
             self.confirmationBeeps = confirmationBeeps
         } else {
-            self.confirmationBeeps = .manualCommands
+            confirmationBeeps = .manualCommands
         }
 
-        self.scheduledExpirationReminderOffset = rawValue["scheduledExpirationReminderOffset"] as? TimeInterval
-    
-        self.defaultExpirationReminderOffset = rawValue["defaultExpirationReminderOffset"] as? TimeInterval ?? Pod.defaultExpirationReminderOffset
-    
-        self.lowReservoirReminderValue = rawValue["lowReservoirReminderValue"] as? Double ?? Pod.defaultLowReservoirReminder
+        scheduledExpirationReminderOffset = rawValue["scheduledExpirationReminderOffset"] as? TimeInterval
 
-        self.defaultLowReservoirReminderValue = rawValue["defaultLowReservoirReminderValue"] as? Double ?? self.lowReservoirReminderValue
+        defaultExpirationReminderOffset = rawValue["defaultExpirationReminderOffset"] as? TimeInterval ?? Pod
+            .defaultExpirationReminderOffset
 
-        self.podAttachmentConfirmed = rawValue["podAttachmentConfirmed"] as? Bool ?? false
+        lowReservoirReminderValue = rawValue["lowReservoirReminderValue"] as? Double ?? Pod.defaultLowReservoirReminder
 
-        self.initialConfigurationCompleted = rawValue["initialConfigurationCompleted"] as? Bool ?? true
+        defaultLowReservoirReminderValue = rawValue["defaultLowReservoirReminderValue"] as? Double ?? lowReservoirReminderValue
 
-        self.acknowledgedTimeOffsetAlert = rawValue["acknowledgedTimeOffsetAlert"] as? Bool ?? false
+        podAttachmentConfirmed = rawValue["podAttachmentConfirmed"] as? Bool ?? false
+
+        initialConfigurationCompleted = rawValue["initialConfigurationCompleted"] as? Bool ?? true
+
+        acknowledgedTimeOffsetAlert = rawValue["acknowledgedTimeOffsetAlert"] as? Bool ?? false
 
         if let lastPumpDataReportDate = rawValue["lastPumpDataReportDate"] as? Date {
             self.lastPumpDataReportDate = lastPumpDataReportDate
         }
 
-        self.activeAlerts = []
+        activeAlerts = []
         if let rawActiveAlerts = rawValue["activeAlerts"] as? [PumpManagerAlert.RawValue] {
             for rawAlert in rawActiveAlerts {
                 if let alert = PumpManagerAlert(rawValue: rawAlert) {
-                    self.activeAlerts.insert(alert)
+                    activeAlerts.insert(alert)
                 }
             }
         }
 
-        self.alertsWithPendingAcknowledgment = []
+        alertsWithPendingAcknowledgment = []
         if let rawAlerts = rawValue["alertsWithPendingAcknowledgment"] as? [PumpManagerAlert.RawValue] {
             for rawAlert in rawAlerts {
                 if let alert = PumpManagerAlert(rawValue: rawAlert) {
-                    self.alertsWithPendingAcknowledgment.insert(alert)
+                    alertsWithPendingAcknowledgment.insert(alert)
                 }
             }
         }
 
         if let prevPodStateRaw = rawValue["previousPodState"] as? PodState.RawValue {
-            self.previousPodState = PodState(rawValue: prevPodStateRaw)
+            previousPodState = PodState(rawValue: prevPodStateRaw)
         } else {
-            self.previousPodState = nil
+            previousPodState = nil
         }
 
         if podType.isEros {
@@ -339,28 +337,28 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
             if let pairingAttemptAddress = rawValue["pairingAttemptAddress"] as? UInt32 {
                 self.pairingAttemptAddress = pairingAttemptAddress
             }
-            self.rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
-            self.lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
+            rileyLinkBatteryAlertLevel = rawValue["rileyLinkBatteryAlertLevel"] as? Int
+            lastRileyLinkBatteryAlertDate = rawValue["lastRileyLinkBatteryAlertDate"] as? Date ?? Date.distantPast
         }
     }
 
     public var rawValue: RawValue {
-        var value: [String : Any] = [
+        var value: [String: Any] = [
             "isOnboarded": isOnboarded,
             "timeZone": timeZone.secondsFromGMT(),
             "basalSchedule": basalSchedule.rawValue,
-            "unstoredDoses": unstoredDoses.map { $0.rawValue },
+            "unstoredDoses": unstoredDoses.map(\.rawValue),
             "silencePod": silencePod,
             "confirmationBeeps": confirmationBeeps.rawValue,
-            "activeAlerts": activeAlerts.map { $0.rawValue },
+            "activeAlerts": activeAlerts.map(\.rawValue),
             "podAttachmentConfirmed": podAttachmentConfirmed,
             "acknowledgedTimeOffsetAlert": acknowledgedTimeOffsetAlert,
-            "alertsWithPendingAcknowledgment": alertsWithPendingAcknowledgment.map { $0.rawValue },
+            "alertsWithPendingAcknowledgment": alertsWithPendingAcknowledgment.map(\.rawValue),
             "initialConfigurationCompleted": initialConfigurationCompleted,
             "maxBasalRateUnitsPerHour": maxBasalRateUnitsPerHour,
             "maxBolusUnits": maxBolusUnits,
             "controllerId": controllerId,
-            "podId": podId,
+            "podId": podId
         ]
 
         value["podType"] = podType.rawValue
@@ -381,16 +379,16 @@ public struct OmniPumpManagerState: RawRepresentable, Equatable {
 
 extension OmniPumpManagerState {
     var hasActivePod: Bool {
-        return podState?.isActive == true
+        podState?.isActive == true
     }
 
     var hasSetupPod: Bool {
-        return podState?.isSetupComplete == true
+        podState?.isSetupComplete == true
     }
 
     var isPumpDataStale: Bool {
         let pumpStatusAgeTolerance = TimeInterval(minutes: 6)
-        let pumpDataAge = -(self.lastPumpDataReportDate ?? .distantPast).timeIntervalSinceNow
+        let pumpDataAge = -(lastPumpDataReportDate ?? .distantPast).timeIntervalSinceNow
         return pumpDataAge > pumpStatusAgeTolerance
     }
 }
@@ -424,19 +422,19 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* acknowledgedTimeOffsetAlert: \(acknowledgedTimeOffsetAlert)",
             "* initialConfigurationCompleted: \(initialConfigurationCompleted)",
             "* podType: \(podType)",
-            "",
+            ""
         ].joined(separator: "\n")
         if podType.usesRileyLink {
             retVal += [
                 "* pairingAttemptAddress: \(optionalString(pairingAttemptAddress))",
                 "* rileyLinkBatteryAlertLevel: \(optionalString(rileyLinkBatteryAlertLevel))",
                 "* lastRileyLinkBatteryAlertDate \(optionalString(lastRileyLinkBatteryAlertDate))",
-                "* rileyLinkConnectionManagerState: \(optionalString(rileyLinkConnectionManagerState))",
+                "* rileyLinkConnectionManagerState: \(optionalString(rileyLinkConnectionManagerState))"
             ].joined(separator: "\n")
         } else {
             retVal += [
                 "* controllerId: \(String(format: "%08X", controllerId))",
-                "* podId: \(String(format: "%08X", podId))",
+                "* podId: \(String(format: "%08X", podId))"
             ].joined(separator: "\n")
         }
         retVal += [
@@ -445,7 +443,7 @@ extension OmniPumpManagerState: CustomDebugStringConvertible {
             "* podState: \(optionalString(podState))",
             "",
             "* previousPodState: \(optionalString(previousPodState))",
-            "",
+            ""
         ].joined(separator: "\n")
         return retVal
     }

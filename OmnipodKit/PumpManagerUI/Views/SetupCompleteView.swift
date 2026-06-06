@@ -1,23 +1,14 @@
-//
-//  SetupCompleteView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/SetupCompleteView.swift
-//  Created by Pete Schwamb on 3/2/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
 import LoopKitUI
-
+import SwiftUI
 
 struct SetupCompleteView: View {
-    
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @Environment(\.appName) private var appName
 
-    
-    private var onSaveScheduledExpirationReminder: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?
+    private var onSaveScheduledExpirationReminder: (
+        (_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void)
+            -> Void
+    )?
     private var didFinish: () -> Void
     private var didRequestDeactivation: () -> Void
     private var dateFormatter: DateFormatter
@@ -28,21 +19,31 @@ struct SetupCompleteView: View {
 
     var allowedDates: [Date]
 
-    init(scheduledReminderDate: Date?, dateFormatter: DateFormatter, allowedDates: [Date], onSaveScheduledExpirationReminder: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?, didFinish: @escaping () -> Void, didRequestDeactivation: @escaping () -> Void)
+    init(
+        scheduledReminderDate: Date?,
+        dateFormatter: DateFormatter,
+        allowedDates: [Date],
+        onSaveScheduledExpirationReminder: ((_ selectedDate: Date?, _ completion: @escaping (_ error: Error?) -> Void) -> Void)?,
+        didFinish: @escaping () -> Void,
+        didRequestDeactivation: @escaping () -> Void
+    )
     {
-        self._scheduledReminderDate = State(initialValue: scheduledReminderDate)
+        _scheduledReminderDate = State(initialValue: scheduledReminderDate)
         self.dateFormatter = dateFormatter
         self.allowedDates = allowedDates
         self.onSaveScheduledExpirationReminder = onSaveScheduledExpirationReminder
         self.didFinish = didFinish
         self.didRequestDeactivation = didRequestDeactivation
     }
-    
+
     var body: some View {
         GuidePage(content: {
             VStack {
                 LeadingImage("Pod")
-                Text(LocalizedString("Your Pod is ready for use.\n\nThe default expiration reminder and low reservoir alerts have been configured. You can change the alerts for the current Pod in the Notification Settings.", comment: "Format string for instructions for setup complete view"))
+                Text(LocalizedString(
+                    "Your Pod is ready for use.\n\nThe default expiration reminder and low reservoir alerts have been configured. You can change the alerts for the current Pod in the Notification Settings.",
+                    comment: "Format string for instructions for setup complete view"
+                ))
                     .fixedSize(horizontal: false, vertical: true)
                 Divider()
                 VStack(alignment: .leading) {
@@ -53,23 +54,25 @@ struct SetupCompleteView: View {
                             scheduledExpirationReminderDate: scheduledReminderDate,
                             allowedDates: allowedDates,
                             dateFormatter: dateFormatter,
-                            onSave: { (newDate, completion) in
-                                onSaveScheduledExpirationReminder?(newDate) { (error) in
+                            onSave: { newDate, completion in
+                                onSaveScheduledExpirationReminder?(newDate) { error in
                                     if error == nil {
                                         scheduledReminderDate = newDate
                                     }
                                     completion(error)
                                 }
                             },
-                            onFinish: { scheduleReminderDateEditViewIsShown = false }),
-                        isActive: $scheduleReminderDateEditViewIsShown)
-                    {
-                        RoundedCardValueRow(
-                            label: LocalizedString("Time", comment: "Label for expiration reminder row"),
-                            value: scheduledReminderDateString(scheduledReminderDate),
-                            highlightValue: false
-                        )
-                    }
+                            onFinish: { scheduleReminderDateEditViewIsShown = false }
+                        ),
+                        isActive: $scheduleReminderDateEditViewIsShown
+                    )
+                        {
+                            RoundedCardValueRow(
+                                label: LocalizedString("Time", comment: "Label for expiration reminder row"),
+                                value: scheduledReminderDateString(scheduledReminderDate),
+                                highlightValue: false
+                            )
+                        }
                 }
             }
             .padding(.bottom, 8)
@@ -88,7 +91,7 @@ struct SetupCompleteView: View {
         .navigationTitle(LocalizedString("Setup Complete", comment: "Title of SetupCompleteView"))
         .navigationBarTitleDisplayMode(.automatic)
     }
-    
+
     private func scheduledReminderDateString(_ scheduledDate: Date?) -> String {
         if let scheduledDate = scheduledDate {
             return dateFormatter.string(from: scheduledDate)
@@ -104,12 +107,10 @@ struct SetupCompleteView_Previews: PreviewProvider {
             scheduledReminderDate: Date(),
             dateFormatter: DateFormatter(),
             allowedDates: [Date()],
-            onSaveScheduledExpirationReminder: { (date, completion) in
+            onSaveScheduledExpirationReminder: { _, _ in
             },
-            didFinish: {
-            },
-            didRequestDeactivation: {
-            }
+            didFinish: {},
+            didRequestDeactivation: {}
         )
     }
 }

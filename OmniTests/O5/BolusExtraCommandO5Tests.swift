@@ -1,15 +1,7 @@
-//
-//  BolusExtraCommandO5Tests.swift
-//  OmniTests
-//
-//  O5 BolusExtraCommand (subtype 0x12 + bolusInfo). Expected 20-byte blocks from O5CommLogFixtures.
-//
-
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class BolusExtraCommandO5Tests: XCTestCase {
-
     private func hex(_ string: String) -> Data {
         Data(hexadecimalString: string)!
     }
@@ -19,14 +11,14 @@ class BolusExtraCommandO5Tests: XCTestCase {
         XCTAssertEqual(o5.data[1], 0x12)
 
         let dash = BolusExtraCommand(units: 1.0, bolusInfo: nil)
-        XCTAssertEqual(dash.data[1], 0x0d)
+        XCTAssertEqual(dash.data[1], 0x0D)
     }
 
     func testErosStyleDecode_noBolusInfo() throws {
         // Standard Eros/DASH 0x0d block (30 U example from BolusTests).
         let cmd = try BolusExtraCommand(encodedData: hex("170d7c177000030d40000000000000"))
         XCTAssertNil(cmd.bolusInfo)
-        XCTAssertEqual(cmd.data[1], 0x0d)
+        XCTAssertEqual(cmd.data[1], 0x0D)
     }
 
     func testO5OneUnitBolusEncoding_commLog() throws {

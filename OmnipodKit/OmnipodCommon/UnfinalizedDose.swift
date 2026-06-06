@@ -1,12 +1,3 @@
-//
-//  UnfinalizedDose.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/UnfinalizedDose.swift
-//  Created by Pete Schwamb on 9/5/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 import LoopKit
 
@@ -52,7 +43,7 @@ public struct UnfinalizedDose: RawRepresentable, Equatable, CustomStringConverti
     private let dateFormatter = ISO8601DateFormatter()
 
     fileprivate var uniqueKey: Data {
-        return "\(doseType) \(scheduledUnits ?? units) \(dateFormatter.string(from: startTime))".data(using: .utf8)!
+        "\(doseType) \(scheduledUnits ?? units) \(dateFormatter.string(from: startTime))".data(using: .utf8)!
     }
 
     let doseType: DoseType

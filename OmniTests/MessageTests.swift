@@ -1,38 +1,28 @@
-//
-//  MessageTests.swift
-//  OmniTests
-//
-//  From OmniBLE/OmniBLETests/MessageTests.swift
-//  Created by Pete Schwamb on 10/14/17.
-//  Copyright © 2017 Pete Schwamb. All rights reserved.
-//
-
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class MessageTests: XCTestCase {
-    
     func testMessageData() {
         // 2016-06-26T20:33:28.412197 ID1:1f01482a PTYPE:PDM SEQ:13 ID2:1f01482a B9:10 BLEN:3 BODY:0e0100802c CRC:88
-        
-        let msg = Message(address: 0x1f01482a, messageBlocks: [GetStatusCommand()], sequenceNum: 4)
-        
+
+        let msg = Message(address: 0x1F01_482A, messageBlocks: [GetStatusCommand()], sequenceNum: 4)
+
         XCTAssertEqual("1f01482a10030e0100802c", msg.encoded().hexadecimalString)
     }
-    
+
     func testMessageDecoding() {
         do {
             let msg = try Message(encodedData: Data(hexadecimalString: "1f00ee84300a1d18003f1800004297ff8128")!)
-            
-            XCTAssertEqual(0x1f00ee84, msg.address)
+
+            XCTAssertEqual(0x1F00_EE84, msg.address)
             XCTAssertEqual(12, msg.sequenceNum)
-            
+
             let messageBlocks = msg.messageBlocks
-            
+
             XCTAssertEqual(1, messageBlocks.count)
-            
+
             let statusResponse = messageBlocks[0] as! StatusResponse
-            
+
             XCTAssertEqual(Pod.reservoirLevelAboveThresholdMagicNumber, statusResponse.reservoirLevel, accuracy: 0.01)
             XCTAssertEqual(TimeInterval(minutes: 4261), statusResponse.timeActive)
 
@@ -44,45 +34,51 @@ class MessageTests: XCTestCase {
             XCTAssert(statusResponse.alerts.isEmpty)
 
             XCTAssertEqual("1f00ee84300a1d18003f1800004297ff8128", msg.encoded().hexadecimalString)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testParsingShortErosVersionResponse() {
         do {
-            let config = try VersionResponse(encodedData: Data(hexadecimalString: "011502070002070002020000a64000097c279c1f08ced2")!)
+            let config =
+                try VersionResponse(encodedData: Data(hexadecimalString: "011502070002070002020000a64000097c279c1f08ced2")!)
             XCTAssertEqual(23, config.data.count)
             XCTAssertEqual("2.7.0", String(describing: config.firmwareVersion))
             XCTAssertEqual("2.7.0", String(describing: config.iFirmwareVersion))
             XCTAssertEqual(42560, config.lot)
-            XCTAssertEqual(621607, config.tid)
-            XCTAssertEqual(0x1f08ced2, config.address)
+            XCTAssertEqual(621_607, config.tid)
+            XCTAssertEqual(0x1F08_CED2, config.address)
             XCTAssertEqual(erosType, config.podType)
             XCTAssertEqual(.reminderInitialized, config.podProgressStatus)
             XCTAssertEqual(2, config.gain)
-            XCTAssertEqual(0x1c, config.rssi)
+            XCTAssertEqual(0x1C, config.rssi)
             XCTAssertNil(config.pulseSize)
             XCTAssertNil(config.secondsPerBolusPulse)
             XCTAssertNil(config.secondsPerPrimePulse)
             XCTAssertNil(config.primeUnits)
             XCTAssertNil(config.cannulaInsertionUnits)
             XCTAssertNil(config.serviceDuration)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testParsingLongErosVersionResponse() {
         do {
-            let message = try Message(encodedData: Data(hexadecimalString: "ffffffff041d011b13881008340a5002070002070002030000a62b000447941f00ee878352")!)
+            let message =
+                try Message(
+                    encodedData: Data(
+                        hexadecimalString: "ffffffff041d011b13881008340a5002070002070002030000a62b000447941f00ee878352"
+                    )!
+                )
             let config = message.messageBlocks[0] as! VersionResponse
             XCTAssertEqual(29, config.data.count)
             XCTAssertEqual("2.7.0", String(describing: config.firmwareVersion))
             XCTAssertEqual("2.7.0", String(describing: config.iFirmwareVersion))
             XCTAssertEqual(42539, config.lot)
-            XCTAssertEqual(280468, config.tid)
-            XCTAssertEqual(0x1f00ee87, config.address)
+            XCTAssertEqual(280_468, config.tid)
+            XCTAssertEqual(0x1F00_EE87, config.address)
             XCTAssertEqual(erosType, config.podType)
             XCTAssertEqual(.pairingCompleted, config.podProgressStatus)
             XCTAssertNil(config.rssi)
@@ -93,20 +89,21 @@ class MessageTests: XCTestCase {
             XCTAssertEqual(Pod.primeUnits, config.primeUnits)
             XCTAssertEqual(Pod.cannulaInsertionUnits, config.cannulaInsertionUnits)
             XCTAssertEqual(Pod.serviceDuration, config.serviceDuration)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
 
     func testParsingShortDashVersionResponse() {
         do {
-            let config = try VersionResponse(encodedData: Data(hexadecimalString: "0115031b0008080004020812a011000c175700ffffffff")!)
+            let config =
+                try VersionResponse(encodedData: Data(hexadecimalString: "0115031b0008080004020812a011000c175700ffffffff")!)
             XCTAssertEqual(23, config.data.count)
             XCTAssertEqual("3.27.0", String(describing: config.firmwareVersion))
             XCTAssertEqual("8.8.0", String(describing: config.iFirmwareVersion))
-            XCTAssertEqual(135438353, config.lot)
-            XCTAssertEqual(792407, config.tid)
-            XCTAssertEqual(0xFFFFFFFF, config.address)
+            XCTAssertEqual(135_438_353, config.lot)
+            XCTAssertEqual(792_407, config.tid)
+            XCTAssertEqual(0xFFFF_FFFF, config.address)
             XCTAssertEqual(dashType, config.podType)
             XCTAssertEqual(.reminderInitialized, config.podProgressStatus)
             XCTAssertNil(config.gain) // NA for non-Eros pods and now no longer returned
@@ -117,21 +114,26 @@ class MessageTests: XCTestCase {
             XCTAssertNil(config.primeUnits)
             XCTAssertNil(config.cannulaInsertionUnits)
             XCTAssertNil(config.serviceDuration)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
 
     func testParsingLongDashVersionResponse() {
         do {
-            let message = try Message(encodedData: Data(hexadecimalString: "ffffffff0c1d011b13881008340a50031b0008080004030812a011000c175717244389816c")!)
+            let message =
+                try Message(
+                    encodedData: Data(
+                        hexadecimalString: "ffffffff0c1d011b13881008340a50031b0008080004030812a011000c175717244389816c"
+                    )!
+                )
             let config = message.messageBlocks[0] as! VersionResponse
             XCTAssertEqual(29, config.data.count)
             XCTAssertEqual("3.27.0", String(describing: config.firmwareVersion))
             XCTAssertEqual("8.8.0", String(describing: config.iFirmwareVersion))
-            XCTAssertEqual(135438353, config.lot)
-            XCTAssertEqual(792407, config.tid)
-            XCTAssertEqual(0x17244389, config.address)
+            XCTAssertEqual(135_438_353, config.lot)
+            XCTAssertEqual(792_407, config.tid)
+            XCTAssertEqual(0x1724_4389, config.address)
             XCTAssertEqual(dashType, config.podType)
             XCTAssertEqual(.pairingCompleted, config.podProgressStatus)
             XCTAssertNil(config.rssi)
@@ -142,20 +144,23 @@ class MessageTests: XCTestCase {
             XCTAssertEqual(Pod.primeUnits, config.primeUnits)
             XCTAssertEqual(Pod.cannulaInsertionUnits, config.cannulaInsertionUnits)
             XCTAssertEqual(Pod.serviceDuration, config.serviceDuration)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
 
     func testParsingConfigWithPairingExpired() {
         do {
-            let message = try Message(encodedData: Data(hexadecimalString: "ffffffff04170115020700020700020e0000a5ad00053030971f08686301fd")!)
+            let message =
+                try Message(
+                    encodedData: Data(hexadecimalString: "ffffffff04170115020700020700020e0000a5ad00053030971f08686301fd")!
+                )
             let config = message.messageBlocks[0] as! VersionResponse
             XCTAssertEqual("2.7.0", String(describing: config.firmwareVersion))
             XCTAssertEqual("2.7.0", String(describing: config.iFirmwareVersion))
-            XCTAssertEqual(0x0000a5ad, config.lot)
-            XCTAssertEqual(0x00053030, config.tid)
-            XCTAssertEqual(0x1f086863, config.address)
+            XCTAssertEqual(0x0000_A5AD, config.lot)
+            XCTAssertEqual(0x0005_3030, config.tid)
+            XCTAssertEqual(0x1F08_6863, config.address)
             XCTAssertEqual(erosType, config.podType)
             XCTAssertEqual(.activationTimeExceeded, config.podProgressStatus)
             XCTAssertEqual(2, config.gain)
@@ -166,7 +171,7 @@ class MessageTests: XCTestCase {
             XCTAssertNil(config.primeUnits)
             XCTAssertNil(config.cannulaInsertionUnits)
             XCTAssertNil(config.serviceDuration)
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
@@ -174,17 +179,17 @@ class MessageTests: XCTestCase {
     func testAssignAddressCommand() {
         do {
             // Encode
-            let encoded = AssignAddressCommand(address: 0x1f01482a)
+            let encoded = AssignAddressCommand(address: 0x1F01_482A)
             XCTAssertEqual("07041f01482a", encoded.data.hexadecimalString)
 
             // Decode
             let decoded = try AssignAddressCommand(encodedData: Data(hexadecimalString: "07041f01482a")!)
-            XCTAssertEqual(0x1f01482a, decoded.address)
-        } catch (let error) {
+            XCTAssertEqual(0x1F01_482A, decoded.address)
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testSetupPodCommand() {
         do {
             var components = DateComponents()
@@ -196,29 +201,29 @@ class MessageTests: XCTestCase {
 
             // Decode
             let decoded = try SetupPodCommand(encodedData: Data(hexadecimalString: "03131f0218c31404060c100d2f0000a4be0004e4a1")!)
-            XCTAssertEqual(0x1f0218c3, decoded.address)
+            XCTAssertEqual(0x1F02_18C3, decoded.address)
             XCTAssertEqual(components, decoded.dateComponents)
-            XCTAssertEqual(0x0000a4be, decoded.lot)
-            XCTAssertEqual(0x0004e4a1, decoded.tid)
+            XCTAssertEqual(0x0000_A4BE, decoded.lot)
+            XCTAssertEqual(0x0004_E4A1, decoded.tid)
 
             // Encode
-            let encoded = SetupPodCommand(address: 0x1f0218c3, dateComponents: components, lot: 0x0000a4be, tid: 0x0004e4a1)
-            XCTAssertEqual("03131f0218c31404060c100d2f0000a4be0004e4a1", encoded.data.hexadecimalString)            
+            let encoded = SetupPodCommand(address: 0x1F02_18C3, dateComponents: components, lot: 0x0000_A4BE, tid: 0x0004_E4A1)
+            XCTAssertEqual("03131f0218c31404060c100d2f0000a4be0004e4a1", encoded.data.hexadecimalString)
 
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testPrime() {
         do {
             // 1a LL NNNNNNNN 02 CCCC HH SSSS PPPP 0ppp
             // 1a 0e bed2e16b 02 010a 01 01a0 0034 0034
             // Decode
             let cmd = try SetInsulinScheduleCommand(encodedData: Data(hexadecimalString: "1a0ebed2e16b02010a0101a000340034")!)
-            XCTAssertEqual(0xbed2e16b, cmd.nonce)
-            
-            if case SetInsulinScheduleCommand.DeliverySchedule.bolus(let units, let timeBetweenPulses, let table) = cmd.deliverySchedule {
+            XCTAssertEqual(0xBED2_E16B, cmd.nonce)
+
+            if case let SetInsulinScheduleCommand.DeliverySchedule.bolus(units, timeBetweenPulses, table) = cmd.deliverySchedule {
                 XCTAssertEqual(Pod.primeUnits, units)
                 XCTAssertEqual(Pod.secondsPerPrimePulse, timeBetweenPulses)
                 XCTAssertEqual(1, table.entries.count)
@@ -229,7 +234,7 @@ class MessageTests: XCTestCase {
             } else {
                 XCTFail("Expected ScheduleEntry.bolus type")
             }
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
@@ -240,9 +245,9 @@ class MessageTests: XCTestCase {
             // 1a 0e 7e30bf16 02 0065 01 0050 000a 000a
             // Decode
             let cmd = try SetInsulinScheduleCommand(encodedData: Data(hexadecimalString: "1a0e7e30bf16020065010050000a000a")!)
-            XCTAssertEqual(0x7e30bf16, cmd.nonce)
+            XCTAssertEqual(0x7E30_BF16, cmd.nonce)
 
-            if case SetInsulinScheduleCommand.DeliverySchedule.bolus(let units, let timeBetweenPulses, let table) = cmd.deliverySchedule {
+            if case let SetInsulinScheduleCommand.DeliverySchedule.bolus(units, timeBetweenPulses, table) = cmd.deliverySchedule {
                 XCTAssertEqual(Pod.cannulaInsertionUnits, units)
                 XCTAssertEqual(Pod.secondsPerPrimePulse, timeBetweenPulses)
                 XCTAssertEqual(1, table.entries.count)
@@ -252,45 +257,76 @@ class MessageTests: XCTestCase {
             } else {
                 XCTFail("Expected ScheduleEntry.bolus type")
             }
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testStatusResponseAlarmsParsing() {
         // 1d 28 0082 00 0044 46eb ff
-        
+
         do {
             // Decode
             let status = try StatusResponse(encodedData: Data(hexadecimalString: "1d28008200004446ebff")!)
             XCTAssert(status.alerts.contains(.slot3ExpirationReminder))
             XCTAssert(status.alerts.contains(.slot7Expired))
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
-    
+
     func testConfigureAlertsCommand() {
         // 020f 0000 0202
-        let alertConfig0 = AlertConfiguration(alertType: .slot0AutoOff, active: false, duration: .minutes(15), trigger: .timeUntilAlert(0), beepRepeat: .every1MinuteFor15Minutes, beepType: .bipBeepBipBeepBipBeepBipBeep, silent: false, autoOffModifier: true)
+        let alertConfig0 = AlertConfiguration(
+            alertType: .slot0AutoOff,
+            active: false,
+            duration: .minutes(15),
+            trigger: .timeUntilAlert(0),
+            beepRepeat: .every1MinuteFor15Minutes,
+            beepType: .bipBeepBipBeepBipBeepBipBeep,
+            silent: false,
+            autoOffModifier: true
+        )
         XCTAssertEqual("020f00000202", alertConfig0.data.hexadecimalString)
 
         // 2800 1283 0602
-        let podHardExpirationTime = TimeInterval(hours:79) - TimeInterval(minutes:1)
-        let alertConfig2 = AlertConfiguration(alertType: .slot2ShutdownImminent, active: true, duration: .minutes(0), trigger: .timeUntilAlert(podHardExpirationTime), beepRepeat: .every15Minutes, beepType: .bipBeepBipBeepBipBeepBipBeep, silent: false)
+        let podHardExpirationTime = TimeInterval(hours: 79) - TimeInterval(minutes: 1)
+        let alertConfig2 = AlertConfiguration(
+            alertType: .slot2ShutdownImminent,
+            active: true,
+            duration: .minutes(0),
+            trigger: .timeUntilAlert(podHardExpirationTime),
+            beepRepeat: .every15Minutes,
+            beepType: .bipBeepBipBeepBipBeepBipBeep,
+            silent: false
+        )
         XCTAssertEqual("280012830602", alertConfig2.data.hexadecimalString)
 
         // 79a4 10df 0502
         // Pod expires 1 minute short of 3 days
-        let podSoftExpirationTime = TimeInterval(hours:72) - TimeInterval(minutes:1)
-        let alertConfig7 = AlertConfiguration(alertType: .slot7Expired, active: true, duration: .hours(7), trigger: .timeUntilAlert(podSoftExpirationTime), beepRepeat: .every60Minutes, beepType: .bipBeepBipBeepBipBeepBipBeep, silent: false)
+        let podSoftExpirationTime = TimeInterval(hours: 72) - TimeInterval(minutes: 1)
+        let alertConfig7 = AlertConfiguration(
+            alertType: .slot7Expired,
+            active: true,
+            duration: .hours(7),
+            trigger: .timeUntilAlert(podSoftExpirationTime),
+            beepRepeat: .every60Minutes,
+            beepType: .bipBeepBipBeepBipBeepBipBeep,
+            silent: false
+        )
         XCTAssertEqual("79a410df0502", alertConfig7.data.hexadecimalString)
 
-        let configureAlerts = ConfigureAlertsCommand(nonce: 0xfeb6268b, configurations:[alertConfig0, alertConfig2, alertConfig7])
+        let configureAlerts = ConfigureAlertsCommand(
+            nonce: 0xFEB6_268B,
+            configurations: [alertConfig0, alertConfig2, alertConfig7]
+        )
         XCTAssertEqual("1916feb6268b020f0000020228001283060279a410df0502", configureAlerts.data.hexadecimalString)
 
         do {
-            let decoded = try ConfigureAlertsCommand(encodedData: Data(hexadecimalString: "1916feb6268b79a410df0502280012830602020f00000202")!)
+            let decoded =
+                try ConfigureAlertsCommand(
+                    encodedData: Data(hexadecimalString: "1916feb6268b79a410df0502280012830602020f00000202")!
+                )
             XCTAssertEqual(3, decoded.configurations.count)
 
             let config1 = decoded.configurations[0]
@@ -298,7 +334,7 @@ class MessageTests: XCTestCase {
             XCTAssertEqual(true, config1.active)
             XCTAssertEqual(false, config1.autoOffModifier)
             XCTAssertEqual(.hours(7), config1.duration)
-            if case AlertTrigger.timeUntilAlert(let triggerTime) = config1.trigger {
+            if case let AlertTrigger.timeUntilAlert(triggerTime) = config1.trigger {
                 XCTAssertEqual(podSoftExpirationTime, triggerTime)
             }
             XCTAssertEqual(.every60Minutes, config1.beepRepeat)
@@ -309,15 +345,14 @@ class MessageTests: XCTestCase {
             XCTAssertEqual(true, cfg.active)
             XCTAssertEqual(false, cfg.autoOffModifier)
             XCTAssertEqual(0, cfg.duration)
-            if case AlertTrigger.unitsRemaining(let volume) = cfg.trigger {
+            if case let AlertTrigger.unitsRemaining(volume) = cfg.trigger {
                 XCTAssertEqual(10, volume)
             }
             XCTAssertEqual(.every1MinuteFor3MinutesAndRepeatEvery60Minutes, cfg.beepRepeat)
             XCTAssertEqual(.bipBeepBipBeepBipBeepBipBeep, cfg.beepType)
 
-        } catch (let error) {
+        } catch {
             XCTFail("message decoding threw error: \(error)")
         }
     }
 }
-

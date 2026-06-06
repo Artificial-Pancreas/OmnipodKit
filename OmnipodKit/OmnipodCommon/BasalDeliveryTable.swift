@@ -1,20 +1,10 @@
-//
-//  BasalDeliveryTable.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/BasalDeliveryTable.swift
-//  Created by Pete Schwamb on 4/4/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 // Max time between pulses for scheduled basal and temp basal extra timing command
 let maxTimeBetweenPulses = TimeInterval(hours: 5)
 
 // Special flag used for non-Eros pods for near zero basal rates pulse timing for $13 & $16 extra commands
-let nearZeroBasalRateFlag: UInt32 = 0x80000000
-
+let nearZeroBasalRateFlag: UInt32 = 0x8000_0000
 
 struct BasalDeliveryTable {
     static let segmentDuration: TimeInterval = .minutes(30)
@@ -26,7 +16,6 @@ struct BasalDeliveryTable {
     }
 
     init(schedule: BasalSchedule) {
-
         struct TempSegment {
             let pulses: Int
         }
@@ -90,11 +79,11 @@ struct BasalDeliveryTable {
         }
         addEntry(segmentsToMerge, altSegmentPulse)
 
-        self.entries = tableEntries
+        entries = tableEntries
     }
 
     init(tempBasalRate: Double, duration: TimeInterval) {
-        self.entries = BasalDeliveryTable.rateToTableEntries(rate: tempBasalRate, duration: duration)
+        entries = BasalDeliveryTable.rateToTableEntries(rate: tempBasalRate, duration: duration)
     }
 
     private static func rateToTableEntries(rate: Double, duration: TimeInterval) -> [InsulinTableEntry] {
@@ -108,7 +97,11 @@ struct BasalDeliveryTable {
 
         while remaining > 0 {
             let segments = min(remaining, 16)
-            let tableEntry = InsulinTableEntry(segments: segments, pulses: Int(pulsesPerSegment), alternateSegmentPulse: segments > 1 ? alternateSegmentPulse : false)
+            let tableEntry = InsulinTableEntry(
+                segments: segments,
+                pulses: Int(pulsesPerSegment),
+                alternateSegmentPulse: segments > 1 ? alternateSegmentPulse : false
+            )
             tableEntries.append(tableEntry)
             remaining -= segments
         }
@@ -116,13 +109,13 @@ struct BasalDeliveryTable {
     }
 
     func numSegments() -> Int {
-        return entries.reduce(0) { $0 + $1.segments }
+        entries.reduce(0) { $0 + $1.segments }
     }
 }
 
 extension BasalDeliveryTable: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "BasalDeliveryTable(\(entries))"
+        "BasalDeliveryTable(\(entries))"
     }
 }
 
@@ -131,7 +124,7 @@ extension BasalDeliveryTable: CustomDebugStringConvertible {
 // Rounds down to 0 for both non-Eros and Eros (temp basals).
 func roundToSupportedBasalRate(rate: Double) -> Double {
     let delta = 0.01
-    let supportedBasalRates: [Double] = (0...600).map { Double($0) / Double(Pod.pulsesPerUnit) }
+    let supportedBasalRates: [Double] = (0 ... 600).map { Double($0) / Double(Pod.pulsesPerUnit) }
     return supportedBasalRates.last(where: { $0 <= rate + delta }) ?? 0
 }
 
@@ -180,7 +173,7 @@ struct RateEntry {
         var delayBetweenPulsesInHundredthsOfMillisecondsWithFlag = UInt32(delayBetweenPulses.hundredthsOfMilliseconds)
 
         // non-Eros near zero basal rates use the nearZeroBasalRateFlag
-        if delayBetweenPulses == maxTimeBetweenPulses && totalPulses != 0 {
+        if delayBetweenPulses == maxTimeBetweenPulses, totalPulses != 0 {
             delayBetweenPulsesInHundredthsOfMillisecondsWithFlag |= nearZeroBasalRateFlag
         }
 
@@ -191,7 +184,7 @@ struct RateEntry {
     }
 
     static func makeEntries(rate: Double, duration: TimeInterval, podType: PodType) -> [RateEntry] {
-        let maxPulsesPerEntry: Double = 0xffff / 10 // max # of 1/10th pulses encoded in a 2-byte value
+        let maxPulsesPerEntry: Double = 0xFFFF / 10 // max # of 1/10th pulses encoded in a 2-byte value
         var entries = [RateEntry]()
         let rrate = roundToSupportedBasalTimingRate(rate: rate, podType: podType)
         let numHalfHours = max(Int(round(duration.minutes / 30)), 1) // shortest basal duration is 30m
@@ -203,7 +196,7 @@ struct RateEntry {
 
         var remainingPulses = rrate * Double(numHalfHours) / 2 / Pod.pulseSize
 
-        while (remainingSegments > 0) {
+        while remainingSegments > 0 {
             let entry: RateEntry
             if rrate == 0 {
                 // Eros zero TBR only, one rate entry per segment with no pulses
@@ -229,6 +222,6 @@ struct RateEntry {
 
 extension RateEntry: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "RateEntry(rate:\(rate), duration:\(duration.timeIntervalStr))"
+        "RateEntry(rate:\(rate), duration:\(duration.timeIntervalStr))"
     }
 }

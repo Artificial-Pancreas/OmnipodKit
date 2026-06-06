@@ -1,12 +1,3 @@
-//
-//  ReservoirLevel.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/ReservoirLevel.swift
-//  Created by Pete Schwamb on 5/31/19.
-//  Copyright © 2019 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 
 enum ReservoirLevel: RawRepresentable, Equatable {
@@ -19,7 +10,7 @@ enum ReservoirLevel: RawRepresentable, Equatable {
         switch self {
         case .aboveThreshold:
             return 1
-        case .valid(let value):
+        case let .valid(value):
             // Set 50U as the halfway mark, even though pods can hold 200U.
             return min(1, max(0, value / 100))
         }
@@ -35,7 +26,7 @@ enum ReservoirLevel: RawRepresentable, Equatable {
 
     var rawValue: RawValue {
         switch self {
-        case .valid(let value):
+        case let .valid(value):
             return value
         case .aboveThreshold:
             return Pod.reservoirLevelAboveThresholdMagicNumber

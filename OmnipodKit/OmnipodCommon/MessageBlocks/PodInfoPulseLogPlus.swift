@@ -1,29 +1,20 @@
-//
-//  PodInfoPulseLogPlus.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/PodInfoPulseLog.swift
-//  Created by Eelke Jager on 22/09/2018.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 // Type 3 Pod Info returns up to the last 60 pulse log entries pulse some additional info
-struct PodInfoPulseLogPlus : PodInfo {
+struct PodInfoPulseLogPlus: PodInfo {
     // CMD 1  2  3  4 5  6 7  8  9 10
     // DATA   0  1  2 3  4 5  6  7  8
     // 02 LL 03 PP QQQQ SSSS 04 3c XXXXXXXX ...
 
-    let podInfoType   : PodInfoResponseSubType = .pulseLogPlus
+    let podInfoType: PodInfoResponseSubType = .pulseLogPlus
     let faultEventCode: FaultEventCode // fault code
     let timeFaultEvent: TimeInterval // fault time since activation
     let timeActivation: TimeInterval // current time since activation
-    let entrySize     : Int // always 4
-    let maxEntries    : Int // always 60
-    let nEntries      : Int // how many 32-bit pulse log entries returned (calculated)
-    let pulseLog      : [UInt32]
-    let data          : Data
+    let entrySize: Int // always 4
+    let maxEntries: Int // always 60
+    let nEntries: Int // how many 32-bit pulse log entries returned (calculated)
+    let pulseLog: [UInt32]
+    let data: Data
 
     init(encodedData: Data) throws {
         guard encodedData[6] == MemoryLayout<UInt32>.size else {
@@ -34,7 +25,7 @@ struct PodInfoPulseLogPlus : PodInfo {
         let nLogBytesReturned = encodedData.count - logStartByteOffset
         let nEntries = nLogBytesReturned / entrySize
         let maxEntries = Int(encodedData[7])
-        guard encodedData.count >= logStartByteOffset && (nLogBytesReturned & 0x3) == 0 else {
+        guard encodedData.count >= logStartByteOffset, (nLogBytesReturned & 0x3) == 0 else {
             throw MessageBlockError.notEnoughData // not enough data to start log or a non-integral # of pulse log entries
         }
         guard maxEntries >= nEntries else {
@@ -43,11 +34,11 @@ struct PodInfoPulseLogPlus : PodInfo {
         self.entrySize = entrySize
         self.nEntries = nEntries
         self.maxEntries = maxEntries
-        self.faultEventCode = FaultEventCode(rawValue: encodedData[1])
-        self.timeFaultEvent = TimeInterval(minutes: Double((Int(encodedData[2]) << 8) + Int(encodedData[3])))
-        self.timeActivation = TimeInterval(minutes: Double((Int(encodedData[4]) << 8) + Int(encodedData[5])))
-        self.pulseLog = createPulseLog(encodedData: encodedData, logStartByteOffset: logStartByteOffset, nEntries: self.nEntries)
-        self.data = encodedData
+        faultEventCode = FaultEventCode(rawValue: encodedData[1])
+        timeFaultEvent = TimeInterval(minutes: Double((Int(encodedData[2]) << 8) + Int(encodedData[3])))
+        timeActivation = TimeInterval(minutes: Double((Int(encodedData[4]) << 8) + Int(encodedData[5])))
+        pulseLog = createPulseLog(encodedData: encodedData, logStartByteOffset: logStartByteOffset, nEntries: self.nEntries)
+        data = encodedData
     }
 }
 

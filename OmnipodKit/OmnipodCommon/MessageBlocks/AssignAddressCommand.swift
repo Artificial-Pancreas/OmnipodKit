@@ -1,12 +1,3 @@
-//
-//  AssignAddressCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/AssignAddressCommand.swift
-//  Created by Pete Schwamb on 2/12/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct AssignAddressCommand: MessageBlock {
@@ -20,7 +11,7 @@ struct AssignAddressCommand: MessageBlock {
             blockType.rawValue,
             4
         ])
-        data.appendBigEndian(self.address)
+        data.appendBigEndian(address)
         return data
     }
 
@@ -29,7 +20,7 @@ struct AssignAddressCommand: MessageBlock {
             throw MessageBlockError.notEnoughData
         }
 
-        self.address = encodedData[2...].toBigEndian(UInt32.self)
+        address = encodedData[2...].toBigEndian(UInt32.self)
     }
 
     init(address: UInt32) {
@@ -39,6 +30,6 @@ struct AssignAddressCommand: MessageBlock {
 
 extension AssignAddressCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "AssignAddressCommand(address:\(Data(bigEndian: address).hexadecimalString))"
+        "AssignAddressCommand(address:\(Data(bigEndian: address).hexadecimalString))"
     }
 }

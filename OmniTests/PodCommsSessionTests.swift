@@ -1,16 +1,7 @@
-//
-//  PodCommsSessionTests.swift
-//  OmniTests
-//
-//  From OmniBLE/OmniBLETests/PodCommsSessionTests.swift
-//  Created by Pete Schwamb on 3/25/19.
-//  Copyright © 2019 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class MockMessageTransport: MessageTransport {
     var delegate: MessageTransportDelegate?
@@ -47,52 +38,66 @@ class MockMessageTransport: MessageTransport {
 }
 
 class PodCommsSessionTests: XCTestCase, PodCommsSessionDelegate {
-
     var lastPodStateUpdate: PodState?
 
-    let address: UInt32 = 521580830
+    let address: UInt32 = 521_580_830
     let fakeLtk = Data(hexadecimalString: "fedcba98765432100123456789abcdef")!
-    var mockTransport: MockMessageTransport! = nil
-    var podState: PodState! = nil
+    var mockTransport: MockMessageTransport!
+    var podState: PodState!
 
     override func setUp() {
         mockTransport = MockMessageTransport(address: address, messageNumber: 1)
-        podState = PodState(address: address, firmwareVersion: "2.7.0", iFirmwareVersion: "2.7.0", lotNo: 43620, lotSeq: 560313, insulinType: .novolog, podType: dashType, ltk: fakeLtk, bleIdentifier: "0000-0000")
+        podState = PodState(
+            address: address,
+            firmwareVersion: "2.7.0",
+            iFirmwareVersion: "2.7.0",
+            lotNo: 43620,
+            lotSeq: 560_313,
+            insulinType: .novolog,
+            podType: dashType,
+            ltk: fakeLtk,
+            bleIdentifier: "0000-0000"
+        )
     }
 
-    func podCommsSession(_ podCommsSession: PodCommsSession, didChange state: PodState) {
+    func podCommsSession(_: PodCommsSession, didChange state: PodState) {
         lastPodStateUpdate = state
     }
 
     func testBolusFinishedEarlyOnPodIsMarkedNonMutable() {
-         let mockStart = Date()
-         podState.unfinalizedBolus = UnfinalizedDose(bolusAmount: 4.45, startTime: mockStart, scheduledCertainty: .certain, insulinType: .novolog)
-         let session = PodCommsSession(podState: podState, transport: mockTransport, delegate: self)
+        let mockStart = Date()
+        podState.unfinalizedBolus = UnfinalizedDose(
+            bolusAmount: 4.45,
+            startTime: mockStart,
+            scheduledCertainty: .certain,
+            insulinType: .novolog
+        )
+        let session = PodCommsSession(podState: podState, transport: mockTransport, delegate: self)
 
-         // Simulate a status request a bit before the bolus is expected to finish
-         let statusRequestTime = podState.unfinalizedBolus!.finishTime!.addingTimeInterval(-5)
-         session.mockCurrentDate = statusRequestTime
+        // Simulate a status request a bit before the bolus is expected to finish
+        let statusRequestTime = podState.unfinalizedBolus!.finishTime!.addingTimeInterval(-5)
+        session.mockCurrentDate = statusRequestTime
 
-         let statusResponse = StatusResponse(
-             deliveryStatus: .scheduledBasal,
-             podProgressStatus: .aboveFiftyUnits,
-             timeActive: .minutes(10),
-             reservoirLevel: Pod.reservoirLevelAboveThresholdMagicNumber,
-             insulinDelivered: 25,
-             bolusNotDelivered: 0,
-             lastProgrammingMessageSeqNum: 5,
-             alerts: AlertSet(slots: []))
+        let statusResponse = StatusResponse(
+            deliveryStatus: .scheduledBasal,
+            podProgressStatus: .aboveFiftyUnits,
+            timeActive: .minutes(10),
+            reservoirLevel: Pod.reservoirLevelAboveThresholdMagicNumber,
+            insulinDelivered: 25,
+            bolusNotDelivered: 0,
+            lastProgrammingMessageSeqNum: 5,
+            alerts: AlertSet(slots: [])
+        )
 
-         mockTransport.addResponse(statusResponse)
+        mockTransport.addResponse(statusResponse)
 
-         let _ = try! session.getStatus()
+        _ = try! session.getStatus()
 
-         XCTAssertEqual(1, lastPodStateUpdate!.finalizedDoses.count)
+        XCTAssertEqual(1, lastPodStateUpdate!.finalizedDoses.count)
 
-         let finalizedBolus = lastPodStateUpdate!.finalizedDoses[0]
+        let finalizedBolus = lastPodStateUpdate!.finalizedDoses[0]
 
-         XCTAssertTrue(finalizedBolus.isFinished(at: statusRequestTime))
-         XCTAssertFalse(finalizedBolus.isMutable(at: statusRequestTime))
-     }
-
+        XCTAssertTrue(finalizedBolus.isFinished(at: statusRequestTime))
+        XCTAssertFalse(finalizedBolus.isMutable(at: statusRequestTime))
+    }
 }

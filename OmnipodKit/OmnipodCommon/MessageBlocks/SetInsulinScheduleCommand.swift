@@ -1,16 +1,6 @@
-//
-//  SetInsulinScheduleCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/SetInsulinScheduleCommand.swift
-//  Created by Pete Schwamb on 2/24/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
-struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
-
+struct SetInsulinScheduleCommand: NonceResyncableMessageBlock {
     fileprivate enum ScheduleTypeCode: UInt8 {
         case basalSchedule = 0
         case tempBasal = 1
@@ -35,7 +25,7 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
 
         fileprivate var data: Data {
             switch self {
-            case .basalSchedule(let currentSegment, let secondsRemaining, let pulsesRemaining, let table):
+            case let .basalSchedule(currentSegment, secondsRemaining, pulsesRemaining, table):
                 var data = Data([currentSegment])
                 data.appendBigEndian(secondsRemaining << 3)
                 data.appendBigEndian(pulsesRemaining)
@@ -44,7 +34,7 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
                 }
                 return data
 
-            case .tempBasal(let secondsRemaining, let firstSegmentPulses, let table):
+            case let .tempBasal(secondsRemaining, firstSegmentPulses, table):
                 var data = Data([UInt8(table.numSegments())])
                 data.appendBigEndian(secondsRemaining << 3)
                 data.appendBigEndian(firstSegmentPulses)
@@ -53,7 +43,7 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
                 }
                 return data
 
-            case .bolus(let units, let timeBetweenPulses, let table):
+            case let .bolus(units, timeBetweenPulses, table):
                 let firstSegmentPulses = UInt16(round(units / Pod.pulseSize))
                 let multiplier = UInt16(round(timeBetweenPulses * 8))
                 let fieldA = firstSegmentPulses * multiplier
@@ -65,22 +55,22 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
                     data.append(entry.data)
                 }
                 return data
-
             }
         }
-        
+
         fileprivate func checksum() -> UInt16 {
             switch self {
-            case .basalSchedule( _, _, _, let table), .tempBasal(_, _, let table):
-                return data[0..<5].reduce(0) { $0 + UInt16($1) } +
+            case let .basalSchedule(_, _, _, table),
+                 let .tempBasal(_, _, table):
+                return data[0 ..< 5].reduce(0) { $0 + UInt16($1) } +
                     table.entries.reduce(0) { $0 + $1.checksum() }
-            case .bolus(_, _, let table):
-                return data[0..<5].reduce(0) { $0 + UInt16($1) } +
+            case let .bolus(_, _, table):
+                return data[0 ..< 5].reduce(0) { $0 + UInt16($1) } +
                     table.entries.reduce(0) { $0 + $1.checksum() }
             }
         }
     }
-    
+
     let blockType: MessageBlockType = .setInsulinSchedule
 
     var nonce: UInt32
@@ -89,15 +79,15 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            UInt8(7 + deliverySchedule.data.count),
-            ])
+            UInt8(7 + deliverySchedule.data.count)
+        ])
         data.appendBigEndian(nonce)
         data.append(deliverySchedule.typeCode().rawValue)
         data.appendBigEndian(deliverySchedule.checksum())
         data.append(deliverySchedule.data)
         return data
     }
-    
+
     init(encodedData: Data) throws {
         if encodedData.count < 6 {
             throw MessageBlockError.notEnoughData
@@ -116,41 +106,50 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         case .basalSchedule:
             var entries = [InsulinTableEntry]()
             let numEntries = (length - 12) / 2
-            for i in 0..<numEntries {
-                let dataStart = Int(i*2 + 14)
-                let entryData = encodedData.subdata(in: dataStart..<(dataStart+2))
+            for i in 0 ..< numEntries {
+                let dataStart = Int(i * 2 + 14)
+                let entryData = encodedData.subdata(in: dataStart ..< (dataStart + 2))
                 entries.append(InsulinTableEntry(encodedData: entryData))
             }
             let currentTableIndex = encodedData[9]
             let secondsRemaining = encodedData[10...].toBigEndian(UInt16.self) >> 3
             let pulsesRemaining = encodedData[12...].toBigEndian(UInt16.self)
             let table = BasalDeliveryTable(entries: entries)
-            deliverySchedule = .basalSchedule(currentSegment: currentTableIndex, secondsRemaining: secondsRemaining, pulsesRemaining: pulsesRemaining, table: table)
+            deliverySchedule = .basalSchedule(
+                currentSegment: currentTableIndex,
+                secondsRemaining: secondsRemaining,
+                pulsesRemaining: pulsesRemaining,
+                table: table
+            )
 
         case .tempBasal:
             let secondsRemaining = encodedData[10...].toBigEndian(UInt16.self) >> 3
             let firstSegmentPulses = encodedData[12...].toBigEndian(UInt16.self)
             var entries = [InsulinTableEntry]()
             let numEntries = (length - 12) / 2
-            for i in 0..<numEntries {
-                let dataStart = Int(i*2 + 14)
-                let entryData = encodedData.subdata(in: dataStart..<(dataStart+2))
+            for i in 0 ..< numEntries {
+                let dataStart = Int(i * 2 + 14)
+                let entryData = encodedData.subdata(in: dataStart ..< (dataStart + 2))
                 entries.append(InsulinTableEntry(encodedData: entryData))
             }
             let table = BasalDeliveryTable(entries: entries)
-            deliverySchedule = .tempBasal(secondsRemaining: secondsRemaining, firstSegmentPulses: firstSegmentPulses, table: table)
+            deliverySchedule = .tempBasal(
+                secondsRemaining: secondsRemaining,
+                firstSegmentPulses: firstSegmentPulses,
+                table: table
+            )
 
         case .bolus:
             let fieldA = encodedData[10...].toBigEndian(UInt16.self)
             let unitRate = encodedData[12...].toBigEndian(UInt16.self)
-            let units = Double(unitRate & 0x03ff) / Pod.pulsesPerUnit
+            let units = Double(unitRate & 0x03FF) / Pod.pulsesPerUnit
             let timeBetweenPulses = unitRate > 0 ? Double(fieldA / unitRate) / 8 : 0
 
             var entries = [InsulinTableEntry]()
             let numEntries = (length - 12) / 2
-            for i in 0..<numEntries {
+            for i in 0 ..< numEntries {
                 let dataStart = Int((i << 1) + 14)
-                let entryData = encodedData.subdata(in: dataStart..<(dataStart+2))
+                let entryData = encodedData.subdata(in: dataStart ..< (dataStart + 2))
                 entries.append(InsulinTableEntry(encodedData: entryData))
             }
             let table = BolusDeliveryTable(entries: entries)
@@ -171,13 +170,20 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
         self.nonce = nonce
         let pulsesPerHour = Int(round(tempBasalRate / Pod.pulseSize))
         let table = BasalDeliveryTable(tempBasalRate: tempBasalRate, duration: duration)
-        self.deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.tempBasal(secondsRemaining: 30*60, firstSegmentPulses: UInt16(pulsesPerHour / 2), table: table)
+        deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.tempBasal(
+            secondsRemaining: 30 * 60,
+            firstSegmentPulses: UInt16(pulsesPerHour / 2),
+            table: table
+        )
     }
 
     init(nonce: UInt32, basalSchedule: BasalSchedule, scheduleOffset: TimeInterval, podType: PodType) {
         let scheduleOffsetNearestSecond = round(scheduleOffset)
         let table = BasalDeliveryTable(schedule: basalSchedule)
-        var rate = roundToSupportedBasalTimingRate(rate: basalSchedule.rateAt(offset: scheduleOffsetNearestSecond), podType: podType)
+        var rate = roundToSupportedBasalTimingRate(
+            rate: basalSchedule.rateAt(offset: scheduleOffsetNearestSecond),
+            podType: podType
+        )
         if rate == 0.0 {
             rate = Pod.nearZeroBasalRate // prevent crash if a 0.0 schedule basal ever gets here for Eros
         }
@@ -194,20 +200,35 @@ struct SetInsulinScheduleCommand : NonceResyncableMessageBlock {
 
         let pulsesRemainingInSegment = (timeRemainingInSegment + timeBetweenPulses / 10.0 - offsetToNextTenth) / timeBetweenPulses
 
-        self.deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.basalSchedule(currentSegment: UInt8(segment), secondsRemaining: UInt16(timeRemainingInSegment), pulsesRemaining: UInt16(pulsesRemainingInSegment), table: table)
+        deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.basalSchedule(
+            currentSegment: UInt8(segment),
+            secondsRemaining: UInt16(timeRemainingInSegment),
+            pulsesRemaining: UInt16(pulsesRemainingInSegment),
+            table: table
+        )
         self.nonce = nonce
     }
 
-    init(nonce: UInt32, units: Double, timeBetweenPulses: TimeInterval = 0, extendedUnits: Double = 0, extendedDuration: TimeInterval = 0) {
+    init(
+        nonce: UInt32,
+        units: Double,
+        timeBetweenPulses: TimeInterval = 0,
+        extendedUnits: Double = 0,
+        extendedDuration: TimeInterval = 0
+    ) {
         self.nonce = nonce
         let table = BolusDeliveryTable(units: units, extendedUnits: extendedUnits, extendedDuration: extendedDuration)
         let timeBetweenImmediatePulses = (units > 0.0 && timeBetweenPulses > 0) ? timeBetweenPulses : Pod.secondsPerBolusPulse
-        self.deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.bolus(units: units, timeBetweenPulses: timeBetweenImmediatePulses, table: table)
+        deliverySchedule = SetInsulinScheduleCommand.DeliverySchedule.bolus(
+            units: units,
+            timeBetweenPulses: timeBetweenImmediatePulses,
+            table: table
+        )
     }
 }
 
 extension SetInsulinScheduleCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "SetInsulinScheduleCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), \(deliverySchedule))"
+        "SetInsulinScheduleCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), \(deliverySchedule))"
     }
 }

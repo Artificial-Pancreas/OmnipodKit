@@ -1,17 +1,8 @@
-//
-//  NSData.swift
-//  OmnipodKit
-//
-//  From OmniBLE/Common/NSData.swift
-//  Created by Nathan Racklyeft on 9/2/15.
-//  Copyright © 2015 Nathan Racklyeft. All rights reserved.
-//
-
 import Foundation
 
 extension Data {
     private func toDefaultEndian<T: FixedWidthInteger>(_: T.Type) -> T {
-        return self.withUnsafeBytes({ (rawBufferPointer: UnsafeRawBufferPointer) -> T in
+        withUnsafeBytes({ (rawBufferPointer: UnsafeRawBufferPointer) -> T in
             let bufferPointer = rawBufferPointer.bindMemory(to: T.self)
             guard let pointer = bufferPointer.baseAddress else {
                 return 0
@@ -21,11 +12,11 @@ extension Data {
     }
 
     func to<T: FixedWidthInteger>(_ type: T.Type) -> T {
-        return T(littleEndian: toDefaultEndian(type))
+        T(littleEndian: toDefaultEndian(type))
     }
 
     func toBigEndian<T: FixedWidthInteger>(_ type: T.Type) -> T {
-        return T(bigEndian: toDefaultEndian(type))
+        T(bigEndian: toDefaultEndian(type))
     }
 
     mutating func append<T: FixedWidthInteger>(_ newElement: T) {
@@ -58,12 +49,12 @@ extension Data {
         // return nil for all other input characters
         func decodeNibble(u: UInt16) -> UInt8? {
             switch u {
-            case 0x30 ... 0x39:  // '0'-'9'
+            case 0x30 ... 0x39: // '0'-'9'
                 return UInt8(u - 0x30)
-            case 0x41 ... 0x46:  // 'A'-'F'
-                return UInt8(u - 0x41 + 10)  // 10 since 'A' is 10, not 0
-            case 0x61 ... 0x66:  // 'a'-'f'
-                return UInt8(u - 0x61 + 10)  // 10 since 'a' is 10, not 0
+            case 0x41 ... 0x46: // 'A'-'F'
+                return UInt8(u - 0x41 + 10) // 10 since 'A' is 10, not 0
+            case 0x61 ... 0x66: // 'a'-'f'
+                return UInt8(u - 0x61 + 10) // 10 since 'a' is 10, not 0
             default:
                 return nil
             }
@@ -77,7 +68,7 @@ extension Data {
                 byte = val << 4
             } else {
                 byte += val
-                self.append(byte)
+                append(byte)
             }
             even = !even
         }
@@ -85,6 +76,6 @@ extension Data {
     }
 
     var hexadecimalString: String {
-        return map { String(format: "%02hhx", $0) }.joined()
+        map { String(format: "%02hhx", $0) }.joined()
     }
 }

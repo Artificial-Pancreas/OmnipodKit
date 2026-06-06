@@ -1,26 +1,15 @@
-//
-//  TimeView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/TimeView.swift
-//  Created by Pete Schwamb on 5/10/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import SwiftUI
 
-
 struct TimeView: View {
-    
     let timeZone: TimeZone
-    
+
     private let shortTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
         return formatter
     }()
-    
+
     @State var currentDate = Date()
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -31,7 +20,7 @@ struct TimeView: View {
 
     var body: some View {
         Text(timeZoneString).onReceive(timer) { input in
-           currentDate = input
+            currentDate = input
         }
     }
 }

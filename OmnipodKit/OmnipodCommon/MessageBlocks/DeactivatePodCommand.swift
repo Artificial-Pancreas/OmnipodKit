@@ -19,8 +19,8 @@ struct DeactivatePodCommand: NonceResyncableMessageBlock {
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            4,
-            ])
+            4
+        ])
         data.appendBigEndian(nonce)
         return data
     }
@@ -29,7 +29,7 @@ struct DeactivatePodCommand: NonceResyncableMessageBlock {
         if encodedData.count < 6 {
             throw MessageBlockError.notEnoughData
         }
-        self.nonce = encodedData[2...].toBigEndian(UInt32.self)
+        nonce = encodedData[2...].toBigEndian(UInt32.self)
     }
 
     init(nonce: UInt32) {

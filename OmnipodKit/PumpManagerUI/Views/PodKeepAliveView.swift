@@ -1,18 +1,9 @@
-//
-//  PodKeepAliveView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/PodKeepAliveView.swift
-//  Created by Joe Moran on 9/3/25.
-//  Copyright © 2025 Joe Moran. All rights reserved.
-//
-
-import SwiftUI
 import Combine
 import Foundation
+import SwiftUI
 
 struct PodKeepAliveView: View {
-    @ObservedObject var viewModel: PodKeepAliveViewModel = PodKeepAliveViewModel()
+    @ObservedObject var viewModel = PodKeepAliveViewModel()
 
     @State private var forceRefresh = false
 
@@ -25,7 +16,7 @@ struct PodKeepAliveView: View {
     init(title: String, initialValue: PodKeepAlive, onChange: @escaping (_ selectedValue: PodKeepAlive) -> Void) {
         self.title = title
         self.initialValue = initialValue
-        self._preference = State(initialValue: initialValue)
+        _preference = State(initialValue: initialValue)
         savedOnChange = onChange
     }
 
@@ -50,16 +41,22 @@ struct PodKeepAliveView: View {
     private var refreshTypeSection: some View {
         Section {
             VStack(alignment: .center, spacing: 4) {
-                Text("For use with iPhone 16 or iPhone 17e when used with InPlay BLE (Atlas) DASH pods; otherwise leave disabled.", comment: "Hardware which benefits from Pod Keep Alive")
-                    .font(.body)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                Text(
+                    "For use with iPhone 16 or iPhone 17e when used with InPlay BLE (Atlas) DASH pods; otherwise leave disabled.",
+                    comment: "Hardware which benefits from Pod Keep Alive"
+                )
+                .font(.body)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("When enabled and pod is within range, additional pod status requests are issued to minimize pod Bluetooth disconnects.", comment: "Summary of the Pod Keep Alive concept")
-                    .font(.body)
-                    .foregroundColor(.primary)
+                Text(
+                    "When enabled and pod is within range, additional pod status requests are issued to minimize pod Bluetooth disconnects.",
+                    comment: "Summary of the Pod Keep Alive concept"
+                )
+                .font(.body)
+                .foregroundColor(.primary)
             }
 
             Picker("Pod Keep Alive", selection: $viewModel.podKeepAlive) {
@@ -77,8 +74,7 @@ struct PodKeepAliveView: View {
         }
     }
 
-    @ViewBuilder
-    private var selectedDeviceSection: some View {
+    @ViewBuilder  private var selectedDeviceSection: some View {
         if let storedDevice = bleManager.getSelectedDevice() {
             Section(header: Text("Selected Device")) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -128,9 +124,11 @@ struct PodKeepAliveView: View {
     }
 
     private var scanningStatusHeader: some View {
-        Text("\(Storage.shared.selectedBLEDevice.value != nil ? "Additional" : "Scanning for") \(viewModel.podKeepAlive.title)...")
-            .font(.subheadline)
-            .foregroundColor(.secondary)
+        Text(
+            "\(Storage.shared.selectedBLEDevice.value != nil ? "Additional" : "Scanning for") \(viewModel.podKeepAlive.title)..."
+        )
+        .font(.subheadline)
+        .foregroundColor(.secondary)
     }
 
     private func deviceConnectionStatus(for device: BLEDevice) -> some View {
@@ -165,7 +163,7 @@ struct PodKeepAliveView: View {
     }
 }
 
-fileprivate var savedOnChange: ((_ selectedValue: PodKeepAlive) -> Void)?
+private var savedOnChange: ((_ selectedValue: PodKeepAlive) -> Void)?
 
 class PodKeepAliveViewModel: ObservableObject {
     @Published var podKeepAlive: PodKeepAlive
@@ -204,16 +202,21 @@ class PodKeepAliveViewModel: ObservableObject {
         }
 
         switch newValue {
-        case .silentTune, .whenOpen:
+        case .silentTune,
+             .whenOpen:
             /// Setup a refreshTimer to try to prevent a possible pod disconnect
             /// pod disconnect if no pod comms are done in the remaining window.
-            print("handlePodKeepAliveChange: initializing refresh timer for \(refreshInterval.timeIntervalStr) with refreshTimeTarget \(timeStr(refreshTimeTarget))")
+            print(
+                "handlePodKeepAliveChange: initializing refresh timer for \(refreshInterval.timeIntervalStr) with refreshTimeTarget \(timeStr(refreshTimeTarget))"
+            )
             setup_refreshTimer(when: refreshInterval)
 
         case .rileyLink:
             /// trigger a refresh right now if there is less than a minunte until the end of remaining window
             if refreshInterval < .seconds(60), let refresh = refreshFunc {
-                print("handlePodKeepAliveChange: calling refresh with only \(refreshInterval.timeIntervalStr) left before refreshTimeTarget \(timeStr(refreshTimeTarget))")
+                print(
+                    "handlePodKeepAliveChange: calling refresh with only \(refreshInterval.timeIntervalStr) left before refreshTimeTarget \(timeStr(refreshTimeTarget))"
+                )
                 refresh()
             }
 
@@ -253,13 +256,25 @@ enum PodKeepAlive: Int, CaseIterable, Codable {
     var description: String {
         switch self {
         case .disabled:
-            return LocalizedString("Pod keep alive disabled. Pod disconnects 3 minutes after last message exchange (nominal behavior).", comment: "Description for PodKeepAlive.disabled")
+            return LocalizedString(
+                "Pod keep alive disabled. Pod disconnects 3 minutes after last message exchange (nominal behavior).",
+                comment: "Description for PodKeepAlive.disabled"
+            )
         case .whenOpen:
-            return LocalizedString("Pod keep alive enabled when app is in the foreground with phone unlocked. Additional pod status request issued after 2 minutes, 40 seconds.", comment: "Description for PodKeepAlive.whenOpen")
+            return LocalizedString(
+                "Pod keep alive enabled when app is in the foreground with phone unlocked. Additional pod status request issued after 2 minutes, 40 seconds.",
+                comment: "Description for PodKeepAlive.whenOpen"
+            )
         case .silentTune:
-            return LocalizedString("Pod keep alive enabled. Additional pod status request issued after 2 minutes, 40 seconds.\n\nAttempt to keep pod connected even when phone is locked by using a silent tune playing in the background. The silent tune may be interrupted by other apps. If silent tune is interrupted, pod keep alive stops working. The silent tune consumes extra iPhone battery.", comment: "Description for PodKeepAlive.silentTune")
+            return LocalizedString(
+                "Pod keep alive enabled. Additional pod status request issued after 2 minutes, 40 seconds.\n\nAttempt to keep pod connected even when phone is locked by using a silent tune playing in the background. The silent tune may be interrupted by other apps. If silent tune is interrupted, pod keep alive stops working. The silent tune consumes extra iPhone battery.",
+                comment: "Description for PodKeepAlive.silentTune"
+            )
         case .rileyLink:
-            return LocalizedString("Pod keep alive enabled. Additional pod status request issued after 2 minutes.\n\nRequires a RileyLink-compatible device within Bluetooth range. Allows pod keep alive messages when app is in background. This method uses less iPhone battery and slightly more DASH battery than the Silent Tune method. The RileyLink-compatible device must be selected and be connected.", comment: "Description for PodKeepAlive.rileyLink")
+            return LocalizedString(
+                "Pod keep alive enabled. Additional pod status request issued after 2 minutes.\n\nRequires a RileyLink-compatible device within Bluetooth range. Allows pod keep alive messages when app is in background. This method uses less iPhone battery and slightly more DASH battery than the Silent Tune method. The RileyLink-compatible device must be selected and be connected.",
+                comment: "Description for PodKeepAlive.rileyLink"
+            )
         }
     }
 
@@ -268,7 +283,9 @@ enum PodKeepAlive: Int, CaseIterable, Codable {
         switch self {
         case .rileyLink:
             return true
-        case .disabled, .whenOpen, .silentTune:
+        case .disabled,
+             .silentTune,
+             .whenOpen:
             return false
         }
     }
@@ -302,12 +319,13 @@ enum PodKeepAlive: Int, CaseIterable, Codable {
             }
             return false
 
-        case .disabled, .whenOpen, .silentTune:
+        case .disabled,
+             .silentTune,
+             .whenOpen:
             return false
         }
     }
 }
-
 
 class Storage {
     var bgUpdateDelay = StorageValue<Int>(key: "bgUpdateDelay", defaultValue: 10)
@@ -326,7 +344,6 @@ class Storage {
     private init() {}
 }
 
-
 class StorageValue<T: Codable & Equatable>: ObservableObject {
     let key: String
 
@@ -341,11 +358,11 @@ class StorageValue<T: Codable & Equatable>: ObservableObject {
     }
 
     var exists: Bool {
-        return StorageValue.defaults.object(forKey: key) != nil
+        StorageValue.defaults.object(forKey: key) != nil
     }
 
     private static var defaults: UserDefaults {
-        return UserDefaults.standard
+        UserDefaults.standard
     }
 
     init(key: String, defaultValue: T) {
@@ -365,7 +382,6 @@ class StorageValue<T: Codable & Equatable>: ObservableObject {
     }
 }
 
-
 import AVFoundation
 
 class BackgroundTask {
@@ -380,7 +396,12 @@ class BackgroundTask {
     func startBackgroundTask(hasPod: Bool) {
         Storage.shared.inBackground.value = true
         if hasPod && Storage.shared.podKeepAlive.value == .silentTune {
-            NotificationCenter.default.addObserver(self, selector: #selector(interruptedAudio), name: AVAudioSession.interruptionNotification, object: AVAudioSession.sharedInstance())
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(interruptedAudio),
+                name: AVAudioSession.interruptionNotification,
+                object: AVAudioSession.sharedInstance()
+            )
             playAudio()
         }
     }
@@ -391,7 +412,7 @@ class BackgroundTask {
         player.stop()
     }
 
-    @objc fileprivate func interruptedAudio(_ notification: Notification) {
+    @objc private func interruptedAudio(_ notification: Notification) {
         if notification.name == AVAudioSession.interruptionNotification, notification.userInfo != nil,
            Storage.shared.podKeepAlive.value == .silentTune
         {
@@ -404,7 +425,7 @@ class BackgroundTask {
         }
     }
 
-    fileprivate func playAudio() {
+    private func playAudio() {
         let forResource = "blank"
         let ofType = "wav"
         do {
@@ -421,16 +442,13 @@ class BackgroundTask {
             player.volume = 0.01
             player.prepareToPlay()
             player.play()
-        } catch {
-        }
+        } catch {}
     }
 }
-
 
 import CoreBluetooth
 
 class BLEManager: NSObject, ObservableObject {
-
     static let shared = BLEManager()
 
     @Published private(set) var devices: [BLEDevice] = []
@@ -455,7 +473,7 @@ class BLEManager: NSObject, ObservableObject {
     }
 
     func getSelectedDevice() -> BLEDevice? {
-        return devices.first { $0.id == Storage.shared.selectedBLEDevice.value?.id }
+        devices.first { $0.id == Storage.shared.selectedBLEDevice.value?.id }
     }
 
     func startScanning() {
@@ -490,13 +508,18 @@ class BLEManager: NSObject, ObservableObject {
 
             switch matchedType {
             case .rileyLink:
-                activeDevice = RileyLinkHeartbeatBluetoothDevice(address: device.id.uuidString, name: device.name, bluetoothDeviceDelegate: self)
+                activeDevice = RileyLinkHeartbeatBluetoothDevice(
+                    address: device.id.uuidString,
+                    name: device.name,
+                    bluetoothDeviceDelegate: self
+                )
                 activeDevice?.connect()
-            case .silentTune, .whenOpen, .disabled:
+            case .disabled,
+                 .silentTune,
+                 .whenOpen:
                 return
             }
-        } else {
-        }
+        } else {}
     }
 
     func stopScanning() {
@@ -549,14 +572,16 @@ extension BLEManager: CBCentralManagerDelegate {
         }
     }
 
-    func centralManager(_: CBCentralManager,
-                        didDiscover peripheral: CBPeripheral,
-                        advertisementData: [String: Any],
-                        rssi RSSI: NSNumber)
+    func centralManager(
+        _: CBCentralManager,
+        didDiscover peripheral: CBPeripheral,
+        advertisementData: [String: Any],
+        rssi RSSI: NSNumber
+    )
     {
         let uuid = peripheral.identifier
         let services = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?
-            .map { $0.uuidString }
+            .map(\.uuidString)
 
         let device = BLEDevice(
             id: uuid,
@@ -582,7 +607,6 @@ extension BLEManager: CBCentralManagerDelegate {
 
 extension BLEManager: BluetoothDeviceDelegate {
     func didConnectTo(bluetoothDevice: BluetoothDevice) {
-
         findAndUpdateDevice(with: bluetoothDevice.deviceAddress) { device in
             device.isConnected = true
             device.lastConnected = Date()
@@ -590,7 +614,6 @@ extension BLEManager: BluetoothDeviceDelegate {
     }
 
     func didDisconnectFrom(bluetoothDevice: BluetoothDevice) {
-
         findAndUpdateDevice(with: bluetoothDevice.deviceAddress) { device in
             device.isConnected = false
             device.lastConnected = Date()
@@ -603,7 +626,7 @@ extension BLEManager: BluetoothDeviceDelegate {
         }
 
         let now = Date()
-        let nowTimeStr=timeStr(now)
+        let nowTimeStr = timeStr(now)
         guard let expectedInterval = device.expectedHeartbeatInterval() else {
             device.lastHeartbeatTime = now
             // TaskScheduler.shared.checkTasksNow()
@@ -631,15 +654,21 @@ extension BLEManager: BluetoothDeviceDelegate {
         let refreshTimerInterval = Storage.shared.refreshTimerInterval.value
         let refreshTargetTime = lastUpdateTime.addingTimeInterval(refreshTimerInterval)
         let refreshTargetTimeStr = timeStr(refreshTargetTime)
-        print("@@@ HeartBeat next refresh target time of \(timeStr(lastUpdateTime)) + \(refreshTimerInterval.timeIntervalStr) = \(refreshTargetTimeStr)")
+        print(
+            "@@@ HeartBeat next refresh target time of \(timeStr(lastUpdateTime)) + \(refreshTimerInterval.timeIntervalStr) = \(refreshTargetTimeStr)"
+        )
 
         let nextExpectedHeartbeatTime = now.addingTimeInterval(expectedInterval)
         let nextExpectedHeartbeatTimeStr = timeStr(nextExpectedHeartbeatTime)
-        print("@@@ HeartBeat next heartbeat expected at \(nowTimeStr) + \(expectedInterval.timeIntervalStr) = \(nextExpectedHeartbeatTimeStr)")
+        print(
+            "@@@ HeartBeat next heartbeat expected at \(nowTimeStr) + \(expectedInterval.timeIntervalStr) = \(nextExpectedHeartbeatTimeStr)"
+        )
 
         let pad: TimeInterval = .seconds(5)
         if refreshTargetTime < nextExpectedHeartbeatTime - pad {
-            print("@@@ HeartBeat refreshTargetTime \(refreshTargetTimeStr) within \(pad.timeIntervalStr) of nextExpectedHeartbeatTime \(nextExpectedHeartbeatTimeStr)")
+            print(
+                "@@@ HeartBeat refreshTargetTime \(refreshTargetTimeStr) within \(pad.timeIntervalStr) of nextExpectedHeartbeatTime \(nextExpectedHeartbeatTimeStr)"
+            )
             if let refresh = refreshFunc {
                 print("@@@ HeartBeat calling refresh with inBackground \(Storage.shared.inBackground.value) at \(nowTimeStr)")
                 refresh()
@@ -647,7 +676,6 @@ extension BLEManager: BluetoothDeviceDelegate {
         }
     }
 }
-
 
 protocol BluetoothDeviceDelegate: AnyObject {
     func didConnectTo(bluetoothDevice: BluetoothDevice)
@@ -672,7 +700,14 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     private var connectTimeOutTimer: Timer?
     var lastHeartbeatTime: Date?
 
-    init(address: String, name: String?, CBUUID_Advertisement: String?, servicesCBUUIDs: [CBUUID]?, CBUUID_ReceiveCharacteristic: String, bluetoothDeviceDelegate: BluetoothDeviceDelegate) {
+    init(
+        address: String,
+        name: String?,
+        CBUUID_Advertisement: String?,
+        servicesCBUUIDs: [CBUUID]?,
+        CBUUID_ReceiveCharacteristic: String,
+        bluetoothDeviceDelegate: BluetoothDeviceDelegate
+    ) {
         lastHeartbeatTime = nil
         deviceAddress = address
         deviceName = name
@@ -790,7 +825,13 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         self.peripheral = peripheral
 
         if peripheral.state == .disconnected {
-            connectTimeOutTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(stopConnectAndRestartScanning), userInfo: nil, repeats: false)
+            connectTimeOutTimer = Timer.scheduledTimer(
+                timeInterval: 5.0,
+                target: self,
+                selector: #selector(stopConnectAndRestartScanning),
+                userInfo: nil,
+                repeats: false
+            )
             centralManager?.connect(peripheral, options: nil)
         } else {
             if let newCentralManager = centralManager {
@@ -815,7 +856,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         if let uuid = UUID(uuidString: deviceAddress) {
             // trace("    uuid is not nil", log: log, category: ConstantsLog.categoryBlueToothTransmitter, type: .info)
             let peripheralArr = central.retrievePeripherals(withIdentifiers: [uuid])
-            if peripheralArr.count > 0 {
+            if !peripheralArr.isEmpty {
                 peripheral = peripheralArr[0]
                 if let peripheral = peripheral {
                     peripheral.delegate = self
@@ -827,7 +868,12 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         return false
     }
 
-    func centralManager(_: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData _: [String: Any], rssi _: NSNumber) {
+    func centralManager(
+        _: CBCentralManager,
+        didDiscover peripheral: CBPeripheral,
+        advertisementData _: [String: Any],
+        rssi _: NSNumber
+    ) {
         timeStampLastStatusUpdate = Date()
 
         if peripheral.identifier.uuidString == deviceAddress {
@@ -851,7 +897,9 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         let peripheralName = peripheral.name ?? "Unknown"
         let errorMessage = error?.localizedDescription ?? "No error details provided"
 
-        print("@@@ Failed to connect to peripheral '\(peripheralName)' (UUID: \(peripheral.identifier.uuidString)). Error: \(errorMessage). Retrying...")
+        print(
+            "@@@ Failed to connect to peripheral '\(peripheralName)' (UUID: \(peripheral.identifier.uuidString)). Error: \(errorMessage). Retrying..."
+        )
 
         centralManager?.connect(peripheral, options: nil)
     }
@@ -920,7 +968,14 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
         cBCentralManagerOptionRestoreIdentifierKeyToUse = "LoopFollow-" + deviceAddress
 
-        centralManager = CBCentralManager(delegate: self, queue: nil, options: [CBCentralManagerOptionShowPowerAlertKey: true, CBCentralManagerOptionRestoreIdentifierKey: cBCentralManagerOptionRestoreIdentifierKeyToUse!])
+        centralManager = CBCentralManager(
+            delegate: self,
+            queue: nil,
+            options: [
+                CBCentralManagerOptionShowPowerAlertKey: true,
+                CBCentralManagerOptionRestoreIdentifierKey: cBCentralManagerOptionRestoreIdentifierKeyToUse!
+            ]
+        )
     }
 
     enum startScanningResult: Equatable {
@@ -959,7 +1014,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     }
 
     func expectedHeartbeatInterval() -> TimeInterval? {
-        return nil
+        nil
     }
 }
 
@@ -1002,12 +1057,15 @@ extension BLEManager {
             return "up to \(Int(heartBeatInterval)) sec"
         }
 
-        let effectiveDelay = CycleHelper.computeDelay(sensorOffset: expectedOffset, heartbeatLast: heartbeatLast, heartbeatInterval: heartBeatInterval)
+        let effectiveDelay = CycleHelper.computeDelay(
+            sensorOffset: expectedOffset,
+            heartbeatLast: heartbeatLast,
+            heartbeatInterval: heartBeatInterval
+        )
 
         return "\(Int(effectiveDelay)) sec"
     }
 }
-
 
 class RileyLinkHeartbeatBluetoothDevice: BluetoothDevice {
     private let CBUUID_Service_RileyLink: String = "0235733B-99C5-4197-B856-69219C2A3845"
@@ -1042,10 +1100,9 @@ class RileyLinkHeartbeatBluetoothDevice: BluetoothDevice {
     }
 
     override func expectedHeartbeatInterval() -> TimeInterval? {
-        return 60
+        60
     }
 }
-
 
 enum CycleHelper {
     /// Returns a positive modulus value (always between 0 and modulus).
@@ -1072,10 +1129,12 @@ enum CycleHelper {
     /// Computes the delay experienced when using a heartbeat device to read a sensor value.
     /// The calculation is based on a sensor reference (Date) and sensor interval.
     /// All calculations assume midnight as the base reference.
-    static func computeDelay(sensorReference: Date,
-                             sensorInterval: TimeInterval,
-                             heartbeatLast: Date,
-                             heartbeatInterval: TimeInterval) -> TimeInterval
+    static func computeDelay(
+        sensorReference: Date,
+        sensorInterval: TimeInterval,
+        heartbeatLast: Date,
+        heartbeatInterval: TimeInterval
+    ) -> TimeInterval
     {
         let sensorOffset = cycleOffset(for: sensorReference, interval: sensorInterval)
         let hbOffset = cycleOffset(for: heartbeatLast, interval: heartbeatInterval)
@@ -1083,15 +1142,16 @@ enum CycleHelper {
     }
 
     /// Overloaded version of computeDelay where the sensor cycle offset is already known.
-    static func computeDelay(sensorOffset: TimeInterval,
-                             heartbeatLast: Date,
-                             heartbeatInterval: TimeInterval) -> TimeInterval
+    static func computeDelay(
+        sensorOffset: TimeInterval,
+        heartbeatLast: Date,
+        heartbeatInterval: TimeInterval
+    ) -> TimeInterval
     {
         let hbOffset = cycleOffset(for: heartbeatLast, interval: heartbeatInterval)
         return positiveModulo(hbOffset - sensorOffset, modulus: heartbeatInterval)
     }
 }
-
 
 struct BLEDeviceSelectionView: View {
     @ObservedObject var bleManager: BLEManager
@@ -1118,7 +1178,7 @@ struct BLEDeviceSelectionView: View {
                                 .font(.footnote)
 
                             if let offset = BLEManager.shared.expectedSensorFetchOffsetString(for: device) {
-                                //Text("Expected bg delay: \(offset)")
+                                // Text("Expected bg delay: \(offset)")
                                 Text("Expected offset: \(offset)")
                                     .foregroundColor(.secondary)
                                     .font(.footnote)
@@ -1149,7 +1209,6 @@ struct BLEDeviceSelectionView: View {
     }
 }
 
-
 struct BLEDevice: Identifiable, Codable, Equatable {
     let id: UUID
 
@@ -1160,13 +1219,15 @@ struct BLEDevice: Identifiable, Codable, Equatable {
     var lastSeen: Date
     var lastConnected: Date?
 
-    init(id: UUID,
-         name: String? = nil,
-         rssi: Int,
-         isConnected: Bool = false,
-         advertisedServices: [String]? = nil,
-         lastSeen: Date = Date(),
-         lastConnected: Date? = nil)
+    init(
+        id: UUID,
+        name: String? = nil,
+        rssi: Int,
+        isConnected: Bool = false,
+        advertisedServices: [String]? = nil,
+        lastSeen: Date = Date(),
+        lastConnected: Date? = nil
+    )
     {
         self.id = id
         self.name = name
@@ -1178,11 +1239,9 @@ struct BLEDevice: Identifiable, Codable, Equatable {
     }
 }
 
-
-fileprivate var refreshFunc: (() -> Void)? = nil
+private var refreshFunc: (() -> Void)?
 
 func podKeepAliveSetup(refresh: @escaping () -> Void) {
-
     Storage.shared.inBackground.value = false // reset to be sure
     refreshFunc = refresh /// stash the refresh function
 
@@ -1211,14 +1270,14 @@ func podKeepAliveSetup(refresh: @escaping () -> Void) {
     }
 }
 
-fileprivate func timeStr(_ when: Date) -> String {
+private func timeStr(_ when: Date) -> String {
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "HH:mm:ss"
     let str = dateFormatter.string(from: when)
     return str
 }
 
-fileprivate var refreshTimer: Timer?
+private var refreshTimer: Timer?
 
 /// Manages private refreshTimer to implement pod keep alives
 /// when in foreground, playing a silent tune, or under Xcode.

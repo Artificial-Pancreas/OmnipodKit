@@ -29,16 +29,17 @@ struct FaultConfigCommand: NonceResyncableMessageBlock {
             throw MessageBlockError.notEnoughData
         }
 
-        self.nonce = encodedData[2...].toBigEndian(UInt32.self)
+        nonce = encodedData[2...].toBigEndian(UInt32.self)
 
-        self.tab5Sub16 = encodedData[6]
-        self.tab5Sub17 = encodedData[7]
+        tab5Sub16 = encodedData[6]
+        tab5Sub17 = encodedData[7]
     }
 
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            length])
+            length
+        ])
 
         data.appendBigEndian(nonce)
         data.append(tab5Sub16)
@@ -49,6 +50,6 @@ struct FaultConfigCommand: NonceResyncableMessageBlock {
 
 extension FaultConfigCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "FaultConfigCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), tab5Sub16:\(tab5Sub16), tab5Sub17:\(tab5Sub17))"
+        "FaultConfigCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), tab5Sub16:\(tab5Sub16), tab5Sub17:\(tab5Sub17))"
     }
 }

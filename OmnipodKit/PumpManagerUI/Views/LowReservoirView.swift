@@ -1,16 +1,7 @@
-//
-//  LowReservoirView.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/PumpManageUI/Views/LowReservoirReminder{Edit,Setup}View.swift
-//  Created by Joe Moran on 1/28/26.
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
-import LoopKitUI
-import LoopKit
 import HealthKit
+import LoopKit
+import LoopKitUI
+import SwiftUI
 
 struct LowReservoirView: View {
     private var reservoirLevel: Double // current reservoir level
@@ -44,18 +35,18 @@ struct LowReservoirView: View {
         cancelButtonTapped: (() -> Void)? = nil,
         onSave: ((_ selectedValue: Int, _ completion: @escaping (_ error: Error?) -> Void) -> Void)? = nil,
         onFinish: (() -> Void)? = nil,
-    ){
+    ) {
         self.setDefault = setDefault
         self.initialValue = initialValue
         self.reservoirLevel = reservoirLevel ?? Pod.reservoirLevelAboveThresholdMagicNumber
 
         if setDefault || reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber {
-            self.maxValue = Int(Pod.maximumReservoirReading)
-            self.reservoirLevelString = "50+"
+            maxValue = Int(Pod.maximumReservoirReading)
+            reservoirLevelString = "50+"
         } else {
             // Needs to be the next whole value below the current reservoir level
-            self.maxValue = Int(self.reservoirLevel - Pod.pulseSize / 10)
-            self.reservoirLevelString = String(format: "%.02f", self.reservoirLevel)
+            maxValue = Int(self.reservoirLevel - Pod.pulseSize / 10)
+            reservoirLevelString = String(format: "%.02f", self.reservoirLevel)
         }
 
         self.valueUpdated = valueUpdated
@@ -63,20 +54,30 @@ struct LowReservoirView: View {
         self.onSave = onSave
         self.onFinish = onFinish
 
-        self.allowedLowReservoirValues = Array(0...self.maxValue)
+        allowedLowReservoirValues = Array(0 ... maxValue)
 
         // Initialize the State-backed property
-        let defaultValue = min(max(initialValue, 0), self.maxValue)
-        self._selectedValue = State(initialValue: defaultValue)
+        let defaultValue = min(max(initialValue, 0), maxValue)
+        _selectedValue = State(initialValue: defaultValue)
 
         if setDefault {
-            self.title = "Low Reservoir Default"
-            self.prompt = String(format: LocalizedString("You can be optionally notified when the amount of insulin remaining in the reservoir reaches a selected level (1 - %1$@ units).\n\nSet the default low reservoir alert level to configure when pairing a Pod.",
-                comment: "Description text on LowReservoirView Default value (1: max value)"),
-                String(describing: self.maxValue))
+            title = "Low Reservoir Default"
+            prompt = String(
+                format: LocalizedString(
+                    "You can be optionally notified when the amount of insulin remaining in the reservoir reaches a selected level (1 - %1$@ units).\n\nSet the default low reservoir alert level to configure when pairing a Pod.",
+                    comment: "Description text on LowReservoirView Default value (1: max value)"
+                ),
+                String(describing: maxValue)
+            )
         } else {
-            self.title = "Low Reservoir"
-            self.prompt = String(format: LocalizedString("You can be optionally notified when the amount of insulin in the current Pod drops to a selected level below the current reservoir value of %1$@ units.\n\nSet the low reservoir alert level for the current Pod.", comment: "Description text on LowReservoirView for the current Pod (1: current reservoir value"), reservoirLevelString)
+            title = "Low Reservoir"
+            prompt = String(
+                format: LocalizedString(
+                    "You can be optionally notified when the amount of insulin in the current Pod drops to a selected level below the current reservoir value of %1$@ units.\n\nSet the low reservoir alert level for the current Pod.",
+                    comment: "Description text on LowReservoirView for the current Pod (1: current reservoir value"
+                ),
+                reservoirLevelString
+            )
         }
     }
 
@@ -140,9 +141,9 @@ struct LowReservoirView: View {
                 Text(formatLowReservoirAlertValue(value))
             }
         }.pickerStyle(WheelPickerStyle())
-        .onChange(of: selectedValue) { value in
-            valueUpdated?(value)
-        }
+            .onChange(of: selectedValue) { value in
+                valueUpdated?(value)
+            }
     }
 
     var saveButtonText: String {
@@ -155,7 +156,7 @@ struct LowReservoirView: View {
 
     private func saveTapped() {
         saving = true
-        self.onSave?(selectedValue) { (error) in
+        onSave?(selectedValue) { error in
             saving = false
             if let error = error {
                 self.error = error
@@ -167,18 +168,20 @@ struct LowReservoirView: View {
     }
 
     private var valueChanged: Bool {
-        return selectedValue != initialValue
+        selectedValue != initialValue
     }
 
     private var contentWithCancel: some View {
         if saving {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
             )
         } else if valueChanged && onSave != nil {
-            return AnyView(content
-                .navigationBarBackButtonHidden(true)
-                .navigationBarItems(leading: cancelButton)
+            return AnyView(
+                content
+                    .navigationBarBackButtonHidden(true)
+                    .navigationBarItems(leading: cancelButton)
             )
         } else {
             return AnyView(content)
@@ -186,14 +189,17 @@ struct LowReservoirView: View {
     }
 
     private var cancelButton: some View {
-        Button(action: { self.onFinish?() } ) {
+        Button(action: { self.onFinish?() }) {
             Text(LocalizedString("Cancel", comment: "Button title for cancelling low reservoir edit"))
         }
     }
 
     private func alert(error: Error?) -> SwiftUI.Alert {
-        return SwiftUI.Alert(
-            title: Text(LocalizedString("Failed to Update Low Reservoir Value", comment: "Alert title for error when updating low reservoir value")),
+        SwiftUI.Alert(
+            title: Text(LocalizedString(
+                "Failed to Update Low Reservoir Value",
+                comment: "Alert title for error when updating low reservoir value"
+            )),
             message: Text(error?.localizedDescription ?? "No Error")
         )
     }
@@ -205,11 +211,11 @@ struct LowReservoirView_Previews: PreviewProvider {
             reservoirLevel: nil,
             setDefault: true,
             initialValue: Int(Pod.defaultLowReservoirReminder),
-            valueUpdated: { (_) in },
-            continueButtonTapped: { },
-            cancelButtonTapped: { },
-            onSave: { (_, _) in },
-            onFinish: { },
+            valueUpdated: { _ in },
+            continueButtonTapped: {},
+            cancelButtonTapped: {},
+            onSave: { _, _ in },
+            onFinish: {},
         )
     }
 }

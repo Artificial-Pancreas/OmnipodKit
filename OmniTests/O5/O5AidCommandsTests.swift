@@ -1,15 +1,7 @@
-//
-//  O5AidCommandsTests.swift
-//  OmniTests
-//
-//  O5 AID activation commands (ASCII payloads). Expected bytes from O5CommLogFixtures (Loop report 2026-05-31).
-//
-
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class O5AidCommandsTests: XCTestCase {
-
     func testUtcCommand_commLog() {
         let (payload, prefix) = O5AidCommands.UtcCommand.payload(timestamp: O5CommLogFixtures.utcTimestamp)
         XCTAssertEqual(payload, O5CommLogFixtures.utcSend)

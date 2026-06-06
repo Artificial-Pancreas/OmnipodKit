@@ -1,12 +1,3 @@
-//
-//  PumpManagerAlert.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/PumpManagerAlert.swift
-//  Created by Pete Schwamb on 7/9/20.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
 import HealthKit
 import LoopKit
@@ -24,7 +15,7 @@ public enum PumpManagerAlert: Hashable {
     case timeOffsetChangeDetected
 
     var isRepeating: Bool {
-        return repeatInterval != nil
+        repeatInterval != nil
     }
 
     var repeatInterval: TimeInterval? {
@@ -61,51 +52,86 @@ public enum PumpManagerAlert: Hashable {
 
     var contentBody: String {
         switch self {
-        case .userPodExpiration(_, let offset):
+        case let .userPodExpiration(_, offset):
             let formatter = DateComponentsFormatter()
             formatter.allowedUnits = [.hour]
             formatter.unitsStyle = .full
             let timeString = formatter.string(from: TimeInterval(offset))!
-            return String(format: LocalizedString("Pod expires in %1$@.", comment: "Format string for alert content body for userPodExpiration pod alert. (1: time until expiration)"), timeString)
+            return String(
+                format: LocalizedString(
+                    "Pod expires in %1$@.",
+                    comment: "Format string for alert content body for userPodExpiration pod alert. (1: time until expiration)"
+                ),
+                timeString
+            )
         case .podExpiring:
-            return LocalizedString("Change Pod now. Pod has been active for 72 hours.", comment: "Alert content body for podExpiring pod alert")
+            return LocalizedString(
+                "Change Pod now. Pod has been active for 72 hours.",
+                comment: "Alert content body for podExpiring pod alert"
+            )
         case .podExpireImminent:
-            return LocalizedString("Change Pod now. Insulin delivery will stop in 1 hour.", comment: "Alert content body for podExpireImminent pod alert")
-        case .lowReservoir(_, let lowReservoirReminderValue):
+            return LocalizedString(
+                "Change Pod now. Insulin delivery will stop in 1 hour.",
+                comment: "Alert content body for podExpireImminent pod alert"
+            )
+        case let .lowReservoir(_, lowReservoirReminderValue):
             let quantityFormatter = QuantityFormatter(for: .internationalUnit())
-            let valueString = quantityFormatter.string(from: HKQuantity(unit: .internationalUnit(), doubleValue: lowReservoirReminderValue)) ?? String(describing: lowReservoirReminderValue)
-            return String(format: LocalizedString("%1$@ insulin or less remaining in Pod. Change Pod soon.", comment: "Format string for alert content body for lowReservoir pod alert. (1: reminder value)"), valueString)
+            let valueString = quantityFormatter
+                .string(from: HKQuantity(unit: .internationalUnit(), doubleValue: lowReservoirReminderValue)) ??
+                String(describing: lowReservoirReminderValue)
+            return String(
+                format: LocalizedString(
+                    "%1$@ insulin or less remaining in Pod. Change Pod soon.",
+                    comment: "Format string for alert content body for lowReservoir pod alert. (1: reminder value)"
+                ),
+                valueString
+            )
         case .suspendInProgress:
             return LocalizedString("Suspend In Progress Reminder", comment: "Alert content body for suspendInProgress pod alert")
         case .suspendEnded:
-            return LocalizedString("The insulin suspension period has ended.\n\nYou can resume delivery from the banner on the home screen or from your pump settings screen. You will be reminded again in 15 minutes.", comment: "Alert content body for suspendEnded pod alert")
+            return LocalizedString(
+                "The insulin suspension period has ended.\n\nYou can resume delivery from the banner on the home screen or from your pump settings screen. You will be reminded again in 15 minutes.",
+                comment: "Alert content body for suspendEnded pod alert"
+            )
         case .finishSetupReminder:
-            return LocalizedString("Please finish pairing your pod.", comment: "Alert content body for finishSetupReminder pod alert")
-        case .unexpectedAlert(let triggeringSlot):
+            return LocalizedString(
+                "Please finish pairing your pod.",
+                comment: "Alert content body for finishSetupReminder pod alert"
+            )
+        case let .unexpectedAlert(triggeringSlot):
             let slotNumberString = triggeringSlot != nil ? String(describing: triggeringSlot!.rawValue) : "?"
-            return String(format: LocalizedString("Unexpected Pod Alert #%1@!", comment: "Alert content body for unexpected pod alert (1: slotNumberString)"), slotNumberString)
+            return String(
+                format: LocalizedString(
+                    "Unexpected Pod Alert #%1@!",
+                    comment: "Alert content body for unexpected pod alert (1: slotNumberString)"
+                ),
+                slotNumberString
+            )
         case .timeOffsetChangeDetected:
-            return LocalizedString("The time on your pump is different from the current time. You can review the pump time and and sync to current time in settings.", comment: "Alert content body for timeOffsetChangeDetected pod alert")
+            return LocalizedString(
+                "The time on your pump is different from the current time. You can review the pump time and and sync to current time in settings.",
+                comment: "Alert content body for timeOffsetChangeDetected pod alert"
+            )
         }
     }
 
     var triggeringSlot: AlertSlot? {
         switch self {
-        case .userPodExpiration(let slot, _):
+        case let .userPodExpiration(slot, _):
             return slot
-        case .podExpiring(let slot):
+        case let .podExpiring(slot):
             return slot
-        case .podExpireImminent(let slot):
+        case let .podExpireImminent(slot):
             return slot
-        case .lowReservoir(let slot, _):
+        case let .lowReservoir(slot, _):
             return slot
-        case .suspendInProgress(let slot):
+        case let .suspendInProgress(slot):
             return slot
-        case .suspendEnded(let slot):
+        case let .suspendEnded(slot):
             return slot
-        case .finishSetupReminder(let slot):
+        case let .finishSetupReminder(slot):
             return slot
-        case .unexpectedAlert(let slot):
+        case let .unexpectedAlert(slot):
             return slot
         case .timeOffsetChangeDetected:
             return nil
@@ -115,29 +141,31 @@ public enum PumpManagerAlert: Hashable {
     // Override background (UserNotification) content
 
     var backgroundContentTitle: String {
-        return contentTitle
+        contentTitle
     }
 
     var backgroundContentBody: String {
         switch self {
         case .suspendEnded:
-            return LocalizedString("Suspension time is up. Open the app and resume.", comment: "Alert notification body for suspendEnded pod alert user notification")
+            return LocalizedString(
+                "Suspension time is up. Open the app and resume.",
+                comment: "Alert notification body for suspendEnded pod alert user notification"
+            )
         default:
             return contentBody
         }
     }
 
-
     var actionButtonLabel: String {
-        return LocalizedString("Ok", comment: "Action button default text for PodAlerts")
+        LocalizedString("Ok", comment: "Action button default text for PodAlerts")
     }
 
     var foregroundContent: Alert.Content {
-        return Alert.Content(title: contentTitle, body: contentBody, acknowledgeActionButtonLabel: actionButtonLabel)
+        Alert.Content(title: contentTitle, body: contentBody, acknowledgeActionButtonLabel: actionButtonLabel)
     }
 
     var backgroundContent: Alert.Content {
-        return Alert.Content(title: backgroundContentTitle, body: backgroundContentBody, acknowledgeActionButtonLabel: actionButtonLabel)
+        Alert.Content(title: backgroundContentTitle, body: backgroundContentBody, acknowledgeActionButtonLabel: actionButtonLabel)
     }
 
     var alertIdentifier: String {
@@ -164,12 +192,11 @@ public enum PumpManagerAlert: Hashable {
     }
 
     var repeatingAlertIdentifier: String {
-        return alertIdentifier + "-repeating"
+        alertIdentifier + "-repeating"
     }
 }
 
 extension PumpManagerAlert: RawRepresentable {
-
     public typealias RawValue = [String: Any]
 
     public init?(rawValue: RawValue) {
@@ -213,7 +240,7 @@ extension PumpManagerAlert: RawRepresentable {
         }
     }
 
-    public var rawValue: [String : Any] {
+    public var rawValue: [String: Any] {
         var rawValue: RawValue = [
             "identifier": alertIdentifier
         ]
@@ -221,9 +248,9 @@ extension PumpManagerAlert: RawRepresentable {
         rawValue["slot"] = triggeringSlot?.rawValue
 
         switch self {
-        case .lowReservoir(_, lowReservoirReminderValue: let value):
+        case let .lowReservoir(_, lowReservoirReminderValue: value):
             rawValue["value"] = value
-        case .userPodExpiration(_, scheduledExpirationReminderOffset: let offset):
+        case let .userPodExpiration(_, scheduledExpirationReminderOffset: offset):
             rawValue["offset"] = offset
         default:
             break

@@ -1,12 +1,3 @@
-//
-//  PodInsulinMeasurements.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommmon/PodInsulinMeasurements.swift
-//  Created by Pete Schwamb on 9/5/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
@@ -23,12 +14,12 @@ enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
     case oneNotUsed = 10
     case twoNotUsed = 11
     case threeNotUsed = 12
-    case faultEventOccurred = 13        // fault event occurred (a "screamer")
-    case activationTimeExceeded = 14    // took > 2 hrs from progress 2 to 3 OR > 1 hr from 3 to 8
-    case inactive = 15                  // pod deactivated or a fatal packet state error
+    case faultEventOccurred = 13 // fault event occurred (a "screamer")
+    case activationTimeExceeded = 14 // took > 2 hrs from progress 2 to 3 OR > 1 hr from 3 to 8
+    case inactive = 15 // pod deactivated or a fatal packet state error
 
     var readyForDelivery: Bool {
-        return self == .fiftyOrLessUnits || self == .aboveFiftyUnits
+        self == .fiftyOrLessUnits || self == .aboveFiftyUnits
     }
 
     var description: String {
@@ -62,7 +53,9 @@ enum PodProgressStatus: UInt8, CustomStringConvertible, Equatable {
         case .faultEventOccurred:
             return LocalizedString("Fault event occurred", comment: "Pod state when fault event has occurred")
         case .activationTimeExceeded:
-            return LocalizedString("Activation time exceeded", comment: "Pod state when activation not completed in the time allowed"
+            return LocalizedString(
+                "Activation time exceeded",
+                comment: "Pod state when activation not completed in the time allowed"
             )
         case .inactive:
             return LocalizedString("Deactivated", comment: "Pod state when deactivated")

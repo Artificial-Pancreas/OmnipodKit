@@ -34,7 +34,7 @@ struct GetStatusCommand: MessageBlock {
         var data = Data([
             blockType.rawValue,
             length
-            ])
+        ])
         data.append(podInfoType.rawValue)
         return data
     }
@@ -42,6 +42,6 @@ struct GetStatusCommand: MessageBlock {
 
 extension GetStatusCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "GetStatusCommand(\(podInfoType))"
+        "GetStatusCommand(\(podInfoType))"
     }
 }

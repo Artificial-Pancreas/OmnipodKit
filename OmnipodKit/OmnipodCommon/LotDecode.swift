@@ -1,8 +1,3 @@
-//  OmnipodKit
-//
-//  Created by Joe Moran on 2/24/26.
-//  Copyright © 2026 LoopKit Authors. All rights reserved.
-
 import Foundation
 
 // Constants
@@ -24,14 +19,14 @@ let ProductCode: [UInt32: String] = [
     0x37: "P5", // 'P're-production? U500
 
     0x03: "A0",
-    0x09: "R1",
+    0x09: "R1"
 ]
 
 let MfgLoc: [Int: String] = [
     0: "C", // China
     1: "U", // USA
     2: "K", // Kunshan (China)
-    6: "M", // Malaysia
+    6: "M" // Malaysia
 ]
 
 struct LotDecode {
@@ -52,7 +47,7 @@ struct LotDecode {
 /// Returns the decoded lot information for a modern Insulet 32-bit lot #.
 /// This function does not work for the older (Eros and before) lot #s.
 func lotDecode(lot: UInt32) -> LotDecode {
-    let prefix = (lot & 0x80000000) == 0 ? "P" : "E"
+    let prefix = (lot & 0x8000_0000) == 0 ? "P" : "E"
 
     let productNum = Int((lot >> 25) & mask(6))
     let productCode = ProductCode[UInt32(productNum)] ?? "XX"
@@ -66,12 +61,13 @@ func lotDecode(lot: UInt32) -> LotDecode {
 
     let dateMMDD: String
     if dayOfYear > 0 {
-        let date = Calendar.current.date(from: DateComponents(year: Int(dateYY + 2000), month: 1, day: 1))!.addingTimeInterval(TimeInterval((dayOfYear - 1) * (60*60*24)))
+        let date = Calendar.current.date(from: DateComponents(year: Int(dateYY + 2000), month: 1, day: 1))!
+            .addingTimeInterval(TimeInterval((dayOfYear - 1) * (60 * 60 * 24)))
         let formatter = DateFormatter()
         formatter.dateFormat = "MMdd"
         dateMMDD = formatter.string(from: date)
     } else {
-        dateMMDD = "0000"    }
+        dateMMDD = "0000" }
 
     let line = Int((lot >> 4) & mask(3))
     let batch = String(format: "%X", lot & mask(4))
@@ -95,5 +91,5 @@ func lotDecode(lot: UInt32) -> LotDecode {
 }
 
 private func mask(_ n: Int) -> UInt32 {
-    return (1 << n) - 1
+    (1 << n) - 1
 }

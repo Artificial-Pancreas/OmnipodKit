@@ -1,14 +1,5 @@
-//
-//  EnDecrypt.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmniBLE/Bluetooth/EnDecrypt/EnDecrypt.swift
-//  Created by Randall Knutson on 11/4/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import Foundation
 import CryptoSwift
+import Foundation
 import os.log
 
 class EnDecrypt {
@@ -24,13 +15,18 @@ class EnDecrypt {
 
     func decrypt(_ msg: MessagePacket, _ nonceSeq: Int) throws -> MessagePacket {
         let payload = msg.payload
-        let header = msg.asData(forEncryption: false).subdata(in: 0..<16)
+        let header = msg.asData(forEncryption: false).subdata(in: 0 ..< 16)
 
         let n = nonce.toData(sqn: nonceSeq, podReceiving: false)
-        let ccm = CCM(iv: n.bytes, tagLength: MAC_SIZE, messageLength: payload.count - MAC_SIZE, additionalAuthenticatedData: header.bytes)
+        let ccm = CCM(
+            iv: n.bytes,
+            tagLength: MAC_SIZE,
+            messageLength: payload.count - MAC_SIZE,
+            additionalAuthenticatedData: header.bytes
+        )
         let aes = try AES(key: ck.bytes, blockMode: ccm, padding: .noPadding)
         let decryptedPayload = try aes.decrypt(payload.bytes)
-        
+
         var msgCopy = msg
         msgCopy.payload = Data(decryptedPayload)
         return msgCopy
@@ -38,7 +34,7 @@ class EnDecrypt {
 
     func encrypt(_ headerMessage: MessagePacket, _ nonceSeq: Int) throws -> MessagePacket {
         let payload = headerMessage.payload
-        let header = headerMessage.asData(forEncryption: true).subdata(in: 0..<16)
+        let header = headerMessage.asData(forEncryption: true).subdata(in: 0 ..< 16)
 
         let n = nonce.toData(sqn: nonceSeq, podReceiving: true)
         let ccm = CCM(iv: n.bytes, tagLength: MAC_SIZE, messageLength: payload.count, additionalAuthenticatedData: header.bytes)

@@ -1,25 +1,14 @@
-//
-//  OmniReservoirView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/OmniBLEReservoirView.swift
-//  Created by Pete Schwamb on 10/22/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
-import UIKit
 import LoopKitUI
-
+import UIKit
 
 final class OmniReservoirView: LevelHUDView, NibLoadable {
-
     override var orderPriority: HUDViewOrderPriority {
-        return 11
+        11
     }
 
-    @IBOutlet private weak var volumeLabel: UILabel!
-    
-    @IBOutlet private weak var alertLabel: UILabel! {
+    @IBOutlet private var volumeLabel: UILabel!
+
+    @IBOutlet private var alertLabel: UILabel! {
         didSet {
             alertLabel.alpha = 0
             alertLabel.textColor = UIColor.white
@@ -29,7 +18,7 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
     }
 
     class func instantiate() -> OmniReservoirView {
-        return nib().instantiate(withOwner: nil, options: nil)[0] as! OmniReservoirView
+        nib().instantiate(withOwner: nil, options: nil)[0] as! OmniReservoirView
     }
 
     override func awakeFromNib() {
@@ -44,7 +33,7 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
 
     override func tintColorDidChange() {
         super.tintColorDidChange()
-        
+
         alertLabel?.backgroundColor = tintColor
         volumeLabel.textColor = tintColor
         levelMaskView.tintColor = tintColor
@@ -79,7 +68,6 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
 
     private func updateViews() {
         if let reservoirLevel = reservoirLevel, let date = lastUpdateDate {
-
             let time = timeFormatter.string(from: date)
             caption?.text = time
 
@@ -88,17 +76,40 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
                 level = nil
                 volumeLabel.isHidden = true
                 if let units = numberFormatter.string(from: Pod.maximumReservoirReading) {
-                    volumeLabel.text = String(format: LocalizedString("%@+ U", comment: "Format string for reservoir volume when above maximum reading. (1: The maximum reading)"), units)
-                    accessibilityValue = String(format: LocalizedString("Greater than %1$@ units remaining at %2$@", comment: "Accessibility format string for (1: localized volume)(2: time)"), units, time)
+                    volumeLabel.text = String(
+                        format: LocalizedString(
+                            "%@+ U",
+                            comment: "Format string for reservoir volume when above maximum reading. (1: The maximum reading)"
+                        ),
+                        units
+                    )
+                    accessibilityValue = String(
+                        format: LocalizedString(
+                            "Greater than %1$@ units remaining at %2$@",
+                            comment: "Accessibility format string for (1: localized volume)(2: time)"
+                        ),
+                        units,
+                        time
+                    )
                 }
-            case .valid(let value):
+            case let .valid(value):
                 level = reservoirLevel.percentage
                 volumeLabel.isHidden = false
 
                 if let units = numberFormatter.string(from: value) {
-                    volumeLabel.text = String(format: LocalizedString("%@U", comment: "Format string for reservoir volume. (1: The localized volume)"), units)
+                    volumeLabel.text = String(
+                        format: LocalizedString("%@U", comment: "Format string for reservoir volume. (1: The localized volume)"),
+                        units
+                    )
 
-                    accessibilityValue = String(format: LocalizedString("%1$@ units remaining at %2$@", comment: "Accessibility format string for (1: localized volume)(2: time)"), units, time)
+                    accessibilityValue = String(
+                        format: LocalizedString(
+                            "%1$@ units remaining at %2$@",
+                            comment: "Accessibility format string for (1: localized volume)(2: time)"
+                        ),
+                        units,
+                        time
+                    )
                 }
             }
         } else {
@@ -110,7 +121,8 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
         switch reservoirLevelHighlightState {
         case .normal:
             alertLabelAlpha = 0
-        case .warning, .critical:
+        case .critical,
+             .warning:
             alertLabel?.text = "!"
         }
 
@@ -118,10 +130,10 @@ final class OmniReservoirView: LevelHUDView, NibLoadable {
             self.alertLabel?.alpha = alertLabelAlpha
         })
     }
-    
+
     func update(level: ReservoirLevel?, at date: Date, reservoirLevelHighlightState: ReservoirLevelHighlightState) {
-        self.reservoirLevel = level
-        self.lastUpdateDate = date
+        reservoirLevel = level
+        lastUpdateDate = date
         self.reservoirLevelHighlightState = reservoirLevelHighlightState
         updateViews()
     }

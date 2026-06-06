@@ -1,12 +1,3 @@
-//
-//  ConfigureAlertsCommand.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/MessageBlocks/ConfigureAlertsCommand.swift
-//  Created by Pete Schwamb on 2/22/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
@@ -18,8 +9,8 @@ struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
     var data: Data {
         var data = Data([
             blockType.rawValue,
-            UInt8(4 + configurations.count * AlertConfiguration.length),
-            ])
+            UInt8(4 + configurations.count * AlertConfiguration.length)
+        ])
         data.appendBigEndian(nonce)
         // Sorting the alerts not required, but it can be helpful for log analysis
         let sorted = configurations.sorted { $0.slot.rawValue < $1.slot.rawValue }
@@ -33,7 +24,7 @@ struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
         if encodedData.count < 10 {
             throw MessageBlockError.notEnoughData
         }
-        self.nonce = encodedData[2...].toBigEndian(UInt32.self)
+        nonce = encodedData[2...].toBigEndian(UInt32.self)
 
         let length = Int(encodedData[1])
 
@@ -41,11 +32,11 @@ struct ConfigureAlertsCommand: NonceResyncableMessageBlock {
 
         var configs = [AlertConfiguration]()
 
-        for i in 0..<numConfigs {
+        for i in 0 ..< numConfigs {
             let offset = 2 + 4 + i * AlertConfiguration.length
-            configs.append(try AlertConfiguration(encodedData: encodedData.subdata(in: offset..<(offset+6))))
+            configs.append(try AlertConfiguration(encodedData: encodedData.subdata(in: offset ..< (offset + 6))))
         }
-        self.configurations = configs
+        configurations = configs
     }
 
     init(nonce: UInt32, configurations: [AlertConfiguration]) {
@@ -66,21 +57,21 @@ extension AlertConfiguration {
         guard let alertType = AlertSlot(rawValue: alertTypeBits) else {
             throw MessageError.unknownValue(value: alertTypeBits, typeDescription: "AlertType")
         }
-        self.slot = alertType
+        slot = alertType
 
-        self.active = encodedData[0] & 0b1000 != 0
+        active = encodedData[0] & 0b1000 != 0
 
-        self.autoOffModifier = encodedData[0] & 0b10 != 0
+        autoOffModifier = encodedData[0] & 0b10 != 0
 
-        self.duration = TimeInterval(minutes: Double((Int(encodedData[0] & 0b1) << 8) + Int(encodedData[1])))
+        duration = TimeInterval(minutes: Double((Int(encodedData[0] & 0b1) << 8) + Int(encodedData[1])))
 
-        let yyyy = (Int(encodedData[2]) << 8) + (Int(encodedData[3])) & 0x3fff
+        let yyyy = (Int(encodedData[2]) << 8) + Int(encodedData[3]) & 0x3FFF
 
         if encodedData[0] & 0b100 != 0 {
             let volume = Double(yyyy * 2) / Pod.pulsesPerUnit
-            self.trigger = .unitsRemaining(volume)
+            trigger = .unitsRemaining(volume)
         } else {
-            self.trigger = .timeUntilAlert(TimeInterval(minutes: Double(yyyy)))
+            trigger = .timeUntilAlert(TimeInterval(minutes: Double(yyyy)))
         }
 
         let beepRepeatBits = encodedData[4]
@@ -95,7 +86,7 @@ extension AlertConfiguration {
         }
         self.beepType = beepType
 
-        self.silent = (beepType == .noBeepNonCancel)
+        silent = (beepType == .noBeepNonCancel)
     }
 
     var data: Data {
@@ -110,21 +101,21 @@ extension AlertConfiguration {
         }
 
         // The 9-bit duration is limited to 2^9-1 minutes max value
-        let durationMinutes = min(UInt(duration.minutes), 0x1ff)
+        let durationMinutes = min(UInt(duration.minutes), 0x1FF)
 
         // High bit of duration
         firstByte += UInt8((durationMinutes >> 8) & 0x1)
 
         var data = Data([
             firstByte,
-            UInt8(durationMinutes & 0xff)
-            ])
+            UInt8(durationMinutes & 0xFF)
+        ])
 
         switch trigger {
-        case .unitsRemaining(let volume):
+        case let .unitsRemaining(volume):
             let ticks = UInt16(volume / Pod.pulseSize / 2)
             data.appendBigEndian(ticks)
-        case .timeUntilAlert(let secondsUntilAlert):
+        case let .timeUntilAlert(secondsUntilAlert):
             // round the time to alert to the nearest minute
             let minutes = UInt16((secondsUntilAlert + 30).minutes)
             data.appendBigEndian(minutes)
@@ -139,6 +130,6 @@ extension AlertConfiguration {
 
 extension ConfigureAlertsCommand: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "ConfigureAlertsCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), configurations:\(configurations))"
+        "ConfigureAlertsCommand(nonce:\(Data(bigEndian: nonce).hexadecimalString), configurations:\(configurations))"
     }
 }

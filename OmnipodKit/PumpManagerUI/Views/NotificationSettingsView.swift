@@ -1,20 +1,9 @@
-//
-//  NotificationSettingsView.swift
-//  OmnipodKit
-//
-//  From OmniBLE/PumpManageUI/Views/NotificationSettingsView.swift
-//  Created by Pete Schwamb on 2/3/21.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
-import SwiftUI
+import HealthKit
 import LoopKit
 import LoopKitUI
-import HealthKit
-
+import SwiftUI
 
 struct NotificationSettingsView: View {
-
     var dateFormatter: DateFormatter
 
     @Binding var expirationReminderDefault: Int
@@ -43,18 +32,22 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         RoundedCardScrollView {
-
             /// Only display options to set the expiration reminder and low reservoir alerts if we have an active pod
             if hasActivePod {
-
                 RoundedCard<EmptyView>(
                     title: LocalizedString("Current Pod Alerts", comment: "Title for Current Pod Alerts section"),
-                    footer: LocalizedString("Current Reminders configured for the active Pod.", comment: "Footer text for Current Pod Alerts section")
+                    footer: LocalizedString(
+                        "Current Reminders configured for the active Pod.",
+                        comment: "Footer text for Current Pod Alerts section"
+                    )
                 )
 
                 if let allowedDates = allowedScheduledReminderDates {
                     RoundedCard(
-                        footer: LocalizedString("Expiration reminder time for the current Pod.", comment: "Footer text for scheduled reminder area")
+                        footer: LocalizedString(
+                            "Expiration reminder time for the current Pod.",
+                            comment: "Footer text for scheduled reminder area"
+                        )
                     ) {
                         scheduledReminderRow(
                             scheduledDate: scheduledReminderDate,
@@ -64,11 +57,13 @@ struct NotificationSettingsView: View {
                 }
 
                 RoundedCard(
-                    footer: LocalizedString("Low reservoir alert value for the current Pod.", comment: "Footer text for Low Reservoir value row"
+                    footer: LocalizedString(
+                        "Low reservoir alert value for the current Pod.",
+                        comment: "Footer text for Low Reservoir value row"
                     )
                 ) {
                     /// If reservoirLevel 1.05 to 2.0 -> maxValue 1.0
-                    let maxValue = floor(reservoirLevel - (Pod.pulseSize/10))
+                    let maxValue = floor(reservoirLevel - (Pod.pulseSize / 10))
                     lowReservoirRow(
                         currentValue: lowReservoirReminderValue,
                         maxValue: maxValue
@@ -80,12 +75,17 @@ struct NotificationSettingsView: View {
 
             RoundedCard<EmptyView>(
                 title: LocalizedString("Default Alerts", comment: "Title for Default Alerts section"),
-                footer: LocalizedString("These default alerts will be configured when pairing a new Pod.", comment: "Footer text for the Notifications Settings Default Pod Alerts section"
+                footer: LocalizedString(
+                    "These default alerts will be configured when pairing a new Pod.",
+                    comment: "Footer text for the Notifications Settings Default Pod Alerts section"
                 )
             )
 
             RoundedCard(
-                footer: LocalizedString("The default number of hours advance notice to configure when pairing a new Pod.", comment: "Footer text for the Expiration Reminder Default row")
+                footer: LocalizedString(
+                    "The default number of hours advance notice to configure when pairing a new Pod.",
+                    comment: "Footer text for the Expiration Reminder Default row"
+                )
             ) {
                 ExpirationReminderPickerView(
                     expirationReminderDefault: $expirationReminderDefault
@@ -93,7 +93,10 @@ struct NotificationSettingsView: View {
             }
 
             RoundedCard(
-                footer: LocalizedString("The default number of units to configure for the low reservoir alert level when pairing a new Pod.", comment: "Footer text for Low Reservoir Default row")
+                footer: LocalizedString(
+                    "The default number of units to configure for the low reservoir alert level when pairing a new Pod.",
+                    comment: "Footer text for Low Reservoir Default row"
+                )
             ) {
                 lowReservoirDefaultRow
             }
@@ -102,8 +105,10 @@ struct NotificationSettingsView: View {
 
             RoundedCard<EmptyView>(
                 title: LocalizedString("Critical Alerts", comment: "Title for critical alerts description"),
-                footer: LocalizedString("These alerts will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod alerts except when the Pod is Silenced.",
-                comment: "Description text for Critical Alerts section")
+                footer: LocalizedString(
+                    "These alerts will not sound on your device when it is in Silent or Do Not Disturb mode. There are other critical Pod alerts that will sound on your device even when set to Silent or Do Not Disturb mode.\n\nThe Pod will also use audible beeps for all Pod alerts except when the Pod is Silenced.",
+                    comment: "Description text for Critical Alerts section"
+                )
             )
         }
         .navigationTitle(
@@ -168,22 +173,23 @@ struct NotificationSettingsView: View {
                 onSave: onSaveLowReservoirDefault,
                 onFinish: { lowReservoirDefaultIsShown = false }
             ),
-            isActive: $lowReservoirDefaultIsShown)
-        {
-            RoundedCardValueRow(
-                label: LocalizedString("Low Reservoir Default", comment: "Label for Low Reservoir Default value row"),
-                value: formatLowReservoirAlertValue(lowReservoirReminderDefaultValue),
-                highlightValue: false,
-                disclosure: true
-            )
-        }
+            isActive: $lowReservoirDefaultIsShown
+        )
+            {
+                RoundedCardValueRow(
+                    label: LocalizedString("Low Reservoir Default", comment: "Label for Low Reservoir Default value row"),
+                    value: formatLowReservoirAlertValue(lowReservoirReminderDefaultValue),
+                    highlightValue: false,
+                    disclosure: true
+                )
+            }
     }
 
     @State private var lowReservoirRowIsShown: Bool = false
 
     private func lowReservoirRow(
-        currentValue: Int,
-        maxValue: Double
+        currentValue _: Int,
+        maxValue _: Double
     ) -> some View {
         NavigationLink(
             destination: LowReservoirView(
@@ -215,7 +221,7 @@ func formatLowReservoirAlertValue(_ value: Int) -> String {
 
 struct NotificationSettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        return Group {
+        Group {
             let now = Date()
             NavigationView {
                 NotificationSettingsView(
@@ -224,7 +230,7 @@ struct NotificationSettingsView_Previews: PreviewProvider {
                     scheduledReminderDate: now + TimeInterval(hours: 1),
                     allowedScheduledReminderDates: [
                         now, now - TimeInterval(hours: 2),
-                        now - TimeInterval(hours: 3),
+                        now - TimeInterval(hours: 3)
                     ],
                     lowReservoirReminderDefaultValue: Int(Pod.defaultLowReservoirReminder),
                     lowReservoirReminderValue: 5,
@@ -244,7 +250,7 @@ struct NotificationSettingsView_Previews: PreviewProvider {
                     scheduledReminderDate: now + TimeInterval(hours: 1),
                     allowedScheduledReminderDates: [
                         now, now - TimeInterval(hours: 2),
-                        now - TimeInterval(hours: 3),
+                        now - TimeInterval(hours: 3)
                     ],
                     lowReservoirReminderDefaultValue: Int(Pod.defaultLowReservoirReminder),
                     lowReservoirReminderValue: Int(Pod.defaultLowReservoirReminder),

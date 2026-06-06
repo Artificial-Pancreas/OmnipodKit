@@ -1,238 +1,228 @@
-//
-//  FaultEventCode.swift
-//  OmnipodKit
-//
-//  Based on OmniBLE/OmnipodCommon/FaultEventCode.swift
-//  Created by Pete Schwamb on 9/28/18.
-//  Copyright © 2021 LoopKit Authors. All rights reserved.
-//
-
 import Foundation
-
 
 struct FaultEventCode: CustomStringConvertible, Equatable {
     let rawValue: UInt8
 
     enum FaultEventType: UInt8 {
-        case noFaults                             = 0x00
-        case failedFlashErase                     = 0x01
-        case failedFlashStore                     = 0x02
-        case tableCorruptionBasalSubcommand       = 0x03
-        case basalPulseTableCorruption            = 0x04
-        case basalStepCorrupt                     = 0x05
-        case autoWakeupTimeout                    = 0x06
-        case wireOverDriven                       = 0x07
-        case invalidBeepRepeatIndex               = 0x08
-        case invalidBeepRepeatPattern             = 0x09
-        case tempBasalStep                        = 0x0A
-        case tableCorruptionTempBasalSubcommand   = 0x0B
-        case bolusOverFlow                        = 0x0C
-        case resetDueToCOP                        = 0x0D
-        case resetDueToIllegalOpcode              = 0x0E
-        case resetDueToIllegalAddress             = 0x0F
-        case resetDueToSAWCOP                     = 0x10
-        case bolusStep                            = 0x11
-        case resetDueToLVD                        = 0x12
-        case messageLengthTooLong                 = 0x13
-        case occluded                             = 0x14
-        case bolusProgChksum                      = 0x15
-        case bolusLog                             = 0x16
-        case corruptionInAValidatedTable          = 0x17
-        case reservoirEmpty                       = 0x18
-        case loadErr                              = 0x19
-        case psaFailure                           = 0x1A
-        case tickCntNotCleared                    = 0x1B
-        case exceededMaximumPodLife80Hrs          = 0x1C
-        case comdBitNotSet                        = 0x1D
-        case invalidComdSet                       = 0x1E
-        case wrongSummaryForTable129              = 0x1F
-        case validateCountErrorWhenBolusing       = 0x20
-        case badTimerVariableState                = 0x21
-        case unexpectedRTCModuleValueDuringReset  = 0x22
-        case problemCalibrateTimer                = 0x23
-        case tickcntErrorRTC                      = 0x24
-        case tickFailure                          = 0x25
-        case rtcInterruptHandlerUnexpectedCall    = 0x26
-        case missing2hourAlertToFillTank          = 0x27
-        case invalidPassCode                      = 0x28
-        case autoOff0                             = 0x29
-        case autoOff1                             = 0x2A
-        case autoOff2                             = 0x2B
-        case autoOff3                             = 0x2C
-        case autoOff4                             = 0x2D
-        case autoOff5                             = 0x2E
-        case autoOff6                             = 0x2F
-        case autoOff7                             = 0x30
-        case insulinDeliveryCommandError          = 0x31
-        case copTestFailure                       = 0x32
-        case connectedPodCommandTimeout           = 0x33
-        case illegalReset                         = 0x34
-        case vetoNotSet                           = 0x35
-        case errorFlashInitialization             = 0x36
-        case invalidBeepPattern                   = 0x37
-        case wireStateMachine                     = 0x38
-        case vetoTestDefault                      = 0x39
-        case invalidAlertIndex                    = 0x3A
-        case failedTestSawReset                   = 0x3B
-        case testInProgress                       = 0x3C
-        case stepSensorShorted                    = 0x3D
-        case errorFlashWrite                      = 0x3E
+        case noFaults = 0x00
+        case failedFlashErase = 0x01
+        case failedFlashStore = 0x02
+        case tableCorruptionBasalSubcommand = 0x03
+        case basalPulseTableCorruption = 0x04
+        case basalStepCorrupt = 0x05
+        case autoWakeupTimeout = 0x06
+        case wireOverDriven = 0x07
+        case invalidBeepRepeatIndex = 0x08
+        case invalidBeepRepeatPattern = 0x09
+        case tempBasalStep = 0x0A
+        case tableCorruptionTempBasalSubcommand = 0x0B
+        case bolusOverFlow = 0x0C
+        case resetDueToCOP = 0x0D
+        case resetDueToIllegalOpcode = 0x0E
+        case resetDueToIllegalAddress = 0x0F
+        case resetDueToSAWCOP = 0x10
+        case bolusStep = 0x11
+        case resetDueToLVD = 0x12
+        case messageLengthTooLong = 0x13
+        case occluded = 0x14
+        case bolusProgChksum = 0x15
+        case bolusLog = 0x16
+        case corruptionInAValidatedTable = 0x17
+        case reservoirEmpty = 0x18
+        case loadErr = 0x19
+        case psaFailure = 0x1A
+        case tickCntNotCleared = 0x1B
+        case exceededMaximumPodLife80Hrs = 0x1C
+        case comdBitNotSet = 0x1D
+        case invalidComdSet = 0x1E
+        case wrongSummaryForTable129 = 0x1F
+        case validateCountErrorWhenBolusing = 0x20
+        case badTimerVariableState = 0x21
+        case unexpectedRTCModuleValueDuringReset = 0x22
+        case problemCalibrateTimer = 0x23
+        case tickcntErrorRTC = 0x24
+        case tickFailure = 0x25
+        case rtcInterruptHandlerUnexpectedCall = 0x26
+        case missing2hourAlertToFillTank = 0x27
+        case invalidPassCode = 0x28
+        case autoOff0 = 0x29
+        case autoOff1 = 0x2A
+        case autoOff2 = 0x2B
+        case autoOff3 = 0x2C
+        case autoOff4 = 0x2D
+        case autoOff5 = 0x2E
+        case autoOff6 = 0x2F
+        case autoOff7 = 0x30
+        case insulinDeliveryCommandError = 0x31
+        case copTestFailure = 0x32
+        case connectedPodCommandTimeout = 0x33
+        case illegalReset = 0x34
+        case vetoNotSet = 0x35
+        case errorFlashInitialization = 0x36
+        case invalidBeepPattern = 0x37
+        case wireStateMachine = 0x38
+        case vetoTestDefault = 0x39
+        case invalidAlertIndex = 0x3A
+        case failedTestSawReset = 0x3B
+        case testInProgress = 0x3C
+        case stepSensorShorted = 0x3D
+        case errorFlashWrite = 0x3E
 
-        case encoderCountTooHigh                  = 0x40
-        case encoderCountExcessiveVariance        = 0x41
-        case encoderCountTooLow                   = 0x42
-        case encoderCountProblem                  = 0x43
-        case checkVoltageOpenWire1                = 0x44
-        case checkVoltageOpenWire2                = 0x45
-        case problemWithLoad1and2type46           = 0x46
-        case problemWithLoad1and2type47           = 0x47
-        case badTimerCalibration                  = 0x48
-        case badTickHigh                          = 0x49
-        case badTickPeriod                        = 0x4A
-        case badTrimValue                         = 0x4B
-        case badBusClock                          = 0x4C
-        case badCalMode                           = 0x4D
-        case sawTrimError                         = 0x4E
-        case rfmCrystalError                      = 0x4F
-        case timerPulseWidthModulatorOverflow     = 0x50
-        case tickcntError                         = 0x51
-        case badRfmXtalStart                      = 0x52
-        case badRxSensitivity                     = 0x53
-        case packetFrameLengthTooLong             = 0x54
-        case tickLowPhaseExceeded                 = 0x55
-        case tickHighPhaseExceeded                = 0x56
-        case occlusionCritVarFail                 = 0x57
-        case occlusionParam                       = 0x58
-        case occlusionProgFail                    = 0x59
-        case occlusionCheckValueTooHigh           = 0x5A
-        case loadTableCorruption                  = 0x5B
-        case primeOpenCountTooLow                 = 0x5C
-        case badValueByte109                      = 0x5D
-        case disableFlashSecurityFailed           = 0x5E
-        case checkVoltageFailure                  = 0x5F
-        case occlusionCheckStartup1               = 0x60
-        case occlusionCheckStartup2               = 0x61
-        case occlusionCheckTimeouts1              = 0x62
-        case occlusionParamInvalid                = 0x63
+        case encoderCountTooHigh = 0x40
+        case encoderCountExcessiveVariance = 0x41
+        case encoderCountTooLow = 0x42
+        case encoderCountProblem = 0x43
+        case checkVoltageOpenWire1 = 0x44
+        case checkVoltageOpenWire2 = 0x45
+        case problemWithLoad1and2type46 = 0x46
+        case problemWithLoad1and2type47 = 0x47
+        case badTimerCalibration = 0x48
+        case badTickHigh = 0x49
+        case badTickPeriod = 0x4A
+        case badTrimValue = 0x4B
+        case badBusClock = 0x4C
+        case badCalMode = 0x4D
+        case sawTrimError = 0x4E
+        case rfmCrystalError = 0x4F
+        case timerPulseWidthModulatorOverflow = 0x50
+        case tickcntError = 0x51
+        case badRfmXtalStart = 0x52
+        case badRxSensitivity = 0x53
+        case packetFrameLengthTooLong = 0x54
+        case tickLowPhaseExceeded = 0x55
+        case tickHighPhaseExceeded = 0x56
+        case occlusionCritVarFail = 0x57
+        case occlusionParam = 0x58
+        case occlusionProgFail = 0x59
+        case occlusionCheckValueTooHigh = 0x5A
+        case loadTableCorruption = 0x5B
+        case primeOpenCountTooLow = 0x5C
+        case badValueByte109 = 0x5D
+        case disableFlashSecurityFailed = 0x5E
+        case checkVoltageFailure = 0x5F
+        case occlusionCheckStartup1 = 0x60
+        case occlusionCheckStartup2 = 0x61
+        case occlusionCheckTimeouts1 = 0x62
+        case occlusionParamInvalid = 0x63
 
-        case occlusionCheckTimeouts2              = 0x66
-        case occlusionCheckTimeouts3              = 0x67
-        case occlusionCheckPulseIssue             = 0x68
-        case occlusionCheckBolusProblem           = 0x69
-        case occlusionCheckAboveThreshold         = 0x6A
+        case occlusionCheckTimeouts2 = 0x66
+        case occlusionCheckTimeouts3 = 0x67
+        case occlusionCheckPulseIssue = 0x68
+        case occlusionCheckBolusProblem = 0x69
+        case occlusionCheckAboveThreshold = 0x6A
 
-        case basalUnderInfusion                   = 0x80
-        case basalOverInfusion                    = 0x81
-        case tempBasalUnderInfusion               = 0x82
-        case tempBasalOverInfusion                = 0x83
-        case bolusUnderInfusion                   = 0x84
-        case bolusOverInfusion                    = 0x85
-        case basalOverInfusionPulse               = 0x86
-        case tempBasalOverInfusionPulse           = 0x87
-        case bolusOverInfusionPulse               = 0x88
-        case immediateBolusOverInfusionPulse      = 0x89
-        case extendedBolusOverInfusionPulse       = 0x8A
-        case corruptionOfTables                   = 0x8B
+        case basalUnderInfusion = 0x80
+        case basalOverInfusion = 0x81
+        case tempBasalUnderInfusion = 0x82
+        case tempBasalOverInfusion = 0x83
+        case bolusUnderInfusion = 0x84
+        case bolusOverInfusion = 0x85
+        case basalOverInfusionPulse = 0x86
+        case tempBasalOverInfusionPulse = 0x87
+        case bolusOverInfusionPulse = 0x88
+        case immediateBolusOverInfusionPulse = 0x89
+        case extendedBolusOverInfusionPulse = 0x8A
+        case corruptionOfTables = 0x8B
 
-        case unrecognizedPulse                    = 0x8D
-        case syncWithoutTempActive                = 0x8E
-        case interlockLoad                        = 0x8F
-        case illegalChanParam                     = 0x90
-        case basalPulseChanInactive               = 0x91
-        case tempPulseChanInactive                = 0x92
-        case bolusPulseChanInactive               = 0x93
-        case intSemaphoreNotSet                   = 0x94
-        case illegalInterLockChan                 = 0x95
-        case terimateBolus                        = 0x96
-        case openTransitionsCount                 = 0x97
+        case unrecognizedPulse = 0x8D
+        case syncWithoutTempActive = 0x8E
+        case interlockLoad = 0x8F
+        case illegalChanParam = 0x90
+        case basalPulseChanInactive = 0x91
+        case tempPulseChanInactive = 0x92
+        case bolusPulseChanInactive = 0x93
+        case intSemaphoreNotSet = 0x94
+        case illegalInterLockChan = 0x95
+        case terimateBolus = 0x96
+        case openTransitionsCount = 0x97
 
         /// End of shared fault codes for all pod types
         /// The following fault code are DASH and O5 only
 
         // O5 only
-        case syncWithoutClosedLoop                = 0x98
-        case qnStatusMismatch                     = 0x99
-        case apLoopMismatch                       = 0x9A
+        case syncWithoutClosedLoop = 0x98
+        case qnStatusMismatch = 0x99
+        case apLoopMismatch = 0x9A
 
         // Dash and O5
-        case bleTimeout                           = 0xA0
-        case bleInitiated                         = 0xA1
-        case bleUnkAlarm                          = 0xA2
+        case bleTimeout = 0xA0
+        case bleInitiated = 0xA1
+        case bleUnkAlarm = 0xA2
 
         // O5 only
-        case adcLibNotInitialized                 = 0xA3
-        case adcLibMemorySize                     = 0xA4
-        case adcLibNVMemoryCrc                    = 0xA5
+        case adcLibNotInitialized = 0xA3
+        case adcLibMemorySize = 0xA4
+        case adcLibNVMemoryCrc = 0xA5
 
         // Dash and O5
-        case bleIaas                              = 0xA6
-        case crcFailure                           = 0xA8
-        case bleWdPingTimeout                     = 0xA9
-        case bleExcessiveResets                   = 0xAA
-        case bleNakError                          = 0xAB
-        case bleReqHighTimeout                    = 0xAC
-        case bleUnknownResp                       = 0xAD
+        case bleIaas = 0xA6
+        case crcFailure = 0xA8
+        case bleWdPingTimeout = 0xA9
+        case bleExcessiveResets = 0xAA
+        case bleNakError = 0xAB
+        case bleReqHighTimeout = 0xAC
+        case bleUnknownResp = 0xAD
         // 0xAE
-        case bleReqStuckHigh                      = 0xAF
-        case bleStateMachine1                     = 0xB1
-        case bleStateMachine2                     = 0xB2
+        case bleReqStuckHigh = 0xAF
+        case bleStateMachine1 = 0xB1
+        case bleStateMachine2 = 0xB2
 
-        case bleArbLost                           = 0xB4
+        case bleArbLost = 0xB4
 
         // O5 only
-        case bolusExtendedNotAllowed              = 0xB5
-        case agcInOpenLoop                        = 0xB6
-        case agcBolusExtendedNotAllowed           = 0xB7
-        case agcPulsesExceeded                    = 0xB8
-        case agcBolusAlreadyActive                = 0xB9
-        case agcBolusTooEarly                     = 0xBA
-        case immedBolusMismatch                   = 0xBB
-        case agcMealCorrBolusNotZero              = 0xBC
-        case tempBasalNotAllowed                  = 0xBD
-        case basalNotAllowed                      = 0xBE
-        case agcBolusTooLate                      = 0xBF
+        case bolusExtendedNotAllowed = 0xB5
+        case agcInOpenLoop = 0xB6
+        case agcBolusExtendedNotAllowed = 0xB7
+        case agcPulsesExceeded = 0xB8
+        case agcBolusAlreadyActive = 0xB9
+        case agcBolusTooEarly = 0xBA
+        case immedBolusMismatch = 0xBB
+        case agcMealCorrBolusNotZero = 0xBC
+        case tempBasalNotAllowed = 0xBD
+        case basalNotAllowed = 0xBE
+        case agcBolusTooLate = 0xBF
 
         // Dash and O5
-        case bleDualNack                          = 0xC0
-        case bleQnExceedMaxRetry                  = 0xC1
-        case bleQnCritVarFail                     = 0xC2
-        case bleQnOptIntvlInvalid                 = 0xC3
+        case bleDualNack = 0xC0
+        case bleQnExceedMaxRetry = 0xC1
+        case bleQnCritVarFail = 0xC2
+        case bleQnOptIntvlInvalid = 0xC3
 
         // O5 only
-        case bleQnCgmUtcMismatch                  = 0xC4
-        case bleQnCgmTxidNotAllowed               = 0xC5
+        case bleQnCgmUtcMismatch = 0xC4
+        case bleQnCgmTxidNotAllowed = 0xC5
         // 0xC6 undefined
-        case bleQnAlgNotRun                       = 0xC7
-        case bleQnHypoInOpenLoop                  = 0xC8
-        case bleQnAlgSetupFail                    = 0xC9
-        case bleQnAgcRunTooLate                   = 0xCA
+        case bleQnAlgNotRun = 0xC7
+        case bleQnHypoInOpenLoop = 0xC8
+        case bleQnAlgSetupFail = 0xC9
+        case bleQnAgcRunTooLate = 0xCA
 
         // Dash and possibly O5
-        case unknown0xCB                          = 0xCB
+        case unknown0xCB = 0xCB
         // 0xCC - 0xD3 undefined and never seen
-        case unknown0xD4                          = 0xD4
-        case unknown0xD5                          = 0xD5
-        case resetFault0xD6                       = 0xD6
-        case resetFault0xD7                       = 0xD7
-        case unknown0xD8                          = 0xD8
-        case unknown0xD9                          = 0xD9
+        case unknown0xD4 = 0xD4
+        case unknown0xD5 = 0xD5
+        case resetFault0xD6 = 0xD6
+        case resetFault0xD7 = 0xD7
+        case unknown0xD8 = 0xD8
+        case unknown0xD9 = 0xD9
 
         // O5 only
-        case bleAgcPotentialDivZero               = 0xE1
-        case bleAgcInvalidInputParam              = 0xE2
-        case bleAgcInvalidParam                   = 0xE3
-        case bleAgcStateVectorParam               = 0xE4
-        case bleAgcInvalidAlgoStateParam          = 0xE5
-        case bleAgcInvalidHypoSetting             = 0xE6
-        case bleAgcOutputOutOfBounds              = 0xE7
-        case bleAgcInvalidFirstRunInInitState     = 0xE8
-        case bleAgcInvalidOffset                  = 0xE9
+        case bleAgcPotentialDivZero = 0xE1
+        case bleAgcInvalidInputParam = 0xE2
+        case bleAgcInvalidParam = 0xE3
+        case bleAgcStateVectorParam = 0xE4
+        case bleAgcInvalidAlgoStateParam = 0xE5
+        case bleAgcInvalidHypoSetting = 0xE6
+        case bleAgcOutputOutOfBounds = 0xE7
+        case bleAgcInvalidFirstRunInInitState = 0xE8
+        case bleAgcInvalidOffset = 0xE9
 
-        case valuesDoNotMatch                     = 0xFF
+        case valuesDoNotMatch = 0xFF
     }
 
     var faultType: FaultEventType? {
-        return FaultEventType(rawValue: rawValue)
+        FaultEventType(rawValue: rawValue)
     }
 
     init(rawValue: UInt8) {
@@ -602,9 +592,15 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
         case .bleAgcInvalidOffset:
             return "BLE AGC invalid offset"
 
-        case .resetFault0xD6, .resetFault0xD7:
+        case .resetFault0xD6,
+             .resetFault0xD7:
             return "Reset fault of unknown origin"
-        case .unknown0xCB, .unknown0xD4, .unknown0xD5, .unknown0xD8, .unknown0xD9, .none:
+        case .none,
+             .unknown0xCB,
+             .unknown0xD4,
+             .unknown0xD5,
+             .unknown0xD8,
+             .unknown0xD9:
             return "Unknown fault"
 
         case .valuesDoNotMatch:
@@ -613,7 +609,7 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
     }
 
     var description: String {
-        return String(format: "Fault Event Code 0x%02x: %@", rawValue, faultDescription)
+        String(format: "Fault Event Code 0x%02x: %@", rawValue, faultDescription)
     }
 
     var localizedDescription: String {
@@ -628,34 +624,53 @@ struct FaultEventCode: CustomStringConvertible, Equatable {
             case .occluded:
                 return LocalizedString("Occlusion detected", comment: "Description for Occlusion detected pod fault")
             default:
-                return String(format: LocalizedString("Internal pod fault %1$@",
-                                        comment: "The format string for Internal pod fault (1: The fault code value)"),
-                                        String(format: "%03u", rawValue))
+                return String(
+                    format: LocalizedString(
+                        "Internal pod fault %1$@",
+                        comment: "The format string for Internal pod fault (1: The fault code value)"
+                    ),
+                    String(format: "%03u", rawValue)
+                )
             }
         } else {
-            return String(format: LocalizedString("Unknown pod fault %1$@",
-                                    comment: "The format string for Unknown pod fault (1: The fault code value)"),
-                                    String(format: "%03u", rawValue))
+            return String(
+                format: LocalizedString(
+                    "Unknown pod fault %1$@",
+                    comment: "The format string for Unknown pod fault (1: The fault code value)"
+                ),
+                String(format: "%03u", rawValue)
+            )
         }
     }
 
     // Convenience alert notification strings
     var notificationTitle: String {
-        switch self.faultType {
+        switch faultType {
         case .reservoirEmpty:
             return LocalizedString("Empty Reservoir", comment: "The title for Empty Reservoir alarm notification")
-        case .occluded, .occlusionCheckStartup1, .occlusionCheckStartup2, .occlusionCheckTimeouts1, .occlusionCheckTimeouts2, .occlusionCheckTimeouts3, .occlusionCheckPulseIssue, .occlusionCheckBolusProblem:
+        case .occluded,
+             .occlusionCheckBolusProblem,
+             .occlusionCheckPulseIssue,
+             .occlusionCheckStartup1,
+             .occlusionCheckStartup2,
+             .occlusionCheckTimeouts1,
+             .occlusionCheckTimeouts2,
+             .occlusionCheckTimeouts3:
             return LocalizedString("Occlusion Detected", comment: "The title for Occlusion alarm notification")
         case .exceededMaximumPodLife80Hrs:
             return LocalizedString("Pod Expired", comment: "The title for Pod Expired alarm notification")
         default:
-            return String(format: LocalizedString("Critical Pod Fault %1$@",
-                                    comment: "The title for AlarmCode.other notification: (1: fault code value)"),
-                                    String(format: "%03u", self.rawValue))
+            return String(
+                format: LocalizedString(
+                    "Critical Pod Fault %1$@",
+                    comment: "The title for AlarmCode.other notification: (1: fault code value)"
+                ),
+                String(format: "%03u", rawValue)
+            )
         }
     }
 
     var notificationBody: String {
-        return LocalizedString("Insulin delivery stopped. Change Pod now.", comment: "The default notification body for AlarmCodes")
+        LocalizedString("Insulin delivery stopped. Change Pod now.", comment: "The default notification body for AlarmCodes")
     }
 }

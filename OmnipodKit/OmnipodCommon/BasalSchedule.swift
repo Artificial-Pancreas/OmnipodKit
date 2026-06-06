@@ -1,24 +1,14 @@
-//
-//  BasalSchedule.swift
-//  OmnipodKit
-//
-//  From OmniBLE/OmnipodCommon/BasalSchedule.swift
-//  Created by Pete Schwamb on 4/4/18.
-//  Copyright © 2018 Pete Schwamb. All rights reserved.
-//
-
 import Foundation
 
 struct BasalScheduleEntry: RawRepresentable, Equatable {
-    
     typealias RawValue = [String: Any]
 
     let rate: Double
     let startTime: TimeInterval
-    
+
     init(rate: Double, startTime: TimeInterval, podType: PodType) {
         var rrate = roundToSupportedBasalRate(rate: rate)
-        if rrate == 0 && podType.zeroBasalRate == 0 {
+        if rrate == 0, podType.zeroBasalRate == 0 {
             // Got a zero scheduled basal rate for an Eros pod, use the min allowed
             rrate = Pod.pulseSize
         }
@@ -27,53 +17,52 @@ struct BasalScheduleEntry: RawRepresentable, Equatable {
     }
 
     // MARK: - RawRepresentable
+
     init?(rawValue: RawValue) {
-        
         guard
             let rate = rawValue["rate"] as? Double,
             let startTime = rawValue["startTime"] as? Double
-            else {
-                return nil
+        else {
+            return nil
         }
-        
+
         self.rate = rate
         self.startTime = startTime
     }
-    
+
     var rawValue: RawValue {
         let rawValue: RawValue = [
             "rate": rate,
             "startTime": startTime
         ]
-        
+
         return rawValue
     }
 }
 
 // A basal schedule starts at midnight and should contain 24 hours worth of entries
 struct BasalSchedule: RawRepresentable, Equatable {
-    
     typealias RawValue = [String: Any]
 
     let entries: [BasalScheduleEntry]
-    
+
     func rateAt(offset: TimeInterval) -> Double {
         let (_, entry, _) = lookup(offset: offset)
         return entry.rate
     }
-    
+
     // Only valid for fixed offset timezones
     func currentRate(using calendar: Calendar, at date: Date = Date()) -> Double {
         let midnight = calendar.startOfDay(for: date)
         return rateAt(offset: date.timeIntervalSince(midnight))
     }
-    
+
     // Returns index, entry, and time remaining
     func lookup(offset: TimeInterval) -> (Int, BasalScheduleEntry, TimeInterval) {
-        guard offset >= 0 && offset < .hours(24) else {
+        guard offset >= 0, offset < .hours(24) else {
             fatalError("Schedule offset out of bounds")
         }
-        
+
         var last: TimeInterval = .hours(24)
         for (index, entry) in entries.reversed().enumerated() {
             if entry.startTime <= offset {
@@ -83,11 +72,11 @@ struct BasalSchedule: RawRepresentable, Equatable {
         }
         fatalError("Schedule incomplete")
     }
-    
+
     init(entries: [BasalScheduleEntry]) {
         self.entries = entries
     }
-    
+
     func durations() -> [(rate: Double, duration: TimeInterval, startTime: TimeInterval)] {
         var last: TimeInterval = .hours(24)
         let durations = entries.reversed().map { (entry) -> (rate: Double, duration: TimeInterval, startTime: TimeInterval) in
@@ -97,24 +86,24 @@ struct BasalSchedule: RawRepresentable, Equatable {
         }
         return durations.reversed()
     }
-    
+
     // MARK: - RawRepresentable
+
     init?(rawValue: RawValue) {
-        
         guard
             let entries = rawValue["entries"] as? [BasalScheduleEntry.RawValue]
-            else {
-                return nil
+        else {
+            return nil
         }
-        
+
         self.entries = entries.compactMap { BasalScheduleEntry(rawValue: $0) }
     }
-    
+
     var rawValue: RawValue {
         let rawValue: RawValue = [
-            "entries": entries.map { $0.rawValue }
+            "entries": entries.map(\.rawValue)
         ]
-        
+
         return rawValue
     }
 }
@@ -122,7 +111,7 @@ struct BasalSchedule: RawRepresentable, Equatable {
 extension Sequence where Element == BasalScheduleEntry {
     func adjacentEqualRatesMerged() -> [BasalScheduleEntry] {
         var output = [BasalScheduleEntry]()
-        let _ = self.reduce(nil) { (lastRate, entry) -> TimeInterval? in
+        _ = reduce(nil) { (lastRate, entry) -> TimeInterval? in
             if entry.rate != lastRate {
                 output.append(entry)
             }

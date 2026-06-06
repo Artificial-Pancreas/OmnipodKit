@@ -1,13 +1,7 @@
-//
-//  PodTypeO5Tests.swift
-//  OmniTests
-//
-
-import XCTest
 @testable import OmnipodKit
+import XCTest
 
 class PodTypeO5Tests: XCTestCase {
-
     func testO5PodTypeFlags() {
         XCTAssertTrue(omnipod5Type.isO5)
         XCTAssertFalse(omnipod5Type.isDash)
