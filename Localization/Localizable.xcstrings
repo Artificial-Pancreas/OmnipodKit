@@ -74482,12 +74482,6 @@
         }
       }
     },
-    "You are currently configured to use %1$@ Pods. You can pair an Omnipod 5 Pod by selecting ‘Change pod type’ on your next Pod change." : {
-      "comment" : "Guidance shown when configured for a non-O5 pod type (1: current pod type)"
-    },
-    "You are currently configured to use Omnipod 5 Pods. To return to DASH or Eros, select ‘Change pod type’." : {
-      "comment" : "Guidance shown when already configured for Omnipod 5"
-    },
     "You can be optionally notified when the amount of insulin in the current Pod drops to a selected level below the current reservoir value of %1$@ units.\n\nSet the low reservoir alert level for the current Pod." : {
       "comment" : "Description text on LowReservoirView for the current Pod (1: current reservoir value",
       "extractionState" : "manual",
