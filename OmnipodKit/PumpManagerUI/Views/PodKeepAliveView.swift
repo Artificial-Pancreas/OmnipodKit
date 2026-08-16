@@ -388,6 +388,7 @@ class BackgroundTask {
     static let shared = BackgroundTask()
 
     var player = AVAudioPlayer()
+    private let queue = DispatchQueue(label: "com.iaps.backgroundtask.omnipodkit", qos: .userInitiated)
 
     // MARK: - Methods
 
@@ -402,7 +403,9 @@ class BackgroundTask {
     func stopBackgroundTask() {
         Storage.shared.inBackground.value = false
         NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
-        player.stop()
+        queue.async { [weak self] in
+            self?.player.stop()
+        }
     }
 
     @objc fileprivate func interruptedAudio(_ notification: Notification) {
@@ -421,21 +424,23 @@ class BackgroundTask {
     fileprivate func playAudio() {
         let forResource = "blank"
         let ofType = "wav"
-        do {
-            let bundle = Bundle(for: OmniHUDProvider.self).path(forResource: forResource, ofType: ofType)
-            guard let bundle = bundle else {
-                return
+        queue.async { [weak self] in
+            guard let self = self else { return }
+            do {
+                guard let bundlePath = Bundle(for: OmniHUDProvider.self).path(forResource: forResource, ofType: ofType) else {
+                    return
+                }
+                let alertSound = URL(fileURLWithPath: bundlePath)
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+                try AVAudioSession.sharedInstance().setActive(true)
+                let newPlayer = try AVAudioPlayer(contentsOf: alertSound)
+                newPlayer.numberOfLoops = -1
+                newPlayer.volume = 0.01
+                newPlayer.prepareToPlay()
+                newPlayer.play()
+                self.player = newPlayer
+            } catch {
             }
-            let alertSound = URL(fileURLWithPath: bundle)
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
-            try AVAudioSession.sharedInstance().setActive(true)
-            try player = AVAudioPlayer(contentsOf: alertSound)
-            // Play audio forever by setting num of loops to -1
-            player.numberOfLoops = -1
-            player.volume = 0.01
-            player.prepareToPlay()
-            player.play()
-        } catch {
         }
     }
 }
