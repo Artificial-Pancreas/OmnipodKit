@@ -9803,6 +9803,24 @@
         }
       }
     },
+    "blue" : {
+      "comment" : "Pod tab color: DASH's needle cap tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "blue"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "blauwe"
+          }
+        }
+      }
+    },
     "Bluetooth is powered off" : {
       "comment" : "Error description for BluetoothManagerError.bluetoothNotAvailable(.poweredOff)",
       "extractionState" : "manual",
@@ -13580,6 +13598,24 @@
         }
       }
     },
+    "clear" : {
+      "comment" : "Pod tab color: Eros and Omnipod 5's needle cap tab",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "clear"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "doorzichtig"
+          }
+        }
+      }
+    },
     "Command error %1$@: %2$@" : {
       "comment" : "Format string for invalid message error code (1: error code number) (2: error description)",
       "extractionState" : "manual",
@@ -15632,7 +15668,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bevestig Vastgeplakte Pod"
+            "value" : "Bevestig vastgeplakte Pod"
           }
         },
         "pl" : {
@@ -25633,7 +25669,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voltooi Deactivering"
+            "value" : "Voltooi deactivering"
           }
         },
         "pl" : {
@@ -25795,7 +25831,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voltooi Installatie"
+            "value" : "Voltooi installatie"
           }
         },
         "pl" : {
@@ -27304,7 +27340,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Onjuiste Reactie"
+            "value" : "Onjuiste reactie"
           }
         },
         "pl" : {
@@ -41302,7 +41338,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Omnipod DASH Pods hebben een blauw naaldtabblad met een PARTIJNUMMER van 12 tekens dat meestal begint met 'PD1'."
+            "value" : "Omnipod DASH Pods hebben een blauwe naaldkap met een LOTNUMMER van 12 tekens dat meestal begint met 'PD1'."
           }
         },
         "pl" : {
@@ -43568,7 +43604,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Test beeps commando met succes verzonden.\n\nAls je geen beeps vanuit je Pod hebt gehoord is het goed mogelijk dat de speaker van de Pod kapot is."
+            "value" : "Testpiepjes commando met succes verzonden.\n\nAls je geen piepjes vanuit je Pod hebt gehoord is het goed mogelijk dat de speaker van de Pod kapot is."
           }
         },
         "pl" : {
@@ -45887,7 +45923,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pod Geactiveerd"
+            "value" : "Pod geactiveerd"
           }
         },
         "pl" : {
@@ -47021,7 +47057,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Herinnering Vervaldatum Pod"
+            "value" : "Herinnering vervaldatum Pod"
           }
         },
         "pl" : {
@@ -47345,7 +47381,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pod Verlopen"
+            "value" : "Pod verlopen"
           }
         },
         "pl" : {
@@ -47507,7 +47543,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pod Verloopt"
+            "value" : "Pod verloopt"
           }
         },
         "pl" : {
@@ -50747,7 +50783,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Koppeling Pod Onvolledig"
+            "value" : "Podkoppeling onvolledig"
           }
         },
         "pl" : {
@@ -55300,7 +55336,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impulslogboek lezen..."
+            "value" : "Pulslogboek lezen..."
           }
         },
         "pl" : {
@@ -56775,7 +56811,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verwijder Pod van Lichaam"
+            "value" : "Verwijder Pod van je lichaam"
           }
         },
         "pl" : {
@@ -57295,7 +57331,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hervat Insuline"
+            "value" : "Hervat insuline"
           }
         },
         "pl" : {
@@ -57457,7 +57493,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hervat Insulinetoediening"
+            "value" : "Hervat insulinetoediening"
           }
         },
         "pl" : {
@@ -62223,7 +62259,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stille melodie"
+            "value" : "Stil geluid"
           }
         },
         "pl" : {
@@ -76483,7 +76519,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Je Pod is klaar voor gebruik.\n\nDe standaardwaarschuwingen voor vervaldatum en laag reservoir zijn geconfigureerd. Je kunt de waarschuwingen voor de huidige Pod wijzigen in de Meldingsinstellingen."
+            "value" : "Je Pod is klaar voor gebruik.\n\nDe standaardwaarschuwingen voor vervaldatum en laag reservoir zijn geconfigureerd. \nJe kunt de waarschuwingen voor de huidige Pod wijzigen in de meldingsinstellingen."
           }
         },
         "pl" : {
