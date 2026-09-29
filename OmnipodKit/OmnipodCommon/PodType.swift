@@ -88,9 +88,9 @@ struct PodType: CustomStringConvertible, Equatable {
     var tabColor: String {
         switch podType {
         case .productIdDash:
-            return "blue"
+            return LocalizedString("blue", comment: "Tab color for DASH Pods")
         default:
-            return "clear"
+            return LocalizedString("clear", comment: "Tab color for Classic and Omnipod 5 Pods")
         }
     }
 
@@ -101,18 +101,6 @@ struct PodType: CustomStringConvertible, Equatable {
             return "PodBottomBlueTab"
         default:
             return "PodBottomClearTab"
-        }
-    }
-
-    // Does pod type possibly use a RileyLink
-    var mayUseRileyLink: Bool {
-        switch podType {
-        case .productIdEros:
-            return true // always needed for basic pod connection
-        case .productIdDash:
-            return true // only needed for the PodKeepAlive RileyLink option
-        default:
-            return false
         }
     }
 
