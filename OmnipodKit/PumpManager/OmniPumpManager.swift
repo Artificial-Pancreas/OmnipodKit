@@ -280,6 +280,12 @@ public class OmniPumpManager: RileyLinkPumpManager {
             }
         }
 
+        // Once the delegate has been asked to remove this pump manager, a late state write (e.g. from
+        // an async RileyLink disconnect) must not reach it, or the host may re-adopt this manager.
+        guard !lockedIsDeactivating.value else {
+            return returnType
+        }
+
         // Ideally we ensure that oldValue.rawValue != newValue.rawValue, but the types aren't
         // defined as equatable
         pumpDelegate.notify { (delegate) in
@@ -294,6 +300,8 @@ public class OmniPumpManager: RileyLinkPumpManager {
     }
 
     private let lockedState: Locked<OmniPumpManagerState>
+
+    private let lockedIsDeactivating = Locked(false)
 
     private let statusObservers = WeakSynchronizedSet<PumpManagerStatusObserver>()
 
@@ -1252,6 +1260,13 @@ extension OmniPumpManager {
             delegate?.pumpManager(self, hasNewPumpEvents: [event], lastReconciliation: self.lastSync, replacePendingEvents: false) { _ in }
             delegate?.deviceManager(self, recordAnalyticsEvent: "Pod Ended", properties: properties)
         }
+    }
+
+    // Stop using OmnipodKit altogether: release Bluetooth and any RileyLinks, then ask the delegate to remove us.
+    func stopUsing(completion: @escaping () -> Void) {
+        lockedIsDeactivating.value = true
+        forgetBluetoothManager()
+        notifyDelegateOfDeactivation(completion: completion)
     }
 
     // If applicable forget the BluetoothManager for current podComms
