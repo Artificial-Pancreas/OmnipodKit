@@ -1080,12 +1080,7 @@ extension OmniPumpManager {
                 return
             }
 
-            if state.podType.isEros || state.podKeepAlive == .rileyLink {
-                /// Switching away from using RileyLinks, disconnect the devices
-                disconnectRileyLinkDevices()
-            }
-
-            forgetBluetoothManager()
+            forgetBluetoothConnections()
 
             let podComms: PodComms
             switch newValue {
@@ -1265,13 +1260,16 @@ extension OmniPumpManager {
     // Stop using OmnipodKit altogether: release Bluetooth and any RileyLinks, then ask the delegate to remove us.
     func stopUsing(completion: @escaping () -> Void) {
         lockedIsDeactivating.value = true
-        forgetBluetoothManager()
+        forgetBluetoothConnections()
         notifyDelegateOfDeactivation(completion: completion)
     }
 
-    // If applicable forget the BluetoothManager for current podComms
-    // to avoid future "Bluetooth use unsupported on this device" errors.
-    func forgetBluetoothManager() {
+    /// Forget all Bluetooth connections. For BLE pods call
+    /// blePodComms.forgetBluetoothManager() to avoid future
+    /// "Bluetooth use unsupported on this device" errors.
+    /// For Eros pods or if using Pod Keep Alive RileyLink mode,
+    /// call disconnectRileyLinkDevices() to release the RLs.
+    func forgetBluetoothConnections() {
         if let blePodComms = self.lockedPodComms.value as? BlePodComms {
             blePodComms.forgetBluetoothManager()
         }
