@@ -3263,6 +3263,10 @@ extension OmniPumpManager: PumpManager {
                 self.runSession(withName: "Silence already acknowledged alert") { (result) in
                     switch result {
                     case .success(let session):
+                        // Another queued session may have cleared it already
+                        guard self.state.alertsWithPendingAcknowledgment.contains(alert) else {
+                            return
+                        }
                         do {
                             let _ = try session.acknowledgeAlerts(alerts: AlertSet(slots: [slot]))
                         } catch {
@@ -3465,30 +3469,38 @@ extension OmniPumpManager {
                         return
                     }
 
+                    // Loop records the acknowledgement as soon as it is tapped. Persist it here too, before
+                    // the session runs, so that if the app dies while waiting on the pod the next status
+                    // update still clears the pod alert (see silenceAcknowledgedAlerts).
+                    self.setState { state in
+                        state.alertsWithPendingAcknowledgment.insert(alert)
+                    }
+
                     // Acknowledge the pod alert for the triggering slot
                     self.runSession(withName: "Acknowledge Alert") { (result) in
                         switch result {
                         case .success(let session):
                             self.handleSilencePodEnd(session: session)
 
+                            // A retry from silenceAcknowledgedAlerts may have cleared it already
+                            guard self.state.alertsWithPendingAcknowledgment.contains(alert) else {
+                                completion(nil)
+                                return
+                            }
+
                             do {
                                 let beepBlock = self.beepMessageBlock(beepType: .beep)
                                 let _ = try session.acknowledgeAlerts(alerts: AlertSet(slots: [slot]), beepBlock: beepBlock)
                             } catch {
-                                self.setState { state in
-                                    state.alertsWithPendingAcknowledgment.insert(alert)
-                                }
                                 completion(error)
                                 return
                             }
                             self.setState { state in
                                 state.activeAlerts.remove(alert)
+                                state.alertsWithPendingAcknowledgment.remove(alert)
                             }
                             completion(nil)
                         case .failure(let error):
-                            self.setState { state in
-                                state.alertsWithPendingAcknowledgment.insert(alert)
-                            }
                             completion(error)
                         }
                     }
