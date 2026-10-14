@@ -69,14 +69,18 @@ class BlePodComms: PodComms {
     // "Bluetooth use unsupported on this device" errors on the
     // next BlePodComms instantiation and subsequent usage.
     func forgetBluetoothManager() {
-        bluetoothManager.connectionDelegate = nil
-        bluetoothManager = nil
+        if bluetoothManager != nil {
+            bluetoothManager.connectionDelegate = nil
+            bluetoothManager = nil
+        }
     }
 
     /// Sets bluetoothManager's podKeepAlive value to drive the pod connection policy.
     func setPodKeepAliveKeepsConnectedInBackground(_ keepConnectedInBackground: Bool) {
-        print("@@@ setting bluetoothManager.podKeepAliveKeepsConnectedInBackground to \(keepConnectedInBackground)")
-        bluetoothManager.podKeepAliveKeepsConnectedInBackground = keepConnectedInBackground
+        if bluetoothManager != nil {
+            print("@@@ setting bluetoothManager.podKeepAliveKeepsConnectedInBackground to \(keepConnectedInBackground)")
+            bluetoothManager.podKeepAliveKeepsConnectedInBackground = keepConnectedInBackground
+        }
     }
 
     func connectToNewPod(_ completion: @escaping (Result<Omni, Error>) -> Void) {
